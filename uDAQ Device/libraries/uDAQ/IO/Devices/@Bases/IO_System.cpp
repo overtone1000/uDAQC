@@ -1,0 +1,317 @@
+#include "IO_System.h"
+
+namespace ESP_Managers{ namespace IO
+{
+  //WiFiServer IO_System::tcp_server(ESP_Managers::IO::Constants::tcp_main_port);
+  std::vector<IO_Saveable*> IO_System::saveable_members;
+
+  IO_System::IO_System():
+  IO_Group("Unnamed",nullptr),
+  ts("Timestamp",this),
+  udp_timer(2*60*1000)
+  //debug_timer(1000)
+  {
+  }
+
+  IO_System::~IO_System()
+  {
+    //if(ts)
+    //{
+    //  delete ts;
+    //}
+  }
+
+
+  int IO_System::add_saveable(IO_Saveable* new_member)
+  {
+    int retval = saveable_members.size();
+    saveable_members.push_back(new_member);
+    return retval;
+  }
+
+  void IO_System::InitializeSaveables()
+  {
+    //Resize();
+
+    //Load saveable members from SPIFFS.
+    DEBUG_println("Initializing IO objects.");
+    Dir dir = SPIFFS.openDir("/devices");
+    while (dir.next()) {
+      DEBUG_println("Found file " + dir.fileName());
+      bool deleteme=true;
+      for(auto it=saveable_members.begin();it!=saveable_members.end();it++)
+      {
+        DEBUG_println((*it)->file_name());
+        DEBUG_println(dir.fileName());
+        if((*it)->file_name()==dir.fileName())
+        {
+          deleteme=false;
+          break;
+        }
+      }
+      if(deleteme)
+      {
+        SPIFFS.remove(dir.fileName());
+        DEBUG_println("Deleting file " + dir.fileName());
+      }
+    }
+
+    for(auto it=saveable_members.begin();it!=saveable_members.end();it++)
+    {
+      DEBUG_println("Initializing " + (*it)->file_name());
+      (*it)->ReadFromFile();
+    }
+  }
+
+  void IO_System::InitializeTCPClient()
+  {
+    //tcp_server.begin();
+  }
+
+  void IO_System::add_client(IPAddress host, int port)
+  {
+    DEBUG_println("Adding tcp client.");
+
+    CommandCodec::TCP_Command_Client new_client;
+    new_client.connect(host,port);
+
+    CommandCodec::TCP_Command_Header header;
+
+    header.message_length = DescriptionSize();
+    header.command_id = NetworkCommands::group_description;
+
+    unsigned int header_size = new_client.send_command_header(header);
+    DEBUG_println("Actual header size sent " + (String)header_size);
+    unsigned int description_length_sent=SendDescription(&(new_client));
+    DEBUG_println("Sending description of size " + (String)header.message_length);
+    DEBUG_println("Actual description  size " + (String)description_length_sent);
+
+    //new_client.println("Description sent.");
+    tcp_clients.push_back(new_client);
+  }
+
+  void IO_System::LoopTCPClient()
+  {
+    //DEBUG_println("Starting tcp loop.");
+
+    /*
+    if(tcp_server.hasClient())
+    {
+      DEBUG_println("Adding tcp client.");
+      CommandCodec::TCP_Command_Client new_client(tcp_server.available());
+
+      CommandCodec::TCP_Command_Header header;
+
+      header.message_length = DescriptionSize();
+      header.command_id = NetworkCommands::group_description;
+
+      unsigned int header_size = new_client.send_command_header(header);
+      DEBUG_println("Actual header size sent " + (String)header_size);
+      unsigned int description_length_sent=SendDescription(&(new_client));
+      DEBUG_println("Sending description of size " + (String)header.message_length);
+      DEBUG_println("Actual description  size " + (String)description_length_sent);
+
+      //new_client.println("Description sent.");
+      tcp_clients.push_back(new_client);
+    }
+    */
+
+    for(auto it=tcp_clients.begin();it!=tcp_clients.end();it++)
+    {
+      CommandCodec::TCP_Command_Client* client = &*it;
+      if(client->connected())
+      {
+        while(client->command_available())
+        {
+          CommandCodec::TCP_Command new_command = client->get_command();
+          DEBUG_print("Received command " + (String)new_command.command_id);
+          DEBUG_println(" (" + (String)new_command.message_length + " b)");
+
+          //Now need to do something with the command
+          //Pretty much just need to handle changes to IO_SaveableValue
+          switch(new_command.command_id)
+          {
+            case ESP_Managers::IO::NetworkCommands::handshake:
+            DEBUG_println("Handshake.");
+            break;
+            case ESP_Managers::IO::NetworkCommands::modifiablevalue_modification:
+            DEBUG_println("Received modification command.");
+            IO_Saveable::HandleModificationCommand(new_command);
+            break;
+            default:
+            DEBUG_println("Unhandled command " + (String)new_command.command_id);
+            break;
+          }
+        }
+      }
+      else
+      {
+        DEBUG_println("Erasing client not connected.");
+        tcp_clients.erase(it--); //Erase the item and move iterator back to the previous element or iteration loop throaws an exception.
+        DEBUG_println("Client erased.");
+      }
+    }
+    yield();
+  }
+
+  void IO_System::SetTimeToNow()
+  {
+      ts.SetTimeToNow();
+  }
+
+  void IO_System::SendDataReportTCP()
+  {
+    for(auto it=tcp_clients.begin();it!=tcp_clients.end();it++)
+    {
+      CommandCodec::TCP_Command_Client* client = &*it;
+      if(client->connected())
+      {
+        client->flush(); //Don't start sending new data until old data send is finished.
+
+        //Send the header
+        CommandCodec::TCP_Command_Header header;
+        header.message_length = DataSize();
+        header.command_id = NetworkCommands::data;
+        client->send_command_header(header);
+
+        //Send the data
+        SendData(client);
+
+        //For debugging for now.
+        //DEBUG_println("Stopping client.");
+        //client->stop();
+        //DEBUG_println("Client stopped.");
+      }
+    }
+    yield();
+  }
+/*
+  void IO_System::Resize()
+  {
+    current_size=0;
+    for(auto it=members.begin();it!=members.end();it++)
+    {
+      current_size+=(**it).DataSize();
+    }
+
+    if(data)
+    {
+      delete[] data;
+    }
+    DEBUG_println("Total size is " + (String)current_size);
+    data = new uint8_t[current_size];
+
+    memset(data,0,current_size); //Zero the whole buffer
+
+    IO_Group::Set_p(data); //assign pointers to children
+  }
+*/
+
+  void IO_System::ShowReportPage()
+  {
+    //DEBUG_println("Building page.");
+    String page;
+	  page = HTML_Builder::html_header;
+
+    page += R"(<h2>IO</h2>)";
+
+    page += HTML_Builder::create_hyperlink("/","Back") + HTML_Builder::breakline  + HTML_Builder::breakline;
+
+    page +="     " + (String)(((float)(ESP.getFreeHeap()))) + " bytes used by the heap" + HTML_Builder::breakline;
+
+    page += String(members.size()) + R"( devices.)" + HTML_Builder::breakline;
+    if(ESP_Managers::IO::IO_Reporter::errcnt>0)
+    {
+      page += String(ESP_Managers::IO::IO_Reporter::errcnt) + R"( unsuccessful device addition attempts.)" + HTML_Builder::breakline;
+    }
+
+    for(auto it=members.begin();it!=members.end();it++)
+    {
+      page+=R"(<h3>)";
+      page+=(**it).Name();
+      page+=R"(</h3>)";
+      page+=(**it).Report(); //The memory leak goes away when this line is commented out. Fixed in IO_SaveableValue by not adding the handler repeatedly.
+      page+=HTML_Builder::breakline;
+    }
+
+    page += HTML_Builder::html_footer;
+    //DEBUG_println("Sending page.");
+
+    ESP_Managers::Network::webserver.send(200, "text/html", page);
+    //DEBUG_println("Page sent.");
+  }
+
+  void IO_System::DirectToReportPage()
+  {
+    ESP_Managers::Network::webserver.sendHeader("Location",ESP_Managers::IO::IOpanel_path,true);
+    ESP_Managers::Network::webserver.send ( 302, "text/plain", "");
+  }
+
+	void IO_System::InitializeUDP()
+	{
+    DEBUG_println("Starting UDP multicast listener.");
+		udp.stop();
+		//int retval = udp.beginMulticast(WiFi.localIP(), ESP_Managers::IO::Constants::udp_multicast_IP, ESP_Managers::IO::Constants::udp_multicast_port);
+
+    //multicast doesn't work well (subscription expires), just use broadcasting
+    //this is fine, as this isn't really the intended situation for multicasting use
+    udp.begin(ESP_Managers::IO::Constants::udp_multicast_port);
+	}
+
+	void IO_System::LoopUDP()
+	{
+		//max packet size is 65,507 bytes
+    //but this define is in wifiudp.h: #define UDP_TX_PACKET_MAX_SIZE 8192
+
+    //Eventually, the device stops responding to multicast. This looks like a bug in the ESP8266 library. Here is a workaround.
+		int packetSize = udp.parsePacket();
+
+    //Process a packet if received in full.
+		if (packetSize>=CommandCodec::TCP_Command_Header::bytelength())
+		{
+			DEBUG_printf("Received %d bytes from %s, port %d\n", packetSize, udp.remoteIP().toString().c_str(), udp.remotePort());
+
+			CommandCodec::TCP_Command_Header header;
+			udp.read((uint8_t*)&(header.message_length),sizeof(header.message_length));
+			udp.read((uint8_t*)&(header.command_id),sizeof(header.command_id));
+
+      DEBUG_println("Received message of length " + (String)header.message_length);
+      DEBUG_println("Received command id " + (String)header.command_id);
+
+			if(header.command_id == ESP_Managers::IO::NetworkCommands::request_subscription && header.message_length>0)
+			{
+        int32_t port;
+        udp.read((uint8_t*)(&port),sizeof(port));
+
+        add_client(udp.remoteIP(), port);
+
+        /*
+        DEBUG_println("Sending response to " + udp.remoteIP().toString() + ":" + (String)port);
+
+        WiFiClient client;
+				if (client.connect(udp.remoteIP(), port))
+				{
+				// we are connected to the host!
+          CommandCodec::TCP_Command_Header reply_header;
+
+          reply_header.message_length = sizeof(ESP_Managers::IO::Constants::tcp_main_port);
+          reply_header.command_id = ESP_Managers::IO::NetworkCommands::declare_identity;
+
+          int returnbytecount = 0;
+          returnbytecount+=client.write((uint8_t*)&(reply_header.message_length),sizeof(reply_header.message_length));
+          returnbytecount+=client.write((uint8_t*)&(reply_header.command_id),sizeof(reply_header.command_id));
+          returnbytecount+=client.write((uint8_t*)&(ESP_Managers::IO::Constants::tcp_main_port),reply_header.message_length);
+
+          client.stop();
+          DEBUG_println("ID response of length " + (String)returnbytecount + " sent.");
+				}
+				else
+				{
+          DEBUG_println("Couldn't connect back via TCP.");
+				}
+        */
+			}
+		}
+	}
+}
+};
