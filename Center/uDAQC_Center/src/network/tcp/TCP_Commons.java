@@ -37,14 +37,7 @@ import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 
 public class TCP_Commons
 {
-	public static void AddSSLFilter(IoAcceptor acceptor)
-	{
-		AddSSLFilter(acceptor.getFilterChain(),false);
-	}
-	public static void AddSSLFilter(NioSocketConnector connector)
-	{
-		AddSSLFilter(connector.getFilterChain(),true);
-	}
+
 	private static TrustManager[] trustAllCerts()
 	{
 		TrustManager[] retval = new TrustManager[] 
@@ -241,6 +234,14 @@ public class TCP_Commons
 			System.out.println("Error during SSL Filter addition.");
 			System.out.println(e.getMessage());
 		}
+	}
+	public static void AddSSLFilter(IoAcceptor acceptor)
+	{
+		AddSSLFilter(acceptor.getFilterChain(),false);
+	}
+	public static void AddSSLFilter(NioSocketConnector connector)
+	{
+		AddSSLFilter(connector.getFilterChain(),true);
 	}
 	public static void CloseSession(IoSession session)
 	{
