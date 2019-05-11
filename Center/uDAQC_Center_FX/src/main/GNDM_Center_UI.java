@@ -1,4 +1,4 @@
-package main.fx;
+package main;
 
 import gndm.network.center.GNDM_Center;
 import javafx.stage.Stage;

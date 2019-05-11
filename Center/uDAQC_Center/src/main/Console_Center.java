@@ -1,4 +1,4 @@
-package main.console;
+package main;
 
 
 import java.nio.file.Path;

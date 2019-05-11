@@ -1,4 +1,4 @@
-package main.fx;
+package main;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Paths;
