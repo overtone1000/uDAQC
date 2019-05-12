@@ -1,2 +1,110 @@
-Testing worked!
-2
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="libs/bootstrap/css/bootstrap.min.css">
+    <link rel="stylesheet" href="libs/jstree/dist/themes/default/style.min.css">
+
+    <title>Hello, world!</title>
+  </head>
+  <body>
+
+    <div class="container-fluid">
+    	<div class="row">
+    		<div class="col-md-12">
+    			<h3>
+    				uDAQC
+    			</h3>
+    			<div class="row">
+    				<div class="col-md-4">
+
+              <div id="jstree">
+              <!-- in this example the tree is populated from inline HTML -->
+
+
+              <ul>
+                <li>Root node 1
+                  <ul>
+                    <li id="child_node_1">Child node 1</li>
+                    <li>Child node 2</li>
+                  </ul>
+                </li>
+                <li>Root node 2</li>
+              </ul>
+
+
+              </div>
+              <button>demo button</button>
+
+    				</div>
+    				<div class="col-md-8">
+
+              Chart.
+
+    				</div>
+    			</div>
+    		</div>
+    	</div>
+    </div>
+
+    <script src="libs/jquery-slim/jquery-3.4.1.slim.min.js"></script>
+    <script src="libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+    <script src="libs/jstree/dist/jstree.min.js"></script>
+
+    <script>
+
+    function changeNodes(parent, new_node)
+    {
+      console.log("Change nodes called.");
+      $('#jstree').jstree({
+        "core" : {
+          'data' : function (obj, cb) {
+            cb.call(this,
+              ['Changed Root 1', 'Changed Root 2']);
+          }
+        },
+        "refresh" : true
+      });
+
+      //This probably needs to recreate the whole tree
+
+      //$('#jstree').jstree(true).refresh();
+    }
+
+    $(function () {
+      // 6 create an instance when the DOM is ready
+      $('#jstree').jstree({
+        "core" : {
+          'check_callback' : true,
+          "multiple" : true,
+          "animation" : 0,
+          "themes" : {
+            "variant" : "large",
+            "icons" : false,
+            "stripes" : false}
+        },
+        "checkbox" : {
+          "keep_selected_style" : false
+        },
+        "plugins" : [ "wholerow", "checkbox" ]
+      });
+      // 7 bind to events triggered on the tree
+      $('#jstree').on("changed.jstree", function (e, data) {
+        console.log(data.selected);
+      });
+      // 8 interact with the tree - either way is OK
+      $('button').on('click', function () {
+        changeNodes(null,null);
+      });
+    });
+
+    //changeNodes(null,null);
+
+    </script>
+
+  </body>
+</html>
