@@ -4,14 +4,17 @@ package main;
 import java.net.InetSocketAddress;
 import java.nio.file.Paths;
 
+import network.http.HTTPS_Server;
 import security.PasswordManager;
+import udaqc.network.Constants.Addresses;
 import udaqc.network.passthrough.Secondary_Center;
 
 public class Testing 
 {
 	public static void main(String[] args) 
 	{
-		TLS();
+		//TLS();
+		WebServer();
 	}
 	public static void TLS()
 	{
@@ -61,5 +64,16 @@ public class Testing
 		
 		System.out.println();
 		System.out.println("Finished!");
+	}
+	public static void WebServer()
+	{
+		HTTPS_Server webserver = new HTTPS_Server(Addresses.webserver_port);
+		try
+		{
+			webserver.start();
+		} catch (Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 }

@@ -19,6 +19,7 @@ import network.udp.UDP_Sender;
 import udaqc.io.IO_Constants;
 import udaqc.io.IO_Constants.Command_IDs;
 import udaqc.io.log.IO_System_Logged;
+import udaqc.network.Constants.Addresses;
 import udaqc.network.center.command.Command;
 import udaqc.network.passthrough.Secondary_Server;
 import udaqc.network.passthrough.command.PT_Command;
@@ -74,7 +75,7 @@ public class Center extends TCP_Server
 			message.putInt(this.Port());
 			Command c = new Command(IO_Constants.Command_IDs.request_subscription, message.array());
 
-			UDP_Sender.send(c, IO_Constants.Constants.udp_broadcast);
+			UDP_Sender.send(c, Addresses.udp_broadcast);
 		} catch (IOException e)
 		{
 			System.out.println(e.getMessage());

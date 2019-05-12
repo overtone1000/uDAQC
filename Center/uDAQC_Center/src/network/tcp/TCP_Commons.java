@@ -1,13 +1,29 @@
 package network.tcp;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.IOException;
+import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.nio.charset.Charset;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
+import java.util.Locale;
+import java.util.PrimitiveIterator.OfInt;
+import java.util.Random;
+import java.util.stream.IntStream;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -38,7 +54,83 @@ import org.bouncycastle.operator.bc.BcRSAContentSignerBuilder;
 public class TCP_Commons
 {
 
-	private static TrustManager[] trustAllCerts()
+	public static class SecurityBundle
+	{
+		public String keystore_filename=null;
+		public String keystore_password;
+		public String key_password;
+		
+		private static final String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+		private static final String lower = upper.toLowerCase(Locale.ROOT);
+		private static final String digits = "0123456789";
+		private static final String special = "_";
+		private static final String alphanum = upper + lower + digits + special;
+				
+		private static String RandomString(int length)
+		{
+			String retval="";
+			Random rand = new Random();
+			
+			IntStream ints = rand.ints(0, alphanum.length());
+			OfInt ints_it = ints.iterator();
+			for(int n = 0; n<length; n++)
+			{
+				retval+=alphanum.charAt(ints_it.next());
+			}
+			return retval;
+		}
+		
+		private void Generate()
+		{
+			keystore_password = RandomString(15) + "0";	
+			key_password = RandomString(15) + "0";
+		}
+		
+		public SecurityBundle()
+		{
+			Generate();
+		}
+		
+		public SecurityBundle(String directory)
+		{
+			keystore_filename=directory+"/ks";
+			String bundle_filename=directory+"/b";
+			Path p = Paths.get(bundle_filename);
+			File f = new File(bundle_filename);
+			if(!Files.exists(p))
+			{
+				Generate();
+				try
+				{
+					//Files.createDirectory(p);
+					f.getParentFile().mkdirs();
+					f.createNewFile();
+					PrintWriter fos = new PrintWriter(bundle_filename);
+					fos.println(keystore_password);
+					fos.println(key_password);
+					fos.close();
+				} catch (IOException e)
+				{
+					e.printStackTrace();
+				}
+			}
+			else
+			{
+				try
+				{
+					BufferedReader fis = new BufferedReader(new FileReader(bundle_filename));
+					keystore_password = fis.readLine();
+					key_password = fis.readLine();
+				} catch (IOException e)
+				{
+					Generate();
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	public static TrustManager[] trustAllCerts()
 	{
 		TrustManager[] retval = new TrustManager[] 
 		{
@@ -66,15 +158,12 @@ public class TCP_Commons
 	private static Certificate generateCertificate(KeyPair keyPair, String algorithm)
 	{
 		X500NameBuilder builder = new X500NameBuilder();
-		builder.addRDN(BCStyle.CN, "Tyler Moore");
-		builder.addRDN(BCStyle.O, "Medical Holographics");
-		builder.addRDN(BCStyle.ST, "Oregon");
-		builder.addRDN(BCStyle.C, "US");
+		builder.addRDN(BCStyle.CN, "Auto-generated Self-signed Certificate");
 		X500Name issuer = builder.build();
 		
 		java.math.BigInteger serial = new java.math.BigInteger(64, new SecureRandom());
 		java.util.Date notBeforeDate=new java.util.Date();
-		java.util.Date notAfter=new java.util.Date(1000*60*24*365*100);
+		java.util.Date notAfter=new java.util.Date(1000*60*24*365*50); //50 years
 		SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo.getInstance(keyPair.getPublic().getEncoded());
 		
 		X509v3CertificateBuilder cert = new X509v3CertificateBuilder(issuer,serial,notBeforeDate,notAfter,issuer,publicKeyInfo);
@@ -135,6 +224,66 @@ public class TCP_Commons
 		
 		return retval;
 	}
+	public static KeyManager[] CreateKeypair()
+	{
+		return CreateKeypair(null);
+	}
+	public static KeyManager[] CreateKeypair(SecurityBundle bundle)
+	{
+		try
+		{
+			String algorithm = "RSA";
+			KeyStore ks  = KeyStore.getInstance(KeyStore.getDefaultType());
+			
+			boolean generate = true;
+	        
+			if(bundle != null)
+			{
+				File f = new File(bundle.keystore_filename);
+				if(f.exists() && bundle.keystore_filename!=null)
+				{
+					ks.load(new FileInputStream(f), bundle.keystore_password.toCharArray());
+					generate = false;
+				}
+				else
+				{
+					ks.load(null, bundle.keystore_password.toCharArray());
+				}
+			}
+			else
+			{
+				ks.load(null,null);
+			}
+	        
+			if(generate)
+			{
+		    	KeyPairGenerator kpg = KeyPairGenerator.getInstance(algorithm);
+		    	kpg.initialize(2048);
+		    	KeyPair kp = kpg.generateKeyPair();
+		    	
+		    	Certificate certificate = generateCertificate(kp,algorithm);
+		    	Certificate[] certChain = new Certificate[1];
+		    	certChain[0] = certificate;
+		    	ks.setKeyEntry("key1",kp.getPrivate(), bundle.key_password.toCharArray(), certChain);
+		    	
+		    	if(bundle.keystore_filename!=null)
+		    	{
+		    		FileOutputStream fos = new FileOutputStream(bundle.keystore_filename);
+		    		ks.store(fos,bundle.keystore_password.toCharArray());
+		    	}
+			}
+				    	
+	        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+	        kmf.init(ks, bundle.key_password.toCharArray());
+	        return kmf.getKeyManagers();
+		}
+        catch(Exception e)
+		{
+			System.out.println("Error during SSL Filter addition.");
+			System.out.println(e.getMessage());
+		}
+        return null;
+	}
 	private static void AddSSLFilter(DefaultIoFilterChainBuilder filter_chain, boolean is_client)
 	{
 		try
@@ -176,8 +325,7 @@ public class TCP_Commons
                                     
             //File keyStoreFile = new File("keystore/keystore.jks");
         	//File trustStoreFile = new File("keystore/truststore.ts");
-        	String pw = "trmtrm";
-        	String algorithm = "RSA";
+        	
         	//String ks_type = "RSA";
         	
         	/*
@@ -195,23 +343,7 @@ public class TCP_Commons
         	
             if(!is_client)
             {
-            	KeyStore ks  = KeyStore.getInstance(KeyStore.getDefaultType());
-                
-            	ks.load(null,null);
-            	//ks.load(new FileInputStream(keyStoreFile), pw.toCharArray());
-                
-            	KeyPairGenerator kpg = KeyPairGenerator.getInstance(algorithm);
-            	kpg.initialize(2048);
-            	KeyPair kp = kpg.generateKeyPair();
-            	
-            	Certificate certificate = generateCertificate(kp,algorithm);
-            	Certificate[] certChain = new Certificate[1];
-            	certChain[0] = certificate;
-            	ks.setKeyEntry("key1",kp.getPrivate(), pw.toCharArray(), certChain);
-            	
-                KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-                kmf.init(ks, pw.toCharArray());
-                kms = kmf.getKeyManagers();
+            	kms = CreateKeypair();
             }
                                                 
             //SSLContext sslContext = sslContextFactory.newInstance();
