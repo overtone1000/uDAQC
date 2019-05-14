@@ -57,19 +57,35 @@
 
     <script>
 
-    function changeNodes(parent, new_node)
-    {
-      console.log("Change nodes called.");
 
+    function createNodes()
+    {
+      //This function successfully creates new nodes on the fly
       retval = $('#jstree').jstree('create_node', '#', {data:'Foo'});
       console.log("Returned " + String(retval));
 
       retval = $('#jstree').jstree('create_node', 'm1', {data:'Bar'});
       console.log("Returned " + String(retval));
 
-
-      //$('#jstree').jstree(true).refresh(); Refreshing returns the tree to its original state...can never call if tree is updated using create_node?
       $('#jstree').jstree(true).redraw(); //this is the desired function
+      //$('#jstree').jstree(true).refresh(); //Refreshing returns the tree to its original state...can never call if tree is updated using create_node!
+    }
+
+    function changeNodes(parent, new_node)
+    {
+      //This function successfully resets the jstree data. This is preferred.
+
+      var new_data = [
+       { "id" : "ajson1", "parent" : "#", "text" : "Simple root node" },
+       { "id" : "ajson2", "parent" : "#", "text" : "Root node 2" },
+       { "id" : "ajson3", "parent" : "ajson2", "text" : "Child 1" },
+       { "id" : "ajson4", "parent" : "ajson2", "text" : "Child 2" },
+      ];
+
+      $('#jstree').jstree(true).settings.core.data=new_data;
+
+      $('#jstree').jstree(true).refresh(); //Refreshing returns the tree to its original state...can never call if tree is updated using create_node!
+
     }
 
     var data = [
