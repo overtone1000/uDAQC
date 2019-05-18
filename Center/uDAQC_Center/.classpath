@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
-	<classpathentry kind="src" path="src"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER">
+	<classpathentry kind="src" output="target/classes" path="src">
 		<attributes>
-			<attribute name="module" value="true"/>
+			<attribute name="optional" value="true"/>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-11">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
 	<classpathentry kind="lib" path="/@External Libraries/Apache/Commons/commons-lang3-3.3.2/commons-lang-2.6.jar"/>
@@ -15,5 +20,11 @@
 	<classpathentry kind="lib" path="/@External Libraries/SLF4J/slf4j-1.7.7/slf4j-jdk14-1.7.7.jar"/>
 	<classpathentry kind="lib" path="/@External Libraries/BouncyCastle/bcprov-jdk15on-161.jar"/>
 	<classpathentry kind="lib" path="/@External Libraries/BouncyCastle/bcpkix-jdk15on-161.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="lib" path="/@External Libraries/jetty-distribution-9.4.18.v20190429/lib/servlet-api-3.1.jar"/>
+	<classpathentry kind="con" path="org.eclipse.m2e.MAVEN2_CLASSPATH_CONTAINER">
+		<attributes>
+			<attribute name="maven.pomderived" value="true"/>
+		</attributes>
+	</classpathentry>
+	<classpathentry kind="output" path="target/classes"/>
 </classpath>

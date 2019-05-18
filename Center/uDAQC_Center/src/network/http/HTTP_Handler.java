@@ -2,17 +2,23 @@ package network.http;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.net.URI;
 import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
-import com.sun.net.httpserver.Headers;
-import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
+import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 
-public class HTTP_Handler implements HttpHandler
+public class HTTP_Handler extends HttpServlet
 {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	private final String baseDir;
 
 	public HTTP_Handler(String baseDir) 
@@ -21,38 +27,35 @@ public class HTTP_Handler implements HttpHandler
 	}
 
 	@Override
-	public void handle(HttpExchange ex) throws IOException
+	protected void doGet( HttpServletRequest request,
+            HttpServletResponse response ) throws ServletException,
+                                          IOException
 	{
 		System.out.println("Handling HTTP request.");
-		
-		URI uri = ex.getRequestURI();
-		String name = new File(uri.getPath()).getName();
-		if(name.contains(".."))
+				
+		Path uri = Paths.get(request.getRequestURI());
+		if(uri.toString().contains(".."))
 		{
 			return;
 		}
 		
-		File path = new File(baseDir, name);
-
-		Headers h = ex.getResponseHeaders();
-		// Could be more clever about the content type based on the filename here.
-		h.add("Content-Type", "text/html");
-
-		OutputStream out = ex.getResponseBody();
-
+		File path = new File(baseDir + uri);
+		
+		response.setContentType("text/html");
+		
 		if (path.exists())
 		{
-			ex.sendResponseHeaders(200, path.length());
-			out.write(Files.readAllBytes(path.toPath()));
+			response.setStatus(HttpServletResponse.SC_OK);
+			byte[] page = Files.readAllBytes(path.toPath());
+			response.getOutputStream().write(page);
 		} else
 		{
-			System.err.println("Wrong URL '" + name + "', redirecting.");
-			ex.getResponseHeaders().add("Location", "/"); //always send right back to root
-			ex.sendResponseHeaders(301, -1);
-			ex.close();
+			System.err.println("Wrong URL '" + uri.toString() + "', redirecting.");
+			
+			response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+			response.setHeader("Location", "/");
 		}
-
-		out.close();
+       
 	}
 
 }

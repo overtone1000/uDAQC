@@ -67,7 +67,7 @@ public class Testing
 	}
 	public static void WebServer()
 	{
-		HTTPS_Server webserver = new HTTPS_Server(Addresses.webserver_port);
+		HTTPS_Server webserver = new HTTPS_Server(Addresses.webserver_insecure_port, Addresses.webserver_secure_port);
 		try
 		{
 			webserver.start();
