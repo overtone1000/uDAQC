@@ -20,6 +20,13 @@ public class Socket_uD extends WebSocketAdapter
     }
     
     @Override
+    public void onWebSocketBinary(byte[] payload, int offset, int len)
+    {
+    	super.onWebSocketBinary(payload, offset, len);
+    	System.out.println("Received binary data. " + ((Integer)payload.length).toString() + " bytes.");
+    }
+    
+    @Override
     public void onWebSocketClose(int statusCode, String reason)
     {
         super.onWebSocketClose(statusCode,reason);

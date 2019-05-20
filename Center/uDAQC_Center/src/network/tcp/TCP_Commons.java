@@ -59,6 +59,7 @@ public class TCP_Commons
 		public String keystore_filename=null;
 		public String keystore_password;
 		public String key_password;
+		public KeyStore keystore;
 		
 		private static final String upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 		private static final String lower = upper.toLowerCase(Locale.ROOT);
@@ -80,7 +81,7 @@ public class TCP_Commons
 			return retval;
 		}
 		
-		private void Generate()
+		private void GeneratePasswords()
 		{
 			keystore_password = RandomString(15) + "0";	
 			key_password = RandomString(15) + "0";
@@ -88,21 +89,24 @@ public class TCP_Commons
 		
 		public SecurityBundle()
 		{
-			Generate();
+			//Creates a security bundle with keystore in memory only.
+			GeneratePasswords();
+			CreateKeystore();
 		}
 		
 		public SecurityBundle(String directory)
 		{
+			//Creates a security bundle that's saved to disk.
 			keystore_filename=directory+"/ks";
 			String bundle_filename=directory+"/b";
 			Path p = Paths.get(bundle_filename);
 			File f = new File(bundle_filename);
 			if(!Files.exists(p))
 			{
-				Generate();
+				GeneratePasswords();
 				try
 				{
-					//Files.createDirectory(p);
+					Files.createDirectories(Paths.get(directory));
 					f.getParentFile().mkdirs();
 					f.createNewFile();
 					PrintWriter fos = new PrintWriter(bundle_filename);
@@ -121,11 +125,57 @@ public class TCP_Commons
 					BufferedReader fis = new BufferedReader(new FileReader(bundle_filename));
 					keystore_password = fis.readLine();
 					key_password = fis.readLine();
+					fis.close();
 				} catch (IOException e)
 				{
-					Generate();
+					GeneratePasswords();
 					e.printStackTrace();
 				}
+			}
+			CreateKeystore();			
+		}
+		
+		protected void CreateKeystore()
+		{
+			try
+			{
+				String algorithm = "RSA";
+				KeyStore ks  = KeyStore.getInstance(KeyStore.getDefaultType());
+				
+				boolean generate = true;
+		        
+				File f = new File(keystore_filename);
+				if(f.exists() && keystore_filename!=null)
+				{
+					ks.load(new FileInputStream(f), keystore_password.toCharArray());
+					generate = false;
+				}
+				else
+				{
+					ks.load(null, keystore_password.toCharArray());
+				}
+		        
+				if(generate)
+				{
+			    	KeyPairGenerator kpg = KeyPairGenerator.getInstance(algorithm);
+			    	kpg.initialize(2048);
+			    	KeyPair kp = kpg.generateKeyPair();
+			    	
+			    	Certificate certificate = generateCertificate(kp);
+			    	Certificate[] certChain = new Certificate[1];
+			    	certChain[0] = certificate;
+			    	ks.setKeyEntry("key1",kp.getPrivate(), key_password.toCharArray(), certChain);
+			    	
+			    	if(keystore_filename!=null)
+			    	{
+			    		FileOutputStream fos = new FileOutputStream(keystore_filename);
+			    		ks.store(fos,keystore_password.toCharArray());
+			    	}
+				}
+			}
+			catch(Exception e)
+			{
+				e.printStackTrace();
 			}
 		}
 	}
@@ -155,7 +205,7 @@ public class TCP_Commons
         };
 		return retval;
     }
-	private static Certificate generateCertificate(KeyPair keyPair, String algorithm)
+	private static Certificate generateCertificate(KeyPair keyPair)
 	{
 		X500NameBuilder builder = new X500NameBuilder();
 		builder.addRDN(BCStyle.CN, "Auto-generated Self-signed Certificate");
@@ -168,7 +218,8 @@ public class TCP_Commons
 		
 		X509v3CertificateBuilder cert = new X509v3CertificateBuilder(issuer,serial,notBeforeDate,notAfter,issuer,publicKeyInfo);
 		
-		AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA1WithRSAEncryption");
+		//AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA1WithRSAEncryption");
+		AlgorithmIdentifier sigAlgId = new DefaultSignatureAlgorithmIdentifierFinder().find("SHA512WithRSAEncryption");
         AlgorithmIdentifier digAlgId = new DefaultDigestAlgorithmIdentifierFinder().find(sigAlgId);
         
         AsymmetricKeyParameter privateKeyAsymKeyParam;
@@ -232,49 +283,13 @@ public class TCP_Commons
 	{
 		try
 		{
-			String algorithm = "RSA";
-			KeyStore ks  = KeyStore.getInstance(KeyStore.getDefaultType());
-			
-			boolean generate = true;
-	        
-			if(bundle != null)
+			if(bundle==null)
 			{
-				File f = new File(bundle.keystore_filename);
-				if(f.exists() && bundle.keystore_filename!=null)
-				{
-					ks.load(new FileInputStream(f), bundle.keystore_password.toCharArray());
-					generate = false;
-				}
-				else
-				{
-					ks.load(null, bundle.keystore_password.toCharArray());
-				}
+				bundle = new SecurityBundle();
 			}
-			else
-			{
-				ks.load(null,null);
-			}
-	        
-			if(generate)
-			{
-		    	KeyPairGenerator kpg = KeyPairGenerator.getInstance(algorithm);
-		    	kpg.initialize(2048);
-		    	KeyPair kp = kpg.generateKeyPair();
-		    	
-		    	Certificate certificate = generateCertificate(kp,algorithm);
-		    	Certificate[] certChain = new Certificate[1];
-		    	certChain[0] = certificate;
-		    	ks.setKeyEntry("key1",kp.getPrivate(), bundle.key_password.toCharArray(), certChain);
-		    	
-		    	if(bundle.keystore_filename!=null)
-		    	{
-		    		FileOutputStream fos = new FileOutputStream(bundle.keystore_filename);
-		    		ks.store(fos,bundle.keystore_password.toCharArray());
-		    	}
-			}
-				    	
+			  	
 	        KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-	        kmf.init(ks, bundle.key_password.toCharArray());
+	        kmf.init(bundle.keystore, bundle.key_password.toCharArray());
 	        return kmf.getKeyManagers();
 		}
         catch(Exception e)
@@ -284,6 +299,7 @@ public class TCP_Commons
 		}
         return null;
 	}
+	
 	private static void AddSSLFilter(DefaultIoFilterChainBuilder filter_chain, boolean is_client)
 	{
 		try

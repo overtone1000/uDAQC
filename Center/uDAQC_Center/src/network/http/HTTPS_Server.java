@@ -70,7 +70,7 @@ public class HTTPS_Server
         resource_handler.setResourceBase(home_dir);
         
         ContextHandler context = new ContextHandler();
-        context.setContextPath("/*"); //This context will handle anything from the root directory up unless another context handles it first.
+        context.setContextPath("/"); //This context will handle anything from the root directory up unless another context handles it first.
                        
         HandlerList hl = new HandlerList();
         hl.addHandler(new SecuredRedirectHandler());
