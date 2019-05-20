@@ -1,16 +1,21 @@
 //var wsUri = "wss://echo.websocket.org/"; //wss is SSL, unsecure would be ws://
-var wsUri = "wss://localhost:49154/socket/"
+//var wsUri = "wss://localhost:49154/socket/"
 var output;
+var websocket;
 
 function init()
 {
-  output = document.getElementById("output");
   testWebSocket();
 }
 
 function testWebSocket()
 {
-  websocket = new WebSocket(wsUri);
+  var ws_header = "wss://";
+  var ws_loc = ":49154/socket/";
+  var websocket_url = ws_header + window.location.hostname + ws_loc;
+  console.log("Websocket address " + String(websocket_url));
+
+  websocket = new WebSocket(websocket_url);
   websocket.onopen = function(evt) { onOpen(evt) };
   websocket.onclose = function(evt) { onClose(evt) };
   websocket.onmessage = function(evt) { onMessage(evt) };
@@ -19,38 +24,35 @@ function testWebSocket()
 
 function onOpen(evt)
 {
-  writeToScreen("CONNECTED to " + evt);
-  doSend("WebSocket rocks");
+  console.log("Updating connection_alert.");
+  var x = document.getElementById("connection_alert");
+  x.className = "alert alert-success";
+  x.innerHTML = "Connected"
+
+  websocket.send("Client hello.");
 }
 
 function onClose(evt)
 {
   writeToScreen("DISCONNECTED");
+
+  console.log("Updating connection_alert.");
+  var x = document.getElementById("connection_alert");
+  x.className = "alert alert-warning";
+  x.innerHTML = "No connection"
 }
 
 function onMessage(evt)
 {
-  writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data+'</span>');
   websocket.close();
 }
 
 function onError(evt)
 {
-  writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
-}
-
-function doSend(message)
-{
-  writeToScreen("SENT: " + message);
-  websocket.send(message);
-}
-
-function writeToScreen(message)
-{
-  var pre = document.createElement("p");
-  pre.style.wordWrap = "break-word";
-  pre.innerHTML = message;
-  output.appendChild(pre);
+  console.log(evt.data);
+  var x = document.getElementById("connection_alert");
+  x.className = "alert alert-danger";
+  x.innerHTML = "Error. Check console."
 }
 
 window.addEventListener("load", init, false);
