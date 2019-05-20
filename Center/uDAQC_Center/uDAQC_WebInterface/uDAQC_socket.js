@@ -1,5 +1,5 @@
-var wsUri = "wss://echo.websocket.org/"; //wss is SSL, unsecure would be ws://
-var wsUri2 = "wss://localhost:49154/socket"
+//var wsUri = "wss://echo.websocket.org/"; //wss is SSL, unsecure would be ws://
+var wsUri = "wss://localhost:49154/socket/"
 var output;
 
 function init()
@@ -15,17 +15,11 @@ function testWebSocket()
   websocket.onclose = function(evt) { onClose(evt) };
   websocket.onmessage = function(evt) { onMessage(evt) };
   websocket.onerror = function(evt) { onError(evt) };
-
-  websocket2 = new WebSocket(wsUri2);
-  websocket2.onopen = function(evt) { onOpen(evt) };
-  websocket2.onclose = function(evt) { onClose(evt) };
-  websocket2.onmessage = function(evt) { onMessage(evt) };
-  websocket2.onerror = function(evt) { onError(evt) };
 }
 
 function onOpen(evt)
 {
-  writeToScreen("CONNECTED");
+  writeToScreen("CONNECTED to " + evt);
   doSend("WebSocket rocks");
 }
 
