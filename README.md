@@ -1,7 +1,7 @@
 # uDAQC
 An architecture for data acquisition, visualization, and control using the ESP8266 and a Java application with a Javascript UI.
 
-#IO Objects
+# IO Objects
 uDAQC is based on the conceptual organization of IO Objects into heirarchical systems.
 -IO_Reporter: This is the fundamental IO Object class. All other IO Objects inherit from this class or one of the other IO Object classes. The IO_Reporter has:
   A String name
@@ -23,8 +23,8 @@ Afterwards, there are three primary communications that occur in uDAQC:
 2. Afterwards, the device sends Data for each IO_System, which contains a timestamp and the values of the IO_Values contained in its system.
 3. Centers can send messages to Devices directing them to change an IO_ModifiableValue and the value to which it should be changed.
 
-#Description Structure
+# Description Structure
 
-#Data Structure
+# Data Structure
 
-#Value Modification Structure
+# Value Modification Structure
