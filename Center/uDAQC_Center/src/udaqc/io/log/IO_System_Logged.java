@@ -18,6 +18,7 @@ import java.util.logging.Logger;
 
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.apache.mina.core.session.IoSession;
+import org.eclipse.jetty.websocket.api.Session;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
@@ -27,6 +28,7 @@ import udaqc.io.IO_Value;
 import udaqc.io.IO_Constants.Command_IDs;
 import udaqc.network.center.command.Command;
 import udaqc.network.passthrough.command.PT_Command;
+import udaqc.network.passthrough.endpoints.Endpoint;
 
 
 public class IO_System_Logged extends IO_System
@@ -48,8 +50,8 @@ public class IO_System_Logged extends IO_System
 	{
 		return id;
 	}
-	
-	public static void PassthroughInitialization(IoSession session)
+		
+	public static void PassthroughInitialization(Endpoint ep)
 	{
 		for(Short id:systems.keySet())
 		{
@@ -58,7 +60,7 @@ public class IO_System_Logged extends IO_System
 			System.out.println("Sending descriptions to passthrough.");
 			Command c = new Command(Command_IDs.group_description,system.description);
 			PT_Command ptc = new PT_Command(id,c);
-			session.write(ptc);
+			ep.SendCommand(ptc);
 			
 			for(Regime r:Regime.values())
 			{
@@ -91,7 +93,7 @@ public class IO_System_Logged extends IO_System
 				
 				Command hc = new Command(Command_IDs.history,message.array());
 				PT_Command pthc = new PT_Command(id,hc);
-				session.write(pthc);
+				ep.SendCommand(pthc);
 			}
 		}
 	}

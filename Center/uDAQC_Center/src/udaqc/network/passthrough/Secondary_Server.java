@@ -9,6 +9,7 @@ import udaqc.io.log.IO_System_Logged;
 import udaqc.network.center.Center;
 import udaqc.network.center.command.Command;
 import udaqc.network.passthrough.command.PT_Command;
+import udaqc.network.passthrough.endpoints.TCP_Endpoint;
 
 public class Secondary_Server extends TCP_Server
 {
@@ -60,7 +61,7 @@ public class Secondary_Server extends TCP_Server
 	@Override
 	public void sessionOpened(IoSession session)
 	{
-		IO_System_Logged.PassthroughInitialization(session); //need to do this first so new messages passed through don't interfere
+		IO_System_Logged.PassthroughInitialization(new TCP_Endpoint(session)); //need to do this first so new messages passed through don't interfere
 		super.sessionOpened(session);
 	}
 

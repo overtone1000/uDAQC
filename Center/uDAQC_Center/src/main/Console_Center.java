@@ -37,7 +37,7 @@ public class Console_Center
 		DummyHandler h = new DummyHandler();
 		
 		@SuppressWarnings("unused")
-		Center id_serv = new Center("ID_Server", path, h);
+		Center id_serv = new Center("IO_Center", path, h);
 		
 		//String Threadname = "GNDM_Server";
 		//InetSocketAddress[] hosts=new InetSocketAddress[1];

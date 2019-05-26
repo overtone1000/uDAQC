@@ -16,6 +16,7 @@ function testWebSocket()
   console.log("Websocket address " + String(websocket_url));
 
   websocket = new WebSocket(websocket_url);
+  websocket.binaryType = 'arraybuffer';
   websocket.onopen = function(evt) { onOpen(evt) };
   websocket.onclose = function(evt) { onClose(evt) };
   websocket.onmessage = function(evt) { onMessage(evt) };
@@ -24,7 +25,6 @@ function testWebSocket()
 
 function onOpen(evt)
 {
-  console.log("Updating connection_alert.");
   var x = document.getElementById("connection_alert");
   x.className = "alert alert-success";
   x.innerHTML = "Connected"
@@ -34,9 +34,6 @@ function onOpen(evt)
 
 function onClose(evt)
 {
-  writeToScreen("DISCONNECTED");
-
-  console.log("Updating connection_alert.");
   var x = document.getElementById("connection_alert");
   x.className = "alert alert-warning";
   x.innerHTML = "No connection"
@@ -44,7 +41,12 @@ function onClose(evt)
 
 function onMessage(evt)
 {
-  websocket.close();
+  console.log("Received message.");
+  
+  var data = evt.data;
+  var dv = new DataView(data);
+
+  console.log("Message of length " + dv.byteLength + " received.");
 }
 
 function onError(evt)

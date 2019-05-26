@@ -53,6 +53,7 @@ public class TCP_Server extends TCP_Base
 	@Override
 	public void run()
 	{
+		System.out.println("Starting server on thread " + threadName);
 		IoAcceptor acceptor = null;
 		Timer resettimer;
 		int resetcount = 0;

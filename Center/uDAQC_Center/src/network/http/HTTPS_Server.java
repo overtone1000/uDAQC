@@ -3,10 +3,12 @@ package network.http;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.KeyStore;
+import java.util.ArrayList;
 import java.util.Collections;
 
 import javax.net.ssl.KeyManager;
@@ -17,9 +19,14 @@ import javax.net.ssl.TrustManagerFactory;
 
 import network.http.websocket.Servlet_uD;
 import network.tcp.TCP_Commons;
-import network.tcp.TCP_Commons.SecurityBundle;
+import network.SecurityBundle;
+import udaqc.io.log.IO_System_Logged;
 import udaqc.network.Constants.Addresses;
+import udaqc.network.center.command.Command;
+import udaqc.network.passthrough.command.PT_Command;
+import udaqc.network.passthrough.endpoints.WS_Endpoint;
 
+import org.apache.mina.core.session.IoSession;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
@@ -44,14 +51,18 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
+import org.eclipse.jetty.websocket.api.Session;
 
 
 public class HTTPS_Server
 {
+	private ArrayList<Session> sessions = new ArrayList<Session>();
+	
 	private static final String home_dir = "./uDAQC_WebInterface";
 	private static final String home_page = "index.html";
 
 	Server server;
+	Servlet_uD ws_servlet;
 	private SecurityBundle bundle = new SecurityBundle("security");
 	
 	public HTTPS_Server(int insecure_port, int secure_port)
@@ -80,7 +91,7 @@ public class HTTPS_Server
         
         ServletContextHandler ws_context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         ws_context.setContextPath("/socket"); //This context handles anything in the socket directory. Note, a call to "url/socket" won't work. It needs to be "url/socket/"
-		Servlet_uD ws_servlet = new Servlet_uD();
+		ws_servlet = new Servlet_uD(this);
 		ServletHolder ws_holder = new ServletHolder("socket",ws_servlet);
 		ws_holder.setServlet(ws_servlet);
 		ws_context.addServlet(ws_holder, "/*"); //This servlet will handle anything.
@@ -174,18 +185,6 @@ public class HTTPS_Server
         server.setConnectors(new Connector[] { https, http });
 	}
 	
-	private void ConfigServlet()
-	{
-		ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-        context.setContextPath("/");
-        server.setHandler(context);
-        
-        HTTP_Handler servlet = new HTTP_Handler(home_dir + "/" + home_page);
-        ServletHolder holder = new ServletHolder(servlet);
-        
-        context.addServlet(holder,"/*");
-	}
-	
 	public void start() throws Exception
 	{
 		server.start();
@@ -202,4 +201,39 @@ public class HTTPS_Server
 			e.printStackTrace();
 		}
 	}
+		
+	public void SessionOpened(Session new_session)
+	{
+		IO_System_Logged.PassthroughInitialization(new WS_Endpoint(new_session));
+		sessions.add(new_session);
+	}
+	
+	public void SessionClosed(Session closed_session)
+	{
+		sessions.remove(closed_session);
+	}
+	
+	public void Broadcast(PT_Command command)
+    {
+    	for(Session s:sessions)
+    	{
+    		SendCommand(s,command);
+    	}
+    }
+    
+    public static void SendCommand(Session sess, Command command)
+    {
+    	if(!sess.isOpen())
+    	{
+    		System.out.println("Tried sending command, but the session closed.");
+    		return;
+    	}
+    	try
+		{
+			sess.getRemote().sendBytes(ByteBuffer.wrap(command.toBuffer().array()));
+		} catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+    }
 }

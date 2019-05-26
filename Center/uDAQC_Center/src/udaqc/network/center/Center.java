@@ -14,6 +14,7 @@ import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 
+import network.http.HTTPS_Server;
 import network.tcp.server.TCP_Server;
 import network.udp.UDP_Sender;
 import udaqc.io.IO_Constants;
@@ -35,6 +36,8 @@ public class Center extends TCP_Server
 	private Loghandler_File loghandler; // only record warning level output
 
 	private TreeMap<Long,DirectDevice> devices = new TreeMap<Long,DirectDevice>();
+	
+	private HTTPS_Server webserver;
 
 	private Path path;
 
@@ -58,9 +61,16 @@ public class Center extends TCP_Server
 		loghandler.addlog(log);
 		log.setLevel(Level.INFO); // Show info level logging on system.out
 
-		System.out.println("Starting " + Threadname);
-		
 		this.start();
+		
+		webserver = new HTTPS_Server(Addresses.webserver_insecure_port, Addresses.webserver_secure_port);
+		try
+		{
+			webserver.start();
+		} catch (Exception e)
+		{
+			e.printStackTrace();
+		}
 	}
 
 	@Override
@@ -184,14 +194,18 @@ public class Center extends TCP_Server
 
 	public void Passthrough_to_Secondaries(IoSession session, Command c)
 	{
-		if(passthrough_server!=null)
+		DirectDevice dd = devices.get(session.getId());
+		if(dd!=null)
 		{
-			DirectDevice dd = devices.get(session.getId());
-			if(dd!=null)
+			IO_System_Logged system = dd.System();
+			PT_Command ptc = new PT_Command(system.getSystemID(),c);
+			if(passthrough_server!=null)
 			{
-				IO_System_Logged system = dd.System();
-				PT_Command ptc = new PT_Command(system.getSystemID(),c);
 				passthrough_server.broadcast(ptc);
+			}
+			if(webserver!=null)
+			{
+				webserver.Broadcast(ptc);
 			}
 		}
 	}
