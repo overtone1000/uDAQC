@@ -25,6 +25,7 @@ console.log("IO_Constants loaded. Group description is " + IO_Constants.group_de
 
 class ByteBuffer {
   constructor(bytes){
+    //console.log("Constructing ByteBuffer");
     this.view = new DataView(bytes);
     this.view.isLittleEndian = true;
     this.pointer = 0;
@@ -35,68 +36,71 @@ class ByteBuffer {
     var retval = "";
     var i;
     for (i = 0; i < length; i++) {
-      retval += String.fromCharCode(this.view.getUint8(pointer+i));
+      var char = this.view.getUint8(this.pointer+i);
+      retval = retval.concat(String.fromCharCode(char));
+      console.log("New char " + char + ", string now " + retval);
     }
     this.pointer+=length; //no matter what, advance the pointer
+    return retval;
   }
 
   getInt8(){
-    var retval = this.view.getInt8(pointer);
-    pointer+=1;
+    var retval = this.view.getInt8(this.pointer, this.view.isLittleEndian);
+    this.pointer+=1;
     return retval;
   }
 
   getInt16(){
-    var retval = this.view.getInt16(pointer);
-    pointer+=2;
+    var retval = this.view.getInt16(this.pointer, this.view.isLittleEndian);
+    this.pointer+=2;
     return retval;
   }
 
   getInt32(){
-    var retval = this.view.getInt32(pointer);
-    pointer+=4;
+    var retval = this.view.getInt32(this.pointer, this.view.isLittleEndian);
+    this.pointer+=4;
     return retval;
   }
 
   getInt64(){
-    var retval = this.view.getInt64(pointer);
-    pointer+=8;
+    var retval = this.view.getInt64(this.pointer, this.view.isLittleEndian);
+    this.pointer+=8;
     return retval;
   }
 
   getUint8(){
-    var retval = this.view.getUint8(pointer);
-    pointer+=1;
+    var retval = this.view.getUint8(this.pointer, this.view.isLittleEndian);
+    this.pointer+=1;
     return retval;
   }
 
   getUint16(){
-    var retval = this.view.getUint16(pointer);
-    pointer+=2;
+    var retval = this.view.getUint16(this.pointer, this.view.isLittleEndian);
+    this.pointer+=2;
     return retval;
   }
 
   getUint32(){
-    var retval = this.view.getUint32(pointer);
-    pointer+=4;
+    var retval = this.view.getUint32(this.pointer, this.view.isLittleEndian);
+    this.pointer+=4;
     return retval;
   }
 
   getUint64(){
-    var retval = this.view.getUint64(pointer);
-    pointer+=8;
+    var retval = this.view.getUint64(this.pointer, this.view.isLittleEndian);
+    this.pointer+=8;
     return retval;
   }
 
   getFloat32(){
-    var retval = this.view.getFloat32(pointer);
-    pointer+=4;
+    var retval = this.view.getFloat32(this.pointer, this.view.isLittleEndian);
+    this.pointer+=4;
     return retval;
   }
 
   getFloat64(){
-    var retval = this.view.getFloat64(pointer);
-    pointer+=4;
+    var retval = this.view.getFloat64(this.pointer, this.view.isLittleEndian);
+    this.pointer+=4;
     return retval;
   }
 
@@ -119,19 +123,19 @@ class ByteBuffer {
         switch(length)
         {
           case 1:
-          retval = this.view.getInt8(pointer);
+          retval = this.view.getInt8(this.pointer);
           //view = new Int8Array(this.bytes,pointer,1);
           break;
           case 2:
-          retval = this.view.getInt16(pointer);
+          retval = this.view.getInt16(this.pointer);
           //view = new Int16Array(this.bytes,pointer,1);
           break;
           case 4:
-          retval = this.view.getInt32(pointer);
+          retval = this.view.getInt32(this.pointer);
           //view = new Int32Array(this.bytes,pointer,1);
           break;
           case 8:
-          retval = this.view.getInt64(pointer);
+          retval = this.view.getInt64(this.pointer);
           //view = new Int64Array(this.bytes,pointer,1);
           break;
           default:
@@ -142,19 +146,19 @@ class ByteBuffer {
         switch(length)
         {
           case 1:
-          retval = this.view.getUint8(pointer);
+          retval = this.view.getUint8(this.pointer);
           //view = new Uint8Array(this.bytes,pointer,1);
           break;
           case 2:
-          retval = this.view.getUint16(pointer);
+          retval = this.view.getUint16(this.pointer);
           //view = new Uint16Array(this.bytes,pointer,1);
           break;
           case 4:
-          retval = this.view.getUint32(pointer);
+          retval = this.view.getUint32(this.pointer);
           //view = new Uint32Array(this.bytes,pointer,1);
           break;
           case 8:
-          retval = this.view.getUint64(pointer);
+          retval = this.view.getUint64(this.pointer);
           //view = new Uint64Array(this.bytes,pointer,1);
           break;
           default:
@@ -168,11 +172,11 @@ class ByteBuffer {
           console.log("Javascript does not support that half (16-bit float) type.");
           break;
           case 4:
-          retval = this.view.getFloat32(pointer);
+          retval = this.view.getFloat32(this.pointer);
           //view = new Float32Array(this.bytes,pointer,1);
           break;
           case 8:
-          retval = this.view.getFloat64(pointer);
+          retval = this.view.getFloat64(this.pointer);
           //view = new Float64Array(this.bytes,pointer,1);
           break;
           default:
@@ -183,7 +187,7 @@ class ByteBuffer {
         switch(length)
         {
           case 1:
-          retval = this.view.getUint8(pointer);
+          retval = this.view.getUint8(this.pointer);
           //view = new Float16Array(this.bytes,pointer,1);
           break;
           default:
@@ -215,7 +219,7 @@ class PTCommand
 {
   constructor(command)
   {
-    this.message = new ByteBuffer(command.message);
+    this.message = command.message;
     this.source_ID = this.message.getInt16();
     this.PTcommand_ID = this.message.getInt16();
   }
@@ -223,11 +227,17 @@ class PTCommand
 
 class IO_Reporter
 {
-  constructor(command_description, bytebuffer){
-    this.command_description = command_description;
+  constructor(bytebuffer){
+    console.log("Byte buffer pointer at " + bytebuffer.pointer);
     this.byte_count = bytebuffer.getInt16();
+    console.log("Byte count is " + this.byte_count);
+    console.log("Byte buffer pointer at " + bytebuffer.pointer);
     this.name_length = bytebuffer.getInt16();
+    console.log("Name length is " + this.name_length);
+    console.log("Byte buffer pointer at " + bytebuffer.pointer);
     this.name = bytebuffer.ReadString(this.name_length);
+    console.log("New reporter = " + this.name);
+    console.log("Byte buffer pointer at " + bytebuffer.pointer);
   }
 }
 
@@ -236,28 +246,30 @@ class IO_Group extends IO_Reporter
   constructor(bytebuffer){
     super(bytebuffer);
     this.member_count = bytebuffer.getInt16();
+    console.log("Member count is " + this.member_count);
+    console.log("Byte buffer pointer at " + bytebuffer.pointer);
     this.members = Object(this.member_count);
     var i;
     for(i=0;i<this.member_count;i++)
     {
         //need to peek the command_description for the next object to decide what kind to add
-        var command_description = bytebuffer.Peek(signed_integer,2);
+        var command_description = bytebuffer.Peek(DataTypes.signed_integer,2);
         switch(command_description)
         {
-          case IO_Contants.group_description:
+          case IO_Constants.group_description:
             this.members[i]=new IO_Group(bytebuffer);
           break;
-          case IO_Contants.emptyreporter_description:
+          case IO_Constants.emptyreporter_description:
             this.members[i]=new IO_Reporter(bytebuffer);
           break;
-          case IO_Contants.value_description:
+          case IO_Constants.value_description:
             this.members[i]=new IO_Value(bytebuffer);
           break;
-          case IO_Contants.modifiablevalue_description:
+          case IO_Constants.modifiablevalue_description:
             this.members[i]=new IO_ModifiableValue(bytebuffer);
           break;
           default:
-          console.log("Ruh roh...");
+          console.log("Wrong command description = " + command_description);
         }
     }
   }

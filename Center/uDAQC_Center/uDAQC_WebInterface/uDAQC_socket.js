@@ -41,12 +41,33 @@ function onClose(evt)
 
 function onMessage(evt)
 {
-  console.log("Received message.");
-  
-  var data = evt.data;
-  var dv = new DataView(data);
+  var c = new Command(evt.data);
 
-  console.log("Message of length " + dv.byteLength + " received.");
+  //All commands should be passthrough as of now
+  switch(c.command_ID)
+  {
+    case IO_Constants.passthrough:
+    {
+      var ptcom = new PTCommand(c);
+      console.log("Passthrough command received. Nested command is " + ptcom.PTcommand_ID + ".");
+      HandlePassthroughCommand(ptcom);
+    }
+    break;
+    default:
+    console.log("Unexpected command " + c.command_ID + " of length " + c.message_length + " received.");
+  }
+}
+
+function HandlePassthroughCommand(ptcom)
+{
+  switch(ptcom.PTcommand_ID)
+  {
+    case IO_Constants.group_description:
+      var new_group = new IO_Group(ptcom.message);
+    break;
+    default:
+    console.log("Unexpected nested command in passthrough " +  ptcom.PTcommand_ID + ".");
+  }
 }
 
 function onError(evt)
