@@ -47,7 +47,7 @@ Data Types - these are int_16 values that identify the type of data contained by
 Each IO Object has a function that will send its description. The contents of that description is as follows for each IO Object:
 ## IO_Reporter
 1. int_16 containing the command description (this specifies which type of IO_Object this is)
-2. int_16 containing the byte count for the data represented by this IO_Object (in practice, this only applies to IO_Value and classes that inherit from IO_Value; for all other classes, this will be 0)
+2. int_32 containing the byte count for the data represented by this IO_Object (in practice, this only applies to IO_Value and classes that inherit from IO_Value; for all other classes, this will be 0)
 3. int_16 containing the length of the name of this IO_Reporter
 4. byte[] containing the name String (ASCII)
 ## IO_Group
