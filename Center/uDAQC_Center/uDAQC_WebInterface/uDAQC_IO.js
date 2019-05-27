@@ -247,7 +247,7 @@ class IO_Group extends IO_Reporter
     this.member_count = bytebuffer.getInt16();
     //console.log("Member count is " + this.member_count);
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
-    this.members = Object(this.member_count);
+    this.members = new Array(this.member_count);
     var i;
     for(i=0;i<this.member_count;i++)
     {

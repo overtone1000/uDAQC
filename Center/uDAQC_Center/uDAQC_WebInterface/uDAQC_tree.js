@@ -11,20 +11,9 @@ function createNodes()
   //$('#jstree').jstree(true).refresh(); //Refreshing returns the tree to its original state...can never call if tree is updated using create_node!
 }
 
-function changeNodes(parent, new_node)
+function changeNodes(new_data)
 {
   //This function successfully resets the jstree data. This is preferred.
-
-  var new_data = [
-   { "id" : "dev1", "parent" : "#", "text" : "Device 1" },
-   { "id" : "dev1sys1", "parent" : "dev1", "text" : "System 1" },
-   { "id" : "dev1sys2", "parent" : "dev1", "text" : "System 2" },
-   { "id" : "dev2", "parent" : "#", "text" : "Device 2" },
-   { "id" : "dev1sys1", "parent" : "dev2", "text" : "System 1" },
-   { "id" : "dev1sys2", "parent" : "dev2", "text" : "System 2" },
-   { "id" : "dev1sys3", "parent" : "dev2", "text" : "System 3" },
-  ];
-
   $('#jstree').jstree(true).settings.core.data=new_data;
 
   $('#jstree').jstree(true).refresh(); //Refreshing returns the tree to its original state...can never call if tree is updated using create_node!
