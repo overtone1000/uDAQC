@@ -49,7 +49,7 @@ $(function () {
   });
   // 7 bind to events triggered on the tree
   $('#jstree').on("changed.jstree", function (e, data) {
-    console.log(data.selected);
+    console.log("Selected tree items: " + data.selected);
   });
   // 8 interact with the tree - either way is OK
   $('#create1').click(function () {

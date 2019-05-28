@@ -238,6 +238,29 @@ class IO_Reporter
     console.log("New reporter = " + this.name);
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
   }
+
+  toNode(key, index, parent)
+  {
+    var new_data = new Array();
+
+    var parval = "#";
+    if(parent !== undefined)
+    {
+        parval = parent.id;
+    }
+    var new_node =
+    {
+      "id" : key + "_" + index.current,
+      "parent" : parval,
+      "text" : this.name
+    };
+
+    index.current++;
+    console.log("Index is now " + index.current);
+
+    new_data.push(new_node);
+    return new_data;
+  }
 }
 
 class IO_Group extends IO_Reporter
@@ -275,6 +298,24 @@ class IO_Group extends IO_Reporter
           console.log("Wrong command description = " + command_description);
         }
     }
+  }
+
+  toNode(key, index, parent)
+  {
+    var new_data = new Array();
+    console.log("Turning " + this.name + " into nodes.");
+
+    var group_node_arr = super.toNode(key,index,parent);
+    new_data = new_data.concat(group_node_arr[0]);
+
+    console.log(new_data);
+    for(var child of this.members)
+    {
+      console.log("Adding child " + child.name + " of group " + this.name);
+      new_data = new_data.concat(child.toNode(key,index,group_node_arr[0]));
+    }
+
+    return new_data;
   }
 }
 
