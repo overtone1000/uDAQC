@@ -225,7 +225,7 @@ class PTCommand
 
 class IO_Reporter
 {
-  constructor(bytebuffer){
+  constructor(bytebuffer, device_index, index_tracker){
     this.command_description = bytebuffer.getInt16();
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
     this.byte_count = bytebuffer.getInt32();
@@ -237,9 +237,18 @@ class IO_Reporter
     this.name = bytebuffer.ReadString(this.name_length);
     console.log("New reporter = " + this.name);
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
+
+    this.device_index=device_index;
+    this.reporter_index=index_tracker.current;
+    index_tracker.current++;
   }
 
-  toNode(key, index, parent)
+  id()
+  {
+    return this.device_index + "_" + this.reporter_index;
+  }
+
+  toNode(parent)
   {
     var new_data = new Array();
 
@@ -250,13 +259,10 @@ class IO_Reporter
     }
     var new_node =
     {
-      "id" : key + "_" + index.current,
+      "id" : this.id() + "_node",
       "parent" : parval,
       "text" : this.name
     };
-
-    index.current++;
-    console.log("Index is now " + index.current);
 
     new_data.push(new_node);
     return new_data;
@@ -265,8 +271,19 @@ class IO_Reporter
 
 class IO_Group extends IO_Reporter
 {
-  constructor(bytebuffer){
-    super(bytebuffer);
+  constructor(bytebuffer, device_index, index_tracker){
+    console.log("Checking index_tracker.");
+    if(index_tracker===undefined || index_tracker.current===undefined)
+    {
+      console.log("Making index_tracker.");
+      index_tracker =
+      {
+        current:0
+      }
+      console.log(index_tracker);
+    }
+    console.log(index_tracker);
+    super(bytebuffer, device_index, index_tracker);
     this.member_count = bytebuffer.getInt16();
     //console.log("Member count is " + this.member_count);
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
@@ -279,19 +296,19 @@ class IO_Group extends IO_Reporter
         switch(command_description)
         {
           case IO_Constants.group_description:
-            this.members[i]=new IO_Group(bytebuffer);
+            this.members[i]=new IO_Group(bytebuffer, device_index, index_tracker);
             //console.log("Processeed member " + this.members[i].name);
           break;
           case IO_Constants.emptyreporter_description:
-            this.members[i]=new IO_Reporter(bytebuffer);
+            this.members[i]=new IO_Reporter(bytebuffer, device_index, index_tracker);
             //console.log("Processeed member " + this.members[i].name);
           break;
           case IO_Constants.value_description:
-            this.members[i]=new IO_Value(bytebuffer);
+            this.members[i]=new IO_Value(bytebuffer, device_index, index_tracker);
             //console.log("Processeed member " + this.members[i].name);
           break;
           case IO_Constants.modifiablevalue_description:
-            this.members[i]=new IO_ModifiableValue(bytebuffer);
+            this.members[i]=new IO_ModifiableValue(bytebuffer, device_index, index_tracker);
             //console.log("Processeed member " + this.members[i].name);
           break;
           default:
@@ -300,19 +317,19 @@ class IO_Group extends IO_Reporter
     }
   }
 
-  toNode(key, index, parent)
+  toNode(parent)
   {
     var new_data = new Array();
     console.log("Turning " + this.name + " into nodes.");
 
-    var group_node_arr = super.toNode(key,index,parent);
+    var group_node_arr = super.toNode(parent);
     new_data = new_data.concat(group_node_arr[0]);
 
     console.log(new_data);
     for(var child of this.members)
     {
       console.log("Adding child " + child.name + " of group " + this.name);
-      new_data = new_data.concat(child.toNode(key,index,group_node_arr[0]));
+      new_data = new_data.concat(child.toNode(group_node_arr[0]));
     }
 
     return new_data;
@@ -321,8 +338,8 @@ class IO_Group extends IO_Reporter
 
 class IO_Value extends IO_Reporter
 {
-  constructor(bytebuffer){
-    super(bytebuffer);
+  constructor(bytebuffer, device_index, index_tracker){
+    super(bytebuffer, device_index, index_tracker);
     this.units_length = bytebuffer.getInt16();
     this.units = bytebuffer.ReadString(this.units_length);
     this.data_type = bytebuffer.getInt16();
@@ -331,8 +348,8 @@ class IO_Value extends IO_Reporter
 
 class IO_ModifiableValue extends IO_Value
 {
-  constructor(bytebuffer){
-    super(bytebuffer);
+  constructor(bytebuffer, device_index, index_tracker){
+    super(bytebuffer, device_index, index_tracker);
     this.modval_index = bytebuffer.getInt16();
   }
 }

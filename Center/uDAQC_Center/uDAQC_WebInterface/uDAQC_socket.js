@@ -63,7 +63,7 @@ function HandlePassthroughCommand(ptcom)
   switch(ptcom.PTcommand_ID)
   {
     case IO_Constants.group_description:
-      var new_group = new IO_Group(ptcom.message);
+      var new_group = new IO_Group(ptcom.message,ptcom.source_ID);
       console.log("Adding device index " + ptcom.source_ID + " for group " + new_group.name);
       devices.set(ptcom.source_ID,new_group);
       update_devices();
@@ -81,11 +81,7 @@ function update_devices()
   for(key of devices.keys())
   {
     var device = devices.get(key);
-    var index =
-    {
-      current:0
-    }
-    new_data = new_data.concat(device.toNode(key,index));
+    new_data = new_data.concat(device.toNode());
   }
   console.log("Changing nodes with " + new_data.length + " members.");
   console.log(new_data);
