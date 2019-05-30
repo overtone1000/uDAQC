@@ -1,4 +1,6 @@
-var IO_Constants =
+'use strict';
+
+let IO_Constants =
 {
     group_description: 1,
 		emptyreporter_description: 2,
@@ -10,16 +12,16 @@ var IO_Constants =
 		request_subscription: 10,
 		history: 11,
     passthrough: 12
-}
+};
 
-var DataTypes =
+let DataTypes =
 {
   undefined: -1,
   signed_integer: 1,
   unsigned_integer: 2,
   floating_point: 3,
   bool: 4
-}
+};
 
 class ByteBuffer {
   constructor(bytes){
@@ -31,10 +33,9 @@ class ByteBuffer {
 
   ReadString(length)
   {
-    var retval = "";
-    var i;
-    for (i = 0; i < length; i++) {
-      var char = this.view.getUint8(this.pointer+i);
+    let retval = "";
+    for (let i = 0; i < length; i++) {
+      let char = this.view.getUint8(this.pointer+i);
       retval = retval.concat(String.fromCharCode(char));
       //console.log("New char " + char + ", string now " + retval);
     }
@@ -43,75 +44,75 @@ class ByteBuffer {
   }
 
   getInt8(){
-    var retval = this.view.getInt8(this.pointer, this.view.isLittleEndian);
+    let retval = this.view.getInt8(this.pointer, this.view.isLittleEndian);
     this.pointer+=1;
     return retval;
   }
 
   getInt16(){
-    var retval = this.view.getInt16(this.pointer, this.view.isLittleEndian);
+    let retval = this.view.getInt16(this.pointer, this.view.isLittleEndian);
     this.pointer+=2;
     return retval;
   }
 
   getInt32(){
-    var retval = this.view.getInt32(this.pointer, this.view.isLittleEndian);
+    let retval = this.view.getInt32(this.pointer, this.view.isLittleEndian);
     this.pointer+=4;
     return retval;
   }
 
   getInt64(){
-    var retval = this.view.getInt64(this.pointer, this.view.isLittleEndian);
+    let retval = this.view.getInt64(this.pointer, this.view.isLittleEndian);
     this.pointer+=8;
     return retval;
   }
 
   getUint8(){
-    var retval = this.view.getUint8(this.pointer, this.view.isLittleEndian);
+    let retval = this.view.getUint8(this.pointer, this.view.isLittleEndian);
     this.pointer+=1;
     return retval;
   }
 
   getUint16(){
-    var retval = this.view.getUint16(this.pointer, this.view.isLittleEndian);
+    let retval = this.view.getUint16(this.pointer, this.view.isLittleEndian);
     this.pointer+=2;
     return retval;
   }
 
   getUint32(){
-    var retval = this.view.getUint32(this.pointer, this.view.isLittleEndian);
+    let retval = this.view.getUint32(this.pointer, this.view.isLittleEndian);
     this.pointer+=4;
     return retval;
   }
 
   getUint64(){
-    var retval = this.view.getUint64(this.pointer, this.view.isLittleEndian);
+    let retval = this.view.getUint64(this.pointer, this.view.isLittleEndian);
     this.pointer+=8;
     return retval;
   }
 
   getFloat32(){
-    var retval = this.view.getFloat32(this.pointer, this.view.isLittleEndian);
+    let retval = this.view.getFloat32(this.pointer, this.view.isLittleEndian);
     this.pointer+=4;
     return retval;
   }
 
   getFloat64(){
-    var retval = this.view.getFloat64(this.pointer, this.view.isLittleEndian);
+    let retval = this.view.getFloat64(this.pointer, this.view.isLittleEndian);
     this.pointer+=4;
     return retval;
   }
 
   Read(type,length)
   {
-    var retval = Peek(type,length);
+    let retval = this.Peek(type,length);
     this.pointer+=length; //no matter what, advance the pointer
     return retval;
   }
 
   Peek(type,length)
   {
-    var retval;
+    let retval;
     switch(type)
     {
       case DataTypes.undefined:
@@ -250,14 +251,14 @@ class IO_Reporter
 
   toNode(parent)
   {
-    var new_data = new Array();
+    let new_data = [];
 
-    var parval = "#";
+    let parval = "#";
     if(parent !== undefined)
     {
         parval = parent.id;
     }
-    var new_node =
+    let new_node =
     {
       "id" : this.id() + "_node",
       "parent" : parval,
@@ -279,7 +280,7 @@ class IO_Group extends IO_Reporter
       index_tracker =
       {
         current:0
-      }
+      };
       console.log(index_tracker);
     }
     console.log(index_tracker);
@@ -288,11 +289,11 @@ class IO_Group extends IO_Reporter
     //console.log("Member count is " + this.member_count);
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
     this.members = new Array(this.member_count);
-    var i;
+    let i;
     for(i=0;i<this.member_count;i++)
     {
         //need to peek the command_description for the next object to decide what kind to add
-        var command_description = bytebuffer.Peek(DataTypes.signed_integer,2);
+        let command_description = bytebuffer.Peek(DataTypes.signed_integer,2);
         switch(command_description)
         {
           case IO_Constants.group_description:
@@ -319,14 +320,14 @@ class IO_Group extends IO_Reporter
 
   toNode(parent)
   {
-    var new_data = new Array();
+    let new_data = [];
     console.log("Turning " + this.name + " into nodes.");
 
-    var group_node_arr = super.toNode(parent);
+    let group_node_arr = super.toNode(parent);
     new_data = new_data.concat(group_node_arr[0]);
 
     console.log(new_data);
-    for(var child of this.members)
+    for(let child of this.members)
     {
       console.log("Adding child " + child.name + " of group " + this.name);
       new_data = new_data.concat(child.toNode(group_node_arr[0]));

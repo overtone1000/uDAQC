@@ -1,7 +1,9 @@
+'use strict';
+
 function createNodes()
 {
   //This function successfully creates new nodes on the fly
-  retval = $('#jstree').jstree('create_node', '#', {data:'Foo'});
+  let retval = $('#jstree').jstree('create_node', '#', {data:'Foo'});
   console.log("Returned " + String(retval));
 
   retval = $('#jstree').jstree('create_node', 'm1', {data:'Bar'});
@@ -20,7 +22,7 @@ function changeNodes(new_data)
 
 }
 
-var data = [
+let data = [
   { "id":"m1", "text": "M1", "children":
     [
       {"parent": "m1", "text": "T1"},
@@ -38,7 +40,7 @@ $(function () {
       "animation" : 0,
       'data' : data,
       "themes" : {
-        "variant" : "large",
+        "letiant" : "large",
         "icons" : false,
         "stripes" : false}
     },

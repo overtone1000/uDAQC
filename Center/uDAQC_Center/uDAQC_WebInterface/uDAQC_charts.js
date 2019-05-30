@@ -1,5 +1,6 @@
-var ctx = document.getElementById('test_chart').getContext('2d');
-var chart = new Chart(ctx, {
+'use strict';
+let ctx = document.getElementById('test_chart').getContext('2d');
+let chart = new Chart(ctx, {
     // The type of chart we want to create
     type: 'line',
 
