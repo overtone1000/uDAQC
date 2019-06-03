@@ -16,7 +16,7 @@ import java.util.TreeMap;
 import java.util.concurrent.Semaphore;
 import java.util.logging.Logger;
 
-import org.apache.commons.lang.exception.ExceptionUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.mina.core.session.IoSession;
 import org.eclipse.jetty.websocket.api.Session;
 import org.joda.time.DateTime;
