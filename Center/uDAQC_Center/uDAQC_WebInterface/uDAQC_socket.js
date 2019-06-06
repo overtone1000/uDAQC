@@ -60,7 +60,7 @@ function handlePassthroughCommand(ptcom)
 function onMessage(evt)
 {
   let c = new Command(evt.data);
-  
+
   //All commands should be passthrough as of now
   switch(c.command_ID)
   {
@@ -81,10 +81,22 @@ function update_devices()
   let new_data = [];
   console.log("Updating devices.");
 
+  //Clear the charts
+  let chartspace = document.getElementById("chart_space");
+  while(chartspace.firstChild)
+  {
+    chartspace.removeChild(chartspace.firstChild);
+  }
+
   for(let key of devices.keys())
   {
     let device = devices.get(key);
+
+    //Add this to the jsTree list
     new_data = new_data.concat(device.toNode());
+
+    //Add thsi to the chart nodes
+    chartspace.appendChild(device.createChartspace());
   }
   console.log("Changing nodes with " + new_data.length + " members.");
   console.log(new_data);

@@ -249,6 +249,26 @@ class IO_Reporter
     return this.device_index + "_" + this.reporter_index;
   }
 
+  getNode()
+  {
+    return document.getElementById(this.getNodeID());
+  }
+
+  getChartspace()
+  {
+    return document.getElementById(this.getChartspaceID());
+  }
+
+  getNodeID()
+  {
+    return this.id() + "_node";
+  }
+
+  getChartspaceID()
+  {
+    return this.id() + "_div";
+  }
+
   toNode(parent)
   {
     let new_data = [];
@@ -260,13 +280,32 @@ class IO_Reporter
     }
     let new_node =
     {
-      "id" : this.id() + "_node",
-      "parent" : parval,
-      "text" : this.name
+      id : this.getNodeID(),
+      parent : parval,
+      text : this.name,
+      state : {
+        opened : true,
+        disabled: false,
+        selected: true
+      },
+      is_checked:true
     };
 
     new_data.push(new_node);
     return new_data;
+  }
+
+  createChartspace()
+  {
+    let retval = document.createElement("div");
+    retval.id = this.getChartspaceID();
+
+    let title = document.createElement("div");
+    title.innerHTML = this.name;
+
+    retval.appendChild(title);
+
+    return retval;
   }
 }
 
@@ -335,6 +374,19 @@ class IO_Group extends IO_Reporter
 
     return new_data;
   }
+
+  createChartspace()
+  {
+    let retval = super.createChartspace(); //get the default IO_Reporter chartspace, which is just a div
+
+    for(let child of this.members)
+    {
+      retval.appendChild(child.createChartspace());
+    }
+
+    return retval;
+  }
+
 }
 
 class IO_Value extends IO_Reporter
@@ -344,6 +396,19 @@ class IO_Value extends IO_Reporter
     this.units_length = bytebuffer.getInt16();
     this.units = bytebuffer.ReadString(this.units_length);
     this.data_type = bytebuffer.getInt16();
+  }
+
+  createChartspace()
+  {
+    let retval = super.createChartspace(); //get the default IO_Reporter chartspace, which is just a div
+
+    let chart = document.createElement("canvas");
+    chart.id = this.id() + "_chart";
+    chart.innerHTML = "Chart for " + this.name;
+    createChart(chart);
+    retval.appendChild(chart);
+
+    return retval;
   }
 }
 

@@ -23,39 +23,52 @@ function changeNodes(new_data)
 }
 
 let data = [
-  { "id":"m1", "text": "M1", "children":
+  { id:"m1", text: "M1", "children":
     [
-      {"parent": "m1", "text": "T1"},
-      {"parent": "m1", "text": "T2"},
+      {parent: "m1", text: "T1"},
+      {parent: "m1", text: "T2"},
     ],
-    "state":{"opened":true}}
+    state:{opened:true}}
   ];
 
 $(function () {
   // 6 create an instance when the DOM is ready
   $('#jstree').jstree({
-    'core' : {
-      'check_callback': true,
-      'multiple' : true,
-      "animation" : 0,
-      'data' : data,
-      "themes" : {
-        "letiant" : "large",
-        "icons" : false,
-        "stripes" : false}
+    core : {
+      check_callback: true,
+      multiple : true,
+      animation : 0,
+      data : data,
+      themes : {
+        letiant : "large",
+        icons : false,
+        stripes : false}
     },
-    "checkbox" : {
-      "keep_selected_style" : false
+    checkbox : {
+      keep_selected_style : false
     },
-    "plugins" : [ "wholerow", "checkbox" ]
+    plugins : [ "wholerow", "checkbox" ]
   });
   // 7 bind to events triggered on the tree
-  $('#jstree').on("changed.jstree", function (e, data) {
-    console.log("Selected tree items: " + data.selected);
-  });
+  $('#jstree').on("changed.jstree", changedJSTree);
   // 8 interact with the tree - either way is OK
   $('#create1').click(function () {
     changeNodes(null,null);
   });
 
 });
+
+function changedJSTree(e, data)
+{
+  console.log(data);
+  for(let key of devices.keys())
+  {
+    let device = devices.get(key);
+    if(device.getNode().selected){
+      device.getChartspace().style.display = "none";
+    }
+    else {
+      device.getChartspace().style.display = "block";
+    }
+  }
+}
