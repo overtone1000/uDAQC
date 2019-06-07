@@ -45,7 +45,9 @@ $(function () {
         stripes : false}
     },
     checkbox : {
-      keep_selected_style : false
+      keep_selected_style : false,
+      three_state : true,
+      cascade : 'down'
     },
     plugins : [ "wholerow", "checkbox" ]
   });
@@ -61,14 +63,50 @@ $(function () {
 function changedJSTree(e, data)
 {
   console.log(data);
-  for(let key of devices.keys())
+  if(data.action==="deselect_all")
   {
-    let device = devices.get(key);
-    if(device.getNode().selected){
-      device.getChartspace().style.display = "none";
-    }
-    else {
-      device.getChartspace().style.display = "block";
+    console.log("Need to hide everything here.");
+  }
+  if(!data.node)
+  {
+    return;
+  }
+
+  setChartspaceVisibilityFromNodeID("#");
+};
+
+function setChartspaceVisibilityFromNodeID(node_id)
+{
+  let retval=false;
+
+  let node = $('#jstree').jstree(true).get_node(node_id); //this is ugly, but this seems to be how nodes are accessed with children_d
+
+  for (let node_index in node.children)
+  {
+    let node_id = node.children[node_index];
+    if(setChartspaceVisibilityFromNodeID(node_id))
+    {
+      retval = true;
     }
   }
-}
+
+  let rawID = IO_Reporter.getRawID(node_id);
+  console.log(node);
+  let chartspace = IO_Reporter.getChartspace(rawID);
+
+  if(!chartspace)
+  {
+    return;
+  }
+
+  if(node.state.selected || retval){
+  //if($('#jstree').jstree(true).is_checked(node)){ //ugly....
+    chartspace.style.display = "block";
+    retval = true;
+  }
+  else {
+    chartspace.style.display = "none";
+  }
+
+  return retval;
+};

@@ -249,24 +249,30 @@ class IO_Reporter
     return this.device_index + "_" + this.reporter_index;
   }
 
-  getNode()
+  static getNode(raw_id)
   {
-    return document.getElementById(this.getNodeID());
+    return document.getElementById(IO_Reporter.getNodeID(raw_id));
   }
 
-  getChartspace()
+  static getChartspace(raw_id)
   {
-    return document.getElementById(this.getChartspaceID());
+    return document.getElementById(IO_Reporter.getChartspaceID(raw_id));
   }
 
-  getNodeID()
+  static getRawID(derived_id)
   {
-    return this.id() + "_node";
+    let lastindexof = derived_id.lastIndexOf("_");
+    return derived_id.substring(0,lastindexof);
   }
 
-  getChartspaceID()
+  static getNodeID(reporter_id)
   {
-    return this.id() + "_div";
+    return reporter_id + "_node";
+  }
+
+  static getChartspaceID(reporter_id)
+  {
+    return reporter_id + "_div";
   }
 
   toNode(parent)
@@ -280,7 +286,7 @@ class IO_Reporter
     }
     let new_node =
     {
-      id : this.getNodeID(),
+      id : IO_Reporter.getNodeID(this.id()),
       parent : parval,
       text : this.name,
       state : {
@@ -298,7 +304,7 @@ class IO_Reporter
   createChartspace()
   {
     let retval = document.createElement("div");
-    retval.id = this.getChartspaceID();
+    retval.id = IO_Reporter.getChartspaceID(this.id());
 
     let title = document.createElement("div");
     title.innerHTML = this.name;
@@ -387,6 +393,10 @@ class IO_Group extends IO_Reporter
     return retval;
   }
 
+  getAllChildren()
+  {
+
+  }
 }
 
 class IO_Value extends IO_Reporter
