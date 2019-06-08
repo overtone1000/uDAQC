@@ -68,6 +68,19 @@ This class description is equal to its parent class IO_Group
 # Data Message Structure
 When a data message for an IO_System is sent from a Device to a Center, the message contains an entry for each IO_Reporter in that system in the order that each IO_Reporter is found in the description for that IO_System. The size of that entry is equal to the data byte count found in the description for that IO_Repoerter. In practice, the byte count will only be non-zero for IO_Value objects and any classes that inherit from IO_Value, although custom IO_Reporter objects not derived from IO_Value objects could conceivably be created that might be included in the data message for an IO_System.
 
+# History Structure
+This message contains the logged data for a single regime. Its structure is as follows:
+1. int_32 indicating the temporal regime (0 for live, 1 for minute, 2 for hour, 3 for day). This might be improved by instead sending the number of nanoseconds or milliseconds over which this time series has been averaged or otherwise consolidated.
+2. int_64 indicating the number of entries in this time series.
+3. byte[] containing the log file
+
+The log file itself is composed of a series of entries with the following structure:
+1. byte containing flag bits with the following flags:
+  1. New epoch - signals discontinuity of this entry from the prior entry
+  2. Split epoch - signals that this entry is actually continuous with the first entry in the file
+2. int_64 containing timestamp
+3. float_32 for each IO_Value in this system (in the same order as that found in a data message)
+
 # Value Modification Structure
 IO_ModifiableValue modification message is a command whose message has the following structure:
 1. int_16 containing the index for the ModifiableValue (see above)
