@@ -298,8 +298,7 @@ class IO_Group extends IO_Reporter
     //console.log("Member count is " + this.member_count);
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
     this.members = new Array(this.member_count);
-    let i;
-    for(i=0;i<this.member_count;i++)
+    for(let i=0;i<this.member_count;i++)
     {
         //need to peek the command_description for the next object to decide what kind to add
         let command_description = bytebuffer.Peek(DataTypes.signed_integer,2);
@@ -357,16 +356,58 @@ class IO_Group extends IO_Reporter
     return retval;
   }
 
-  getAllChildren()
+  countIOValues()
   {
-
+    //count total IO_Values in the system
+    let retval = 0;
+    for(let i=0;i<this.member_count;i++)
+    {
+        switch(this.members[i].command_description)
+        {
+          case IO_Constants.group_description:
+            retval+=this.members[i].countIOValues();
+          break;
+          case IO_Constants.emptyreporter_description:
+          break;
+          case IO_Constants.value_description:
+          case IO_Constants.modifiablevalue_description:
+            retval+=1;
+          break;
+        }
+    }
+    return retval;
   }
 }
 
 class IO_System extends IO_Group
 {
   constructor(bytebuffer, indices){
-    super(bytebuffer, indices); //for now, does nothing special...
+    super(bytebuffer, indices);
+    this.ioValueCount = this.countIOValues()-1; //subtract one for the Timestamp
+    console.log("System has " + this.ioValueCount + " values.");
+  }
+
+  toNode()
+  {
+    let new_data = super.toNode();
+
+    //Remove timestamp
+    new_data.splice(1,1);
+
+    console.log("Updated nodes:");
+    console.log(new_data);
+
+    return new_data;
+  }
+
+  createDashboard()
+  {
+    let retval = super.createDashboard(); //get the default IO_Reporter Dashboard, which is just a div
+
+    //Remove timestamp
+    retval.removeChild(retval.children[1]);
+
+    return retval;
   }
 }
 

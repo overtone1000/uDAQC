@@ -48,6 +48,8 @@ function handlePassthroughCommand(ptcom)
       let new_group = new IO_Device(ptcom.message,ptcom.source_ID);
       update_devices();
     break;
+    case IO_Constants.history:
+      
     default:
     console.log("Unexpected nested command in passthrough " +  ptcom.PTcommand_ID + ".");
   }
