@@ -4,13 +4,13 @@ function changeNodes(new_data)
 {
   //This function successfully resets the jstree data. This is preferred.
   $('#jstree').jstree(true).settings.core.data=new_data;
-
+  $("#jstree").jstree(true).select_all();
+  $("#jstree").jstree(true).check_all();
   $('#jstree').jstree(true).refresh(); //Refreshing returns the tree to its original state...can never call if tree is updated using create_node!
-
 }
 
 $(function () {
-  // 6 create an instance when the DOM is ready
+
   $('#jstree').jstree({
     core : {
       check_callback: true,
@@ -29,29 +29,17 @@ $(function () {
     },
     plugins : [ "wholerow", "checkbox" ]
   });
-  // 7 bind to events triggered on the tree
-  $('#jstree').on("changed.jstree", changedJSTree);
-  // 8 interact with the tree - either way is OK
-  $('#create1').click(function () {
-    changeNodes(null,null);
+
+  //Update dashboard visibility when the tree is changed
+  $('#jstree').on("changed.jstree", function(e,data) {
+    setDashboardVisibilityFromNodeID("#");
   });
 
+  //Make all nodes visible when the tree is refreshed (called in change nodes function)
+  $('#jstree').on("refresh.jstree", function(e) {
+    $('#jstree').jstree(true).select_all();
+  });
 });
-
-function changedJSTree(e, data)
-{
-  console.log(data);
-  if(data.action==="deselect_all")
-  {
-    console.log("Need to hide everything here.");
-  }
-  if(!data.node)
-  {
-    return;
-  }
-
-  setDashboardVisibilityFromNodeID("#");
-};
 
 function setDashboardVisibilityFromNodeID(node_id)
 {
