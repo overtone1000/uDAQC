@@ -6,8 +6,6 @@
 let output;
 let websocket;
 
-let devices = new Map();
-
 function init()
 {
   testWebSocket();
@@ -47,9 +45,9 @@ function handlePassthroughCommand(ptcom)
   switch(ptcom.PTcommand_ID)
   {
     case IO_Constants.group_description:
-      let new_group = new IO_Group(ptcom.message,ptcom.source_ID);
+      let new_group = new IO_Device(ptcom.message,ptcom.source_ID);
       console.log("Adding device index " + ptcom.source_ID + " for group " + new_group.name);
-      devices.set(ptcom.source_ID,new_group);
+      IO_Device.devices.set(ptcom.source_ID,new_group);
       update_devices();
     break;
     default:
@@ -88,15 +86,15 @@ function update_devices()
     chartspace.removeChild(chartspace.firstChild);
   }
 
-  for(let key of devices.keys())
+  for(let key of IO_Device.devices.keys())
   {
-    let device = devices.get(key);
+    let device = IO_Device.devices.get(key);
 
     //Add this to the jsTree list
-    new_data = new_data.concat(device.toNode());
+    new_data = new_data.concat(device.system.toNode());
 
     //Add thsi to the chart nodes
-    chartspace.appendChild(device.createChartspace());
+    chartspace.appendChild(device.system.createChartspace());
   }
   console.log("Changing nodes with " + new_data.length + " members.");
   console.log(new_data);

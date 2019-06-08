@@ -226,7 +226,7 @@ class PTCommand
 
 class IO_Reporter
 {
-  constructor(bytebuffer, device_index, index_tracker){
+  constructor(bytebuffer, indices){
     this.command_description = bytebuffer.getInt16();
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
     this.byte_count = bytebuffer.getInt32();
@@ -239,9 +239,9 @@ class IO_Reporter
     console.log("New reporter = " + this.name);
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
 
-    this.device_index=device_index;
-    this.reporter_index=index_tracker.current;
-    index_tracker.current++;
+    this.device_index=indices.device;
+    this.reporter_index=indices.reporter;
+    indices.reporter++;
   }
 
   id()
@@ -317,19 +317,8 @@ class IO_Reporter
 
 class IO_Group extends IO_Reporter
 {
-  constructor(bytebuffer, device_index, index_tracker){
-    console.log("Checking index_tracker.");
-    if(index_tracker===undefined || index_tracker.current===undefined)
-    {
-      console.log("Making index_tracker.");
-      index_tracker =
-      {
-        current:0
-      };
-      console.log(index_tracker);
-    }
-    console.log(index_tracker);
-    super(bytebuffer, device_index, index_tracker);
+  constructor(bytebuffer, indices){
+    super(bytebuffer, indices);
     this.member_count = bytebuffer.getInt16();
     //console.log("Member count is " + this.member_count);
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
@@ -342,19 +331,19 @@ class IO_Group extends IO_Reporter
         switch(command_description)
         {
           case IO_Constants.group_description:
-            this.members[i]=new IO_Group(bytebuffer, device_index, index_tracker);
+            this.members[i]=new IO_Group(bytebuffer, indices);
             //console.log("Processeed member " + this.members[i].name);
           break;
           case IO_Constants.emptyreporter_description:
-            this.members[i]=new IO_Reporter(bytebuffer, device_index, index_tracker);
+            this.members[i]=new IO_Reporter(bytebuffer, indices);
             //console.log("Processeed member " + this.members[i].name);
           break;
           case IO_Constants.value_description:
-            this.members[i]=new IO_Value(bytebuffer, device_index, index_tracker);
+            this.members[i]=new IO_Value(bytebuffer, indices);
             //console.log("Processeed member " + this.members[i].name);
           break;
           case IO_Constants.modifiablevalue_description:
-            this.members[i]=new IO_ModifiableValue(bytebuffer, device_index, index_tracker);
+            this.members[i]=new IO_ModifiableValue(bytebuffer, indices);
             //console.log("Processeed member " + this.members[i].name);
           break;
           default:
@@ -399,10 +388,32 @@ class IO_Group extends IO_Reporter
   }
 }
 
+class IO_System extends IO_Group
+{
+  constructor(bytebuffer, indices){
+    super(bytebuffer, indices); //for now, does nothing special...
+  }
+}
+
+class IO_Device
+{
+  constructor(bytebuffer, device_index){
+    this.index = device_index;
+    let indices =
+    {
+      device:device_index,
+      reporter:0
+    };
+    this.system = new IO_System(bytebuffer,indices);
+  }
+}
+IO_Device.devices = new Map();
+IO_Reporter.nodes = new Map();
+
 class IO_Value extends IO_Reporter
 {
-  constructor(bytebuffer, device_index, index_tracker){
-    super(bytebuffer, device_index, index_tracker);
+  constructor(bytebuffer, indices){
+    super(bytebuffer, indices);
     this.units_length = bytebuffer.getInt16();
     this.units = bytebuffer.ReadString(this.units_length);
     this.data_type = bytebuffer.getInt16();
@@ -424,8 +435,8 @@ class IO_Value extends IO_Reporter
 
 class IO_ModifiableValue extends IO_Value
 {
-  constructor(bytebuffer, device_index, index_tracker){
-    super(bytebuffer, device_index, index_tracker);
+  constructor(bytebuffer, indices){
+    super(bytebuffer, indices);
     this.modval_index = bytebuffer.getInt16();
   }
 }
