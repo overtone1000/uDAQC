@@ -46,8 +46,6 @@ function handlePassthroughCommand(ptcom)
   {
     case IO_Constants.group_description:
       let new_group = new IO_Device(ptcom.message,ptcom.source_ID);
-      console.log("Adding device index " + ptcom.source_ID + " for group " + new_group.name);
-      IO_Device.devices.set(ptcom.source_ID,new_group);
       update_devices();
     break;
     default:
@@ -86,9 +84,9 @@ function update_devices()
     chartspace.removeChild(chartspace.firstChild);
   }
 
-  for(let key of IO_Device.devices.keys())
+  for(let key of IO.devices.keys())
   {
-    let device = IO_Device.devices.get(key);
+    let device = IO.devices.get(key);
 
     //Add this to the jsTree list
     new_data = new_data.concat(device.system.toNode());

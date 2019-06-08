@@ -296,6 +296,7 @@ class IO_Reporter
       },
       is_checked:true
     };
+    IO.nodes.set(new_node.id,new_node);
 
     new_data.push(new_node);
     return new_data;
@@ -405,10 +406,13 @@ class IO_Device
       reporter:0
     };
     this.system = new IO_System(bytebuffer,indices);
+    IO.devices.set(this.index,this);
   }
 }
-IO_Device.devices = new Map();
-IO_Reporter.nodes = new Map();
+
+class IO{}
+IO.devices = new Map();
+IO.nodes = new Map();
 
 class IO_Value extends IO_Reporter
 {
