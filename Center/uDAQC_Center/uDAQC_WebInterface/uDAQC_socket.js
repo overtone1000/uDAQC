@@ -78,10 +78,10 @@ function update_devices()
   console.log("Updating devices.");
 
   //Clear the charts
-  let chartspace = document.getElementById("chart_space");
-  while(chartspace.firstChild)
+  let dashboard = document.getElementById("chart_space");
+  while(dashboard.firstChild)
   {
-    chartspace.removeChild(chartspace.firstChild);
+    dashboard.removeChild(dashboard.firstChild);
   }
 
   for(let key of IO.devices.keys())
@@ -92,7 +92,7 @@ function update_devices()
     new_data = new_data.concat(device.system.toNode());
 
     //Add thsi to the chart nodes
-    chartspace.appendChild(device.system.createChartspace());
+    dashboard.appendChild(device.system.createDashboard());
   }
   console.log("Changing nodes with " + new_data.length + " members.");
   console.log(new_data);

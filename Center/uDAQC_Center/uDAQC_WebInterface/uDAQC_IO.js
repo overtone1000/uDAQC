@@ -240,39 +240,14 @@ class IO_Reporter
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
 
     this.device_index=indices.device;
-    this.reporter_index=indices.reporter;
-    indices.reporter++;
+    this.reporter_index=indices.next_reporter();
+
+    IO.nodeid_to_reporter.set(this.getNodeID,this);
   }
 
   id()
   {
     return this.device_index + "_" + this.reporter_index;
-  }
-
-  static getNode(raw_id)
-  {
-    return document.getElementById(IO_Reporter.getNodeID(raw_id));
-  }
-
-  static getChartspace(raw_id)
-  {
-    return document.getElementById(IO_Reporter.getChartspaceID(raw_id));
-  }
-
-  static getRawID(derived_id)
-  {
-    let lastindexof = derived_id.lastIndexOf("_");
-    return derived_id.substring(0,lastindexof);
-  }
-
-  static getNodeID(reporter_id)
-  {
-    return reporter_id + "_node";
-  }
-
-  static getChartspaceID(reporter_id)
-  {
-    return reporter_id + "_div";
   }
 
   toNode(parent)
@@ -286,7 +261,7 @@ class IO_Reporter
     }
     let new_node =
     {
-      id : IO_Reporter.getNodeID(this.id()),
+      id : IO.getNodeID(this.id()),
       parent : parval,
       text : this.name,
       state : {
@@ -296,16 +271,15 @@ class IO_Reporter
       },
       is_checked:true
     };
-    IO.nodes.set(new_node.id,new_node);
 
     new_data.push(new_node);
     return new_data;
   }
 
-  createChartspace()
+  createDashboard()
   {
     let retval = document.createElement("div");
-    retval.id = IO_Reporter.getChartspaceID(this.id());
+    retval.id = IO.getDashboardID(this.id());
 
     let title = document.createElement("div");
     title.innerHTML = this.name;
@@ -371,13 +345,13 @@ class IO_Group extends IO_Reporter
     return new_data;
   }
 
-  createChartspace()
+  createDashboard()
   {
-    let retval = super.createChartspace(); //get the default IO_Reporter chartspace, which is just a div
+    let retval = super.createDashboard(); //get the default IO_Reporter Dashboard, which is just a div
 
     for(let child of this.members)
     {
-      retval.appendChild(child.createChartspace());
+      retval.appendChild(child.createDashboard());
     }
 
     return retval;
@@ -403,16 +377,47 @@ class IO_Device
     let indices =
     {
       device:device_index,
-      reporter:0
+      reporter:0,
+      next_reporter:function(){
+        let retval=this.reporter;
+        this.reporter++;
+        return retval;
+      }
     };
     this.system = new IO_System(bytebuffer,indices);
     IO.devices.set(this.index,this);
   }
 }
 
-class IO{}
+class IO{
+  static getNode(raw_id)
+  {
+    return document.getElementById(IO.getNodeID(raw_id));
+  }
+
+  static getDashboard(raw_id)
+  {
+    return document.getElementById(IO.getDashboardID(raw_id));
+  }
+
+  static getRawID(derived_id)
+  {
+    let lastindexof = derived_id.lastIndexOf("_");
+    return derived_id.substring(0,lastindexof);
+  }
+
+  static getNodeID(reporter_id)
+  {
+    return reporter_id + "_node";
+  }
+
+  static getDashboardID(reporter_id)
+  {
+    return reporter_id + "_div";
+  }
+}
 IO.devices = new Map();
-IO.nodes = new Map();
+IO.nodeid_to_reporter = new Map();
 
 class IO_Value extends IO_Reporter
 {
@@ -423,9 +428,9 @@ class IO_Value extends IO_Reporter
     this.data_type = bytebuffer.getInt16();
   }
 
-  createChartspace()
+  createDashboard()
   {
-    let retval = super.createChartspace(); //get the default IO_Reporter chartspace, which is just a div
+    let retval = super.createDashboard(); //get the default IO_Reporter Dashboard, which is just a div
 
     let chart = document.createElement("canvas");
     chart.id = this.id() + "_chart";
