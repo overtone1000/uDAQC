@@ -80,9 +80,13 @@ public class IO_System_Logged extends IO_System
 				message.order(ByteOrder.LITTLE_ENDIAN);
 				message.putInt(r.ordinal());
 				
-				//message.putLong(system.logs.get(r).Size());
-				message.putLong(-500L);
-				System.err.println("Message length is still in a non-functional testing mode.");
+				message.putLong(system.logs.get(r).Size());
+				//message.putLong(500L);
+				//message.putLong(-500L);
+				//message.putLong(254305453037L);
+				//message.putLong(-254305453037L);
+				//message.putLong(9007199254740992L); //unsafe for javascript
+				//System.err.println("Message length is still in a non-functional testing mode.");
 				
 				try
 				{
