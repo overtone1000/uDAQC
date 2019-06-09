@@ -79,7 +79,10 @@ public class IO_System_Logged extends IO_System
 				ByteBuffer message = ByteBuffer.allocate((int) (Integer.BYTES + Long.BYTES + file.length()));
 				message.order(ByteOrder.LITTLE_ENDIAN);
 				message.putInt(r.ordinal());
-				message.putLong(system.logs.get(r).Size());
+				
+				//message.putLong(system.logs.get(r).Size());
+				message.putLong(-500L);
+				System.err.println("Message length is still in a non-functional testing mode.");
 				
 				try
 				{

@@ -62,8 +62,36 @@ class ByteBuffer {
   }
 
   getInt64(){
-    let retval = this.view.getInt64(this.pointer, this.view.isLittleEndian);
-    this.pointer+=8;
+    let little;
+    let big;
+    if(this.view.isLittleEndian)
+    {
+      little = this.getUint32(this.pointer, this.view.isLittleEndian);
+      big = this.getInt32(this.pointer, this.view.isLittleEndian);
+    }
+    else {
+      big = this.getInt32(this.pointer, this.view.isLittleEndian);
+      little = this.getUint32(this.pointer, this.view.isLittleEndian);
+    }
+
+    let max_uint32 = big*Math.pow(2,32);
+    if(big<0)
+    {
+      little=max_uint32-little;
+    }
+
+    //works for small positive numbers
+    //works for 4305453037 (which is greater than the max int32)
+
+    let retval = little + max_uint32;
+    console.log("Get int 64 results:");
+    console.log("Little: ");
+    console.log(little);
+    console.log("Big: ");
+    console.log(big);
+    console.log("Sum: ");
+    console.log(retval);
+
     return retval;
   }
 
