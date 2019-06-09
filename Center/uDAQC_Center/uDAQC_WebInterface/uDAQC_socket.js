@@ -1,9 +1,7 @@
-'use strict';
-
+"use strict";
 
 //let wsUri = "wss://echo.websocket.org/"; //wss is SSL, unsecure would be ws://
 //let wsUri = "wss://localhost:49154/socket/"
-let output;
 let websocket;
 
 function init()
@@ -20,17 +18,18 @@ function testWebSocket()
 
   websocket = new WebSocket(websocket_url);
   websocket.binaryType = 'arraybuffer';
-  websocket.onopen = function(evt) { onOpen(evt) };
-  websocket.onclose = function(evt) { onClose(evt) };
-  websocket.onmessage = function(evt) { onMessage(evt) };
-  websocket.onerror = function(evt) { onError(evt) };
+  websocket.onopen = function(evt) { onOpen(evt); };
+  websocket.onclose = function(evt) { onClose(evt); };
+  websocket.onmessage = function(evt) { onMessage(evt); };
+  websocket.onerror = function(evt) { onError(evt); };
 }
 
 function onOpen(evt)
 {
   let x = document.getElementById("connection_alert");
   x.className = "alert alert-success";
-  x.innerHTML = "Connected"
+  x.innerHTML = "Connected";
+  console.log(evt);
 }
 
 function onClose(evt)
@@ -38,6 +37,7 @@ function onClose(evt)
   let x = document.getElementById("connection_alert");
   x.className = "alert alert-warning";
   x.innerHTML = "No connection";
+  console.log(evt);
 }
 
 function handlePassthroughCommand(ptcom)
@@ -45,19 +45,61 @@ function handlePassthroughCommand(ptcom)
   switch(ptcom.PTcommand_ID)
   {
     case IO_Constants.group_description:
-      let new_group = new IO_Device(ptcom.message,ptcom.source_ID);
+      new IO_Device(ptcom.message,ptcom.source_ID);
       update_devices();
-    break;
+      break;
     case IO_Constants.history:
-      let regime = ptcom.message.getInt32();
-      let max_size = ptcom.message.getInt64();
-
-      let device = IO.devices.get(ptcom.source_ID);
-      let entry_size = 64 + device.system.ioValueCount * 32;
-      console.log("Entry size is " + entry_size);
+      handleHistory(ptcom);
+      break;
     default:
     console.log("Unexpected nested command in passthrough " +  ptcom.PTcommand_ID + ".");
   }
+}
+
+function handleHistory(ptcom)
+{
+  let regime = ptcom.message.getInt32();
+  let max_size = ptcom.message.getInt64();
+
+  let device = IO.devices.get(ptcom.source_ID);
+  let entry_size = 8 + device.system.ioValueCount * 4;
+
+  let epochs = []; //an array of epochs
+  let this_epoch = []; //an array of SystemDatum
+
+  const new_epoch_flag = Math.pow(2,0);
+  const split_epoch_flag = Math.pow(2,1);
+
+  while(ptcom.message.Remaining()>entry_size)
+  {
+    let flag = ptcom.message.getInt8();
+
+    if(flag&new_epoch_flag){
+        //Start a new epoch
+        if (this_epoch.timestamps.length) {
+          epochs.push(this_epoch);
+          this_epoch = [];
+        }
+    }
+    if(flag&split_epoch_flag){
+      //Merge with first epoch
+      if(this_epoch.timestamps.length){
+        epochs[0]=this_epoch.concat(epochs[0]);
+      }
+    }
+
+    let this_datum = device.createSystemDatum();
+    {
+      this_datum.timestamp=ptcom.getInt64();
+      for(let i=0;i<this_datum.values.length;i++)
+      {
+        this_datum.values[i]=ptcom.getFloat32();
+      }
+    }
+    this_epoch.push(this_datum);
+  }
+
+  console.log(epochs);
 }
 
 function onMessage(evt)
@@ -111,7 +153,7 @@ function onError(evt)
   console.log(evt.data);
   let x = document.getElementById("connection_alert");
   x.className = "alert alert-danger";
-  x.innerHTML = "Error. Check console."
+  x.innerHTML = "Error. Check console.";
 }
 
 window.addEventListener("load", init, false);

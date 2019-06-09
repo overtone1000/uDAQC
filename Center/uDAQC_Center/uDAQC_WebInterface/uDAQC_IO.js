@@ -75,7 +75,7 @@ class ByteBuffer {
     }
 
     const max_uint32 = Math.pow(2,32);
-    
+
     let retval;
     if(big>=0)
     {
@@ -439,6 +439,19 @@ class IO_System extends IO_Group
     //Remove timestamp
     retval.removeChild(retval.children[1]);
 
+    return retval;
+  }
+
+  createSystemDatum()
+  {
+    let retval = {
+      timestamp:0,
+      values:new Array(this.ioValueCount)
+    };
+    for(let i=0;i<this.ioValueCount;i++)
+    {
+      this.values[i]=[];
+    }
     return retval;
   }
 }

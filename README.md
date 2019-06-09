@@ -71,14 +71,14 @@ When a data message for an IO_System is sent from a Device to a Center, the mess
 # History Structure
 This message contains the logged data for a single regime. Its structure is as follows:
 1. int_32 indicating the temporal regime (0 for live, 1 for minute, 2 for hour, 3 for day). This might be improved by instead sending the number of nanoseconds or milliseconds over which this time series has been averaged or otherwise consolidated.
-2. int_64 indicating the maximum size of the following byte array (NOT necessarily the number provided in this message)
+2. int_64 indicating the maximum size of the following byte array (NOT necessarily the number provided in this message). Although javascript does not handle 64-bit integers well, this is likely large enough for practical purposes.
 3. byte[] containing the log file
 
 The log file itself is composed of a series of entries with the following structure:
 1. byte containing flag bits with the following flags:
   1. New epoch - signals discontinuity of this entry from the prior entry
   2. Split epoch - signals that this entry is actually continuous with the first entry in the file
-2. int_64 containing timestamp
+2. int_64 containing timestamp (ms since last Java epoch). Although javascript does not handle 64-bit integers well, the max safe value is 9,007,199,254,740,991 while an epoch only contains 2,147,483,647,000 milliseconds (more than 3 orders of magnitude)
 3. float_32 for each IO_Value in this system (in the same order as that found in a data message)
 
 # Value Modification Structure
