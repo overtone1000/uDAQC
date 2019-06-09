@@ -17,7 +17,7 @@ function testWebSocket()
   console.log("Websocket address " + String(websocket_url));
 
   websocket = new WebSocket(websocket_url);
-  websocket.binaryType = 'arraybuffer';
+  websocket.binaryType = "arraybuffer";
   websocket.onopen = function(evt) { onOpen(evt); };
   websocket.onclose = function(evt) { onClose(evt); };
   websocket.onmessage = function(evt) { onMessage(evt); };
@@ -61,8 +61,14 @@ function handleHistory(ptcom)
   let regime = ptcom.message.getInt32();
   let max_size = ptcom.message.getInt64();
 
+  console.log("Regime " + regime);
+  console.log("Max size is " + max_size);
+  console.log("Received size is " + ptcom.message.Remaining());
+
   let device = IO.devices.get(ptcom.source_ID);
-  let entry_size = 8 + device.system.ioValueCount * 4;
+  let entry_size = 1 + 8 + device.system.ioValueCount * 4;
+
+  console.log(ptcom.message.Remaining()/entry_size + " entries. " + ptcom.message.Remaining()%entry_size + " unaccounted bytes.");
 
   let epochs = []; //an array of epochs
   let this_epoch = []; //an array of SystemDatum
@@ -70,33 +76,44 @@ function handleHistory(ptcom)
   const new_epoch_flag = Math.pow(2,0);
   const split_epoch_flag = Math.pow(2,1);
 
+  console.log("Entry size = " + entry_size);
+  console.log("Remaining = " + ptcom.message.Remaining());
   while(ptcom.message.Remaining()>entry_size)
   {
     let flag = ptcom.message.getInt8();
+    console.log("Flag = " + flag);
 
     if(flag&new_epoch_flag){
         //Start a new epoch
-        if (this_epoch.timestamps.length) {
+        if (this_epoch.length) {
           epochs.push(this_epoch);
           this_epoch = [];
         }
     }
+
     if(flag&split_epoch_flag){
       //Merge with first epoch
-      if(this_epoch.timestamps.length){
+      if(this_epoch.length){
         epochs[0]=this_epoch.concat(epochs[0]);
+        this_epoch = [];
       }
     }
 
-    let this_datum = device.createSystemDatum();
+    let this_datum = device.system.createSystemDatum();
     {
-      this_datum.timestamp=ptcom.getInt64();
+      this_datum.timestamp=ptcom.message.getInt64();
       for(let i=0;i<this_datum.values.length;i++)
       {
-        this_datum.values[i]=ptcom.getFloat32();
+        this_datum.values[i]=ptcom.message.getFloat32();
       }
     }
     this_epoch.push(this_datum);
+
+    console.log("Remaining = " + ptcom.message.Remaining());
+  }
+
+  if(this_epoch.length){
+    epochs.push(this_epoch);
   }
 
   console.log(epochs);

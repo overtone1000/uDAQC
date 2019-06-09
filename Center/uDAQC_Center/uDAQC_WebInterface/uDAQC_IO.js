@@ -1,4 +1,4 @@
-'use strict';
+"use strict";
 
 let IO_Constants =
 {
@@ -415,7 +415,8 @@ class IO_System extends IO_Group
 {
   constructor(bytebuffer, indices){
     super(bytebuffer, indices);
-    this.ioValueCount = this.countIOValues()-1; //subtract one for the Timestamp
+    //this.ioValueCount = this.countIOValues()-1; //subtract one for the Timestamp
+    this.ioValueCount = this.countIOValues(); //timestamp is still coming across as a float32. This should be fixed.
     console.log("System has " + this.ioValueCount + " values.");
   }
 
@@ -450,7 +451,7 @@ class IO_System extends IO_Group
     };
     for(let i=0;i<this.ioValueCount;i++)
     {
-      this.values[i]=[];
+      retval.values[i]=[];
     }
     return retval;
   }
@@ -518,11 +519,11 @@ class IO_Value extends IO_Reporter
   {
     let retval = super.createDashboard(); //get the default IO_Reporter Dashboard, which is just a div
 
-    let chart = document.createElement("canvas");
-    chart.id = this.id() + "_chart";
-    chart.innerHTML = "Chart for " + this.name;
-    createChart(chart);
-    retval.appendChild(chart);
+    let dash = document.createElement("canvas");
+    dash.id = this.id() + "_chart";
+    dash.innerHTML = "Chart for " + this.name;
+    createChart(dash);
+    retval.appendChild(dash);
 
     return retval;
   }
