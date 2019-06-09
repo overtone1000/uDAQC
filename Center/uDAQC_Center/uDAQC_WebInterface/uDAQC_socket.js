@@ -49,7 +49,12 @@ function handlePassthroughCommand(ptcom)
       update_devices();
     break;
     case IO_Constants.history:
-      
+      let regime = ptcom.message.getInt32();
+      let max_size = ptcom.message.getInt64();
+
+      let device = IO.devices.get(ptcom.source_ID);
+      let entry_size = 64 + device.system.ioValueCount * 32;
+      console.log("Entry size is " + entry_size);
     default:
     console.log("Unexpected nested command in passthrough " +  ptcom.PTcommand_ID + ".");
   }

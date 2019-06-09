@@ -200,6 +200,10 @@ class ByteBuffer {
     return retval;
   }
 
+  Remaining()
+  {
+    return (this.view.byteLength - this.pointer);
+  }
 }
 
 class Command
