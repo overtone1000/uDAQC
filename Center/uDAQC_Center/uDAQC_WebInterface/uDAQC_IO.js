@@ -409,6 +409,27 @@ class IO_Group extends IO_Reporter
     }
     return retval;
   }
+
+  getIOValues()
+  {
+    let retval = [];
+    for(let i=0;i<this.member_count;i++)
+    {
+        switch(this.members[i].command_description)
+        {
+          case IO_Constants.group_description:
+            retval=retval.concat(this.members[i].getIOValues());
+          break;
+          case IO_Constants.emptyreporter_description:
+          break;
+          case IO_Constants.value_description:
+          case IO_Constants.modifiablevalue_description:
+            retval.push(this.members[i]);
+          break;
+        }
+    }
+    return retval;
+  }
 }
 
 class IO_System extends IO_Group
@@ -443,13 +464,13 @@ class IO_System extends IO_Group
     return retval;
   }
 
-  createSystemDatum()
+  createEpoch()
   {
-    let retval = {
-      timestamp:0,
-      values:new Array(this.ioValueCount)
+    let retval =     {
+      timestamps : [],
+      values : new Array(this.ioValueCount)
     };
-    for(let i=0;i<this.ioValueCount;i++)
+    for(let i=0;i<retval.values.length;i++)
     {
       retval.values[i]=[];
     }
@@ -502,6 +523,10 @@ class IO{
   {
     return reporter_id + "_div";
   }
+  static getChartID(reporter_id)
+  {
+    return reporter_id + "_chart";
+  }
 }
 IO.devices = new Map();
 IO.nodeid_to_reporter = new Map();
@@ -513,6 +538,7 @@ class IO_Value extends IO_Reporter
     this.units_length = bytebuffer.getInt16();
     this.units = bytebuffer.ReadString(this.units_length);
     this.data_type = bytebuffer.getInt16();
+    this.chart = null;
   }
 
   createDashboard()
@@ -520,9 +546,9 @@ class IO_Value extends IO_Reporter
     let retval = super.createDashboard(); //get the default IO_Reporter Dashboard, which is just a div
 
     let dash = document.createElement("canvas");
-    dash.id = this.id() + "_chart";
+    dash.id = IO.getChartID(this.id());
     dash.innerHTML = "Chart for " + this.name;
-    createChart(dash);
+    this.chart = createChart(dash);
     retval.appendChild(dash);
 
     return retval;

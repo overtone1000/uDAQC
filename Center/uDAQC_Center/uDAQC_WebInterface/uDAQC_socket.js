@@ -69,7 +69,7 @@ function handleHistory(ptcom)
   let entry_size = 1 + 8 + device.system.ioValueCount * 4;
 
   let epochs = []; //an array of epochs
-  let this_epoch = []; //an array of SystemDatum
+  let this_epoch = device.system.createEpoch();
 
   const new_epoch_flag = Math.pow(2,0);
   const split_epoch_flag = Math.pow(2,1);
@@ -83,43 +83,80 @@ function handleHistory(ptcom)
         //Start a new epoch
         if (this_epoch.length) {
           epochs.push(this_epoch);
-          this_epoch = [];
+          this_epoch = device.system.createEpoch();
         }
     }
 
     if(flag&split_epoch_flag){
       //Merge with first epoch
       if(this_epoch.length){
-        epochs[0]=this_epoch.concat(epochs[0]);
-        this_epoch = [];
+        epochs[0].timestamps=this_epoch.timestamps.concat(epochs[0].timestamps);
+        for(let i=0;i<device.system.ioValueCount;i++)
+        {
+          epochs[0].values[i]=this_epoch.values[i].concat(epochs[0].values[i]);
+        }
+        this_epoch = device.system.createEpoch();
       }
     }
 
-    let this_datum = device.system.createSystemDatum();
+    let millis=ptcom.message.getInt64();
+
+    let seconds=millis/1000;
+    let millis_remainder=millis%1000;
+    let timestamp=moment.unix(seconds);
+    timestamp.milliseconds(millis_remainder);
+
+    this_epoch.timestamps.push(timestamp);
+
+    for(let i=0;i<device.system.ioValueCount;i++)
     {
-      let millis=ptcom.message.getInt64();
-      let seconds=millis/1000;
-      let millis_remainder=millis%1000;
-
-      this_datum.timestamp=moment.unix(seconds);
-      this_datum.timestamp.milliseconds(millis_remainder);
-
-      for(let i=0;i<this_datum.values.length;i++)
-      {
-        this_datum.values[i]=ptcom.message.getFloat32();
-      }
+      this_epoch.values[i].push(ptcom.message.getFloat32());
     }
-    this_epoch.push(this_datum);
   }
 
-  if(this_epoch.length){
+  if(this_epoch.timestamps.length){
     epochs.push(this_epoch);
   }
 
   console.log(epochs);
 
+  if(regime!==0){return;}
+
+  //This is working but it isn't a good way to load data into charts.
+
   //chart.labels = epochs[0].
   //chart.datasets[0].data=;
+  let values = device.system.getIOValues();
+  for(let i=0;i<values.length;i++)
+  {
+    values[i].chart.data.labels = [];
+    values[i].chart.data.datasets = [];
+
+    for(let j=0;j<epochs.length;j++)
+    {
+      let new_dataset = {
+          label: "My First dataset",
+          fill: false, //no filling under the curve
+          //backgroundColor: "rgb(0,0,0,0)", //transparent (this fills under the curve)
+          borderColor: "rgb(255, 0, 0, 255)",
+          data: [],
+          //pointRadius: 0 //don't render points, but if this is don't you can't hover to get value
+          //pointBackgroundColor: "rgb(0,0,0,0)",
+          pointBorderColor: "rgb(0,0,0,0)" //transparent
+      };
+
+      let this_epoch = epochs[j];
+      for(let k=0;k<this_epoch.timestamps.length;k++)
+      {
+        new_dataset.data.push({x:this_epoch.timestamps[k],y:this_epoch.values[i][k]});
+      }
+      values[i].chart.data.datasets.push(new_dataset);
+
+      console.log(values[i].chart.data);
+    }
+
+    values[i].chart.update();
+  }
 }
 
 function onMessage(evt)

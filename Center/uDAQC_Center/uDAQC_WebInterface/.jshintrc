@@ -95,6 +95,7 @@
       "IO_Device" : true,
       "changeNodes" : true,
       "createChart" : true,
-      "moment" :true
+      "moment" :true,
+      "Chart" : true
       }        // additional predefined global variables
 }
