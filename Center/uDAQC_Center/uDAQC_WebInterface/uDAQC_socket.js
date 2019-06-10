@@ -146,10 +146,10 @@ function handleHistory(ptcom)
       };
 
       let this_epoch = epochs[j];
-      for(let k=0;k<this_epoch.timestamps.length;k++)
-      {
-        new_dataset.data.push({x:this_epoch.timestamps[k],y:this_epoch.values[i][k]});
-      }
+
+      new_dataset.data=this_epoch.values[i];
+
+      values[i].chart.data.labels = this_epoch.timestamps;
       values[i].chart.data.datasets.push(new_dataset);
 
       console.log(values[i].chart.data);
