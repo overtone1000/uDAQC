@@ -68,16 +68,12 @@ function handleHistory(ptcom)
   let device = IO.devices.get(ptcom.source_ID);
   let entry_size = 1 + 8 + device.system.ioValueCount * 4;
 
-  console.log(ptcom.message.Remaining()/entry_size + " entries. " + ptcom.message.Remaining()%entry_size + " unaccounted bytes.");
-
   let epochs = []; //an array of epochs
   let this_epoch = []; //an array of SystemDatum
 
   const new_epoch_flag = Math.pow(2,0);
   const split_epoch_flag = Math.pow(2,1);
 
-  console.log("Entry size = " + entry_size);
-  console.log("Remaining = " + ptcom.message.Remaining());
   while(ptcom.message.Remaining()>entry_size)
   {
     let flag = ptcom.message.getInt8();
@@ -101,15 +97,19 @@ function handleHistory(ptcom)
 
     let this_datum = device.system.createSystemDatum();
     {
-      this_datum.timestamp=ptcom.message.getInt64();
+      let millis=ptcom.message.getInt64();
+      let seconds=millis/1000;
+      let millis_remainder=millis%1000;
+
+      this_datum.timestamp=moment.unix(seconds);
+      this_datum.timestamp.milliseconds(millis_remainder);
+
       for(let i=0;i<this_datum.values.length;i++)
       {
         this_datum.values[i]=ptcom.message.getFloat32();
       }
     }
     this_epoch.push(this_datum);
-
-    console.log("Remaining = " + ptcom.message.Remaining());
   }
 
   if(this_epoch.length){
@@ -117,6 +117,9 @@ function handleHistory(ptcom)
   }
 
   console.log(epochs);
+
+  //chart.labels = epochs[0].
+  //chart.datasets[0].data=;
 }
 
 function onMessage(evt)
