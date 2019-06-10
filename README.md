@@ -81,6 +81,8 @@ The log file itself is composed of a series of entries with the following struct
 2. int_64 containing timestamp (ms since last Java epoch). Although javascript does not handle 64-bit integers well, the max safe value is 9,007,199,254,740,991 while an epoch only contains 2,147,483,647,000 milliseconds (more than 3 orders of magnitude)
 3. float_32 for each IO_Value in this system (in the same order as that found in a data message)
 
+There is currently a timing discrepancy. The Device sends microseconds since the last epoch, but Java converts to milliseconds. This is simply due to a desire to use JodaTime in the Java IO_System class. This would be okay with javascript, as 2,147,483,647,000,000 microseconds per epoch is still less than the safe integer value for Javascript.
+
 # Value Modification Structure
 IO_ModifiableValue modification message is a command whose message has the following structure:
 1. int_16 containing the index for the ModifiableValue (see above)
