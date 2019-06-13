@@ -30,6 +30,7 @@ namespace IO
     extern const int16_t request_subscription;
     extern const int16_t history;
     extern const int16_t passthrough;
+    extern const int16_t new_device_avaialable;
   };
 
   namespace DataTypes

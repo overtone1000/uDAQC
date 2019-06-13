@@ -41,6 +41,7 @@ namespace IO
     const int16_t request_subscription=10;
     const int16_t history=11;
     const int16_t passthrough=12;
+    const int16_t new_device_avaialable=13;
   };
   namespace DataTypes
   {

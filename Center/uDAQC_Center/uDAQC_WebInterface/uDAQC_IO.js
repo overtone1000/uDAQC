@@ -11,7 +11,8 @@ const IO_Constants =
 		modifiablevalue_modification: 9,
 		request_subscription: 10,
 		history: 11,
-    passthrough: 12
+    passthrough: 12,
+    new_device_available: 13
 };
 
 const DataTypes =
