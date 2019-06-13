@@ -14,6 +14,7 @@ namespace IO
   {
     //extern const uint32_t tcp_main_port;
     extern const uint32_t udp_multicast_port;
+    extern const IPAddress udp_multicast_IP;
   }
 
   namespace NetworkCommands //Use sign 16 bit integer. Java doesn't support unsigned shorts.

@@ -5,18 +5,20 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.file.Path;
+import java.util.Timer;
 import java.util.TreeMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
 
 import network.http.HTTPS_Server;
 import network.tcp.server.TCP_Server;
-import network.udp.UDP_Sender;
+import network.udp.UDP_Funnel;
 import udaqc.io.IO_Constants;
 import udaqc.io.IO_Constants.Command_IDs;
 import udaqc.io.log.IO_System_Logged;
@@ -40,6 +42,8 @@ public class Center extends TCP_Server
 	private HTTPS_Server webserver;
 
 	private Path path;
+	
+	private UDP_Funnel udp;
 
 	public Center(String Threadname, Path path, CenterHandler handler)
 	{
@@ -76,20 +80,9 @@ public class Center extends TCP_Server
 	@Override
 	public void serverinitialized()
 	{
-		try
-		{
-			System.out.println("Sending multicast.");
-
-			IoBuffer message = IoBuffer.allocate(Integer.BYTES);
-			message.order(ByteOrder.LITTLE_ENDIAN);
-			message.putInt(this.Port());
-			Command c = new Command(IO_Constants.Command_IDs.request_subscription, message.array());
-
-			UDP_Sender.send(c, Addresses.udp_broadcast);
-		} catch (IOException e)
-		{
-			System.out.println(e.getMessage());
-		}
+		System.out.println("Sending multicast.");
+		udp = new UDP_Funnel(this.Port());
+		udp.Announce();
 	}
 
 	@Override

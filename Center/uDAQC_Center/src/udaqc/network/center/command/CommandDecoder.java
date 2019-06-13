@@ -10,7 +10,7 @@ public class CommandDecoder extends CumulativeProtocolDecoder {
 	@Override
     protected boolean doDecode(IoSession session, IoBuffer in, ProtocolDecoderOutput out) throws Exception 
 	{
-		Command result = Command.tryDecode(in);
+		Command result = Command.tryDecode(in.buf());
 		
 		if(result==null)
 		{

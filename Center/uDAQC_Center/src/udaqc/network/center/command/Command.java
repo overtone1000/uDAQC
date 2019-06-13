@@ -62,27 +62,27 @@ public class Command {
 		return c;
 	}
 	
-	public static Command tryDecode(IoBuffer in)
+	public static Command tryDecode(ByteBuffer bb)
 	{
-		int start=in.position();
+		int start=bb.position();
 		
-		in.order(ByteOrder.LITTLE_ENDIAN);
+		bb.order(ByteOrder.LITTLE_ENDIAN);
 		
-		if(in.remaining()<CommandHeader.header_length) 
+		if(bb.remaining()<CommandHeader.header_length) 
 		{
 			//System.out.println("Waiting for header, only " + in.remaining() + " currently available.");
-			in.position(start);
+			bb.position(start);
 			return null;
 		}
 		
 		CommandHeader header=new CommandHeader();
-		header.message_length=in.getInt();
-		header.command_id=in.getShort();
+		header.message_length=bb.getInt();
+		header.command_id=bb.getShort();
 						
-		if(in.remaining()>=header.message_length) //message length is now strictly the length of the message, not the message plus the command header
+		if(bb.remaining()>=header.message_length) //message length is now strictly the length of the message, not the message plus the command header
 		{
             byte[] message=new byte[header.message_length];
-            in.get(message);            
+            bb.get(message);            
             Command result = new Command(header,message);
             
             return result;
@@ -90,7 +90,7 @@ public class Command {
 		else
 		{
 			//System.out.println("Waiting for command " + header.command_id + " of length " + (Integer)(header.message_length));
-			in.position(start);
+			bb.position(start);
 			return null;
 		}
 	}

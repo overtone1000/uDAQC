@@ -50,13 +50,15 @@ namespace ESP_Managers{ namespace IO
     //uint8_t* data=nullptr;
     static std::vector<IO_Saveable*> saveable_members;
 
-    void add_client(IPAddress host, int port);
+    void add_center(IPAddress host, int port);
 
     IO_Timestamp ts; //This is used to send the timestamp with the data. It's the first member of the group.
     //void Resize();
 
     Repeater udp_timer;
     //Repeater debug_timer;
+
+    void announceUDP();
   };
 }};
 

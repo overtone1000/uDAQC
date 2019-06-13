@@ -68,9 +68,20 @@ namespace ESP_Managers{ namespace IO
     //tcp_server.begin();
   }
 
-  void IO_System::add_client(IPAddress host, int port)
+  void IO_System::add_center(IPAddress host, int port)
   {
-    DEBUG_println("Adding tcp client.");
+    DEBUG_println("Adding uDAQC Center.");
+
+    DEBUG_println("Checking whether client " + host.toString() + ":" + (String)port + "exists.");
+    for(auto it = tcp_clients.begin();it!=tcp_clients.end();it++)
+    {
+      DEBUG_println("Comparing to client " + it->remoteIP().toString() + ":" + (String)(it->remotePort()));
+      if(it->remoteIP()==host && it->remotePort() == port)
+      {
+        DEBUG_println("Already exists.");
+        return;
+      }
+    }
 
     CommandCodec::TCP_Command_Client new_client;
     new_client.connect(host,port);
@@ -256,12 +267,33 @@ namespace ESP_Managers{ namespace IO
     //multicast doesn't work well (subscription expires), just use broadcasting
     //this is fine, as this isn't really the intended situation for multicasting use
     udp.begin(ESP_Managers::IO::Constants::udp_multicast_port);
+
+    announceUDP();
 	}
+
+  void IO_System::announceUDP()
+  {
+    CommandCodec::TCP_Command_Header header;
+    header.message_length = 0;
+    header.command_id = IO::NetworkCommands::new_device_avaialable;
+
+    udp.beginPacket(IO::Constants::udp_multicast_IP, IO::Constants::udp_multicast_port);
+    udp.write((uint8_t*)&(header.message_length),sizeof(header.message_length));
+    udp.write((uint8_t*)&(header.command_id),sizeof(header.command_id));
+    udp.endPacket();
+
+    DEBUG_println("UDP announcement sent.");
+  }
 
 	void IO_System::LoopUDP()
 	{
 		//max packet size is 65,507 bytes
     //but this define is in wifiudp.h: #define UDP_TX_PACKET_MAX_SIZE 8192
+
+    if(tcp_clients.empty() && udp_timer.repeatnow())
+    {
+      announceUDP();
+    }
 
     //Eventually, the device stops responding to multicast. This looks like a bug in the ESP8266 library. Here is a workaround.
 		int packetSize = udp.parsePacket();
@@ -283,7 +315,7 @@ namespace ESP_Managers{ namespace IO
         int32_t port;
         udp.read((uint8_t*)(&port),sizeof(port));
 
-        add_client(udp.remoteIP(), port);
+        add_center(udp.remoteIP(), port);
 
         /*
         DEBUG_println("Sending response to " + udp.remoteIP().toString() + ":" + (String)port);
