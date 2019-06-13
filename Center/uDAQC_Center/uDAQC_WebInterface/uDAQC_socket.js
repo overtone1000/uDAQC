@@ -59,13 +59,6 @@ function handlePassthroughCommand(ptcom)
 class Epochs{
   constructor(value_count)
   {
-    this.timestamps_concat = [];
-    this.timestamp_arrays = [];
-    this.value_arrays = new Array(value_count);
-    for(let n = 0; n<this.value_arrays.length;n++)
-    {
-      this.value_arrays[n]=[];
-    }
     this.timestamps = [];
     this.values = new Array(value_count);
     for(let n = 0; n<this.values.length;n++)
@@ -76,12 +69,6 @@ class Epochs{
   }
   startNewEpoch()
   {
-    this.timestamp_arrays.push([]);
-    for(let n = 0; n<this.value_arrays.length;n++)
-    {
-      this.value_arrays[n].push([]);
-    }
-
     if(this.timestamps.length)
     {
       this.timestamps.push(this.timestamps[this.timestamps.length-1]);
@@ -94,11 +81,15 @@ class Epochs{
   mergeLastAndFirst()
   {
     console.log("Merging first and last.");
-    if(this.timestamp_arrays.length>1 && this.timestamp_arrays[this.timestamp_arrays.length-1].length){
-      this.timestamp_arrays[0]=this.timestamp_arrays[this.timestamp_arrays.length-1].concat(this.timestamp_arrays[0]);
-      for(let n=0;n<this.value_arrays.length;n++)
+
+    //Easiest way to do this is to simply duplicate the last point.
+
+    if(this.timestamps.length)
+    {
+      this.timestamps.push(this.timestamps[0]);
+      for(let n = 0; n<this.values.length;n++)
       {
-        this.value_arrays[n][0]=this.value_arrays[n][this.value_arrays[n].length-1].concat(this.value_arrays[n][0]);
+        this.values[n].push(this.values[n][0]);
       }
     }
   }
@@ -130,11 +121,9 @@ class Epochs{
     let timestamp=moment.unix(seconds);
     timestamp.milliseconds(millis_remainder);
 
-    this.timestamp_arrays[this.timestamp_arrays.length-1].push(timestamp);
-    this.timestamps_concat.push(timestamp);
     this.timestamps.push(timestamp);
 
-    for(let n=0;n<this.value_arrays.length;n++)
+    for(let n=0;n<this.values.length;n++)
     {
       //this.value_arrays[n][this.value_arrays[n].length-1].push(message.getFloat32());
       this.values[n].push(message.getFloat32());
@@ -142,24 +131,24 @@ class Epochs{
   }
   earliestTime()
   {
-    let retval=this.timestamps_concat[0];
-    for(let n=0;n<this.timestamps_concat.length;n++)
+    let retval=this.timestamps[0];
+    for(let n=0;n<this.timestamps.length;n++)
     {
-      if(retval.isAfter(this.timestamps_concat[n]))
+      if(retval.isAfter(this.timestamps[n]))
       {
-        retval = this.timestamps_concat[n];
+        retval = this.timestamps[n];
       }
     }
     return retval;
   }
   latestTime()
   {
-    let retval=this.timestamps_concat[0];
-    for(let n=0;n<this.timestamps_concat.length;n++)
+    let retval=this.timestamps[0];
+    for(let n=0;n<this.timestamps.length;n++)
     {
-      if(retval.isBefore(this.timestamps_concat[n]))
+      if(retval.isBefore(this.timestamps[n]))
       {
-        retval = this.timestamps_concat[n];
+        retval = this.timestamps[n];
       }
     }
     return retval;
