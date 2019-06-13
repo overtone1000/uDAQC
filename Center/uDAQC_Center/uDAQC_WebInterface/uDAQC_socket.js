@@ -59,6 +59,7 @@ function handlePassthroughCommand(ptcom)
 class Epochs{
   constructor(value_count)
   {
+    this.current_epoch_index = 0;
     this.timestamps = [];
     this.values = new Array(value_count);
     for(let n = 0; n<this.values.length;n++)
@@ -71,6 +72,7 @@ class Epochs{
   {
     if(this.timestamps.length)
     {
+      this.current_epoch_index = this.timestamps.length;
       this.timestamps.push(this.timestamps[this.timestamps.length-1]);
       for(let n = 0; n<this.values.length;n++)
       {
@@ -78,21 +80,31 @@ class Epochs{
       }
     }
   }
+
   mergeLastAndFirst()
   {
     console.log("Merging first and last.");
 
-    //Easiest way to do this is to simply duplicate the last point.
-
-    if(this.timestamps.length)
+    if(this.current_epoch_index<=0 || this.current_epoch_index>=this.timestamps.length-1)
     {
-      this.timestamps.push(this.timestamps[0]);
-      for(let n = 0; n<this.values.length;n++)
-      {
-        this.values[n].push(this.values[n][0]);
-      }
+      return;
     }
+
+    Epochs.reorder(this.timestamps,this.current_epoch_index);
+    for(let n = 0; n<this.values.length;n++)
+    {
+      Epochs.reorder(this.timestamps[n],this.current_epoch_index);
+    }
+    this.current_epoch_index=this.timestamps.length;
   }
+
+  static reorder(array, index)
+  {
+    let first = array.slice(0,index);
+    let last = array.slice(index);
+    array = last.concat(first);
+  }
+
   processEntry(message)
   {
     const new_epoch_flag = Math.pow(2,0);
