@@ -56,10 +56,106 @@ function handlePassthroughCommand(ptcom)
   }
 }
 
+class Epochs{
+  constructor(value_count)
+  {
+    this.timestamps_concat = [];
+    this.timestamp_arrays = [];
+    this.value_arrays = new Array(value_count);
+    for(let n = 0; n<this.value_arrays.length;n++)
+    {
+      this.value_arrays[n]=[];
+    }
+    //this.startNewEpoch();
+  }
+  startNewEpoch()
+  {
+    this.timestamp_arrays.push([]);
+    for(let n = 0; n<this.value_arrays.length;n++)
+    {
+      this.value_arrays[n].push([]);
+    }
+  }
+  mergeLastAndFirst()
+  {
+    console.log("Merging first and last.");
+    if(this.timestamp_arrays.length>1 && this.timestamp_arrays[this.timestamp_arrays.length-1].length){
+      this.timestamp_arrays[0]=this.timestamp_arrays[this.timestamp_arrays.length-1].concat(this.timestamp_arrays[0]);
+      for(let n=0;n<this.value_arrays.length;n++)
+      {
+        this.value_arrays[n][0]=this.value_arrays[n][this.value_arrays[n].length-1].concat(this.value_arrays[n][0]);
+      }
+    }
+  }
+  processEntry(message)
+  {
+    const new_epoch_flag = Math.pow(2,0);
+    const split_epoch_flag = Math.pow(2,1);
+
+    let flag = message.getInt8();
+
+    console.log("Flag = " + flag);
+
+    if(flag&new_epoch_flag){
+        //Start a new epoch
+        console.log("New epoch flag.");
+        this.startNewEpoch();
+    }
+
+    if(flag&split_epoch_flag){
+      //Merge with first epoch
+      console.log("Split flag.");
+      this.mergeLastAndFirst();
+    }
+
+    let millis=message.getInt64();
+
+    let seconds=millis/1000;
+    let millis_remainder=millis%1000;
+    let timestamp=moment.unix(seconds);
+    timestamp.milliseconds(millis_remainder);
+
+    this.timestamp_arrays[this.timestamp_arrays.length-1].push(timestamp);
+    this.timestamps_concat.push(timestamp);
+
+    for(let n=0;n<this.value_arrays.length;n++)
+    {
+      this.value_arrays[n][this.value_arrays[n].length-1].push(message.getFloat32());
+    }
+  }
+  earliestTime()
+  {
+    let retval=this.timestamps_concat[0];
+    for(let n=0;n<this.timestamps_concat.length;n++)
+    {
+      if(retval.isAfter(this.timestamps_concat[n]))
+      {
+        retval = this.timestamps_concat[n];
+      }
+    }
+    return retval;
+  }
+  latestTime()
+  {
+    let retval=this.timestamps_concat[0];
+    for(let n=0;n<this.timestamps_concat.length;n++)
+    {
+      if(retval.isBefore(this.timestamps_concat[n]))
+      {
+        retval = this.timestamps_concat[n];
+      }
+    }
+    return retval;
+  }
+}
+
 function handleHistory(ptcom)
 {
   let regime = ptcom.message.getInt32();
   let max_size = ptcom.message.getInt64();
+
+
+  if(regime!==0){console.debug("Not processing non-live history.");return;}
 
   console.log("Regime " + regime);
   console.log("Max size is " + max_size);
@@ -68,59 +164,16 @@ function handleHistory(ptcom)
   let device = IO.devices.get(ptcom.source_ID);
   let entry_size = 1 + 8 + device.system.ioValueCount * 4;
 
-  let epochs = []; //an array of epochs
-  let this_epoch = device.system.createEpoch();
-
-  const new_epoch_flag = Math.pow(2,0);
-  const split_epoch_flag = Math.pow(2,1);
+  let epochs = new Epochs(device.system.ioValueCount);
 
   while(ptcom.message.Remaining()>entry_size)
   {
-    let flag = ptcom.message.getInt8();
-    console.log("Flag = " + flag);
-
-    if(flag&new_epoch_flag){
-        //Start a new epoch
-        if (this_epoch.length) {
-          epochs.push(this_epoch);
-          this_epoch = device.system.createEpoch();
-        }
-    }
-
-    if(flag&split_epoch_flag){
-      //Merge with first epoch
-      if(this_epoch.length){
-        epochs[0].timestamps=this_epoch.timestamps.concat(epochs[0].timestamps);
-        for(let i=0;i<device.system.ioValueCount;i++)
-        {
-          epochs[0].values[i]=this_epoch.values[i].concat(epochs[0].values[i]);
-        }
-        this_epoch = device.system.createEpoch();
-      }
-    }
-
-    let millis=ptcom.message.getInt64();
-
-    let seconds=millis/1000;
-    let millis_remainder=millis%1000;
-    let timestamp=moment.unix(seconds);
-    timestamp.milliseconds(millis_remainder);
-
-    this_epoch.timestamps.push(timestamp);
-
-    for(let i=0;i<device.system.ioValueCount;i++)
-    {
-      this_epoch.values[i].push(ptcom.message.getFloat32());
-    }
+    console.log("Processing entry.");
+    epochs.processEntry(ptcom.message);
   }
 
-  if(this_epoch.timestamps.length){
-    epochs.push(this_epoch);
-  }
-
+  console.log("History interpretation finished.");
   console.log(epochs);
-
-  if(regime!==0){return;}
 
   //This is working but it isn't a good way to load data into charts.
 
@@ -129,33 +182,32 @@ function handleHistory(ptcom)
   let values = device.system.getIOValues();
   for(let i=0;i<values.length;i++)
   {
-    values[i].chart.data.labels = [];
-    values[i].chart.data.datasets = [];
 
-    for(let j=0;j<epochs.length;j++)
+    values[i].chart.data.labels = epochs.timestamps_concat;
+    values[i].chart.options.scales.xAxes[0].ticks.suggestedMin = epochs.earliestTime();
+    values[i].chart.options.scales.xAxes[0].ticks.suggestedMin = epochs.latestTime();
+
+    values[i].chart.data.datasets=[];
+    for(let j=0;j<epochs.timestamp_arrays.length;j++)
     {
-      let new_dataset = {
-          label: "My First dataset",
-          fill: false, //no filling under the curve
-          //backgroundColor: "rgb(0,0,0,0)", //transparent (this fills under the curve)
-          borderColor: "rgb(255, 0, 0, 255)",
-          data: [],
-          //pointRadius: 0 //don't render points, but if this is don't you can't hover to get value
-          //pointBackgroundColor: "rgb(0,0,0,0)",
-          pointBorderColor: "rgb(0,0,0,0)" //transparent
+      let dataset = {
+        label: "Epoch " + j,
+        fill: false, //no filling under the curve
+        //backgroundColor: "rgb(0,0,0,0)", //transparent (this fills under the curve)
+        borderColor: "rgb(255, 0, 0, 255)",
+        data: epochs.value_arrays[i][j],
+        labels: epochs.timestamp_arrays[j],
+        //pointRadius: 0 //don't render points, but if this is don't you can't hover to get value
+        //pointBackgroundColor: "rgb(0,0,0,0)",
+        pointBorderColor: "rgb(0,0,0,0)", //transparent
+        spanGaps: false
       };
-
-      let this_epoch = epochs[j];
-
-      new_dataset.data=this_epoch.values[i];
-
-      values[i].chart.data.labels = this_epoch.timestamps;
-      values[i].chart.data.datasets.push(new_dataset);
-
-      console.log(values[i].chart.data);
+      values[i].chart.data.datasets.push(dataset);
     }
 
     values[i].chart.update();
+
+    console.log(values[i].chart.data);
   }
 }
 

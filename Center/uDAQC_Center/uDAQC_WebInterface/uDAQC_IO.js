@@ -1,6 +1,6 @@
 "use strict";
 
-let IO_Constants =
+const IO_Constants =
 {
     group_description: 1,
 		emptyreporter_description: 2,
@@ -14,7 +14,7 @@ let IO_Constants =
     passthrough: 12
 };
 
-let DataTypes =
+const DataTypes =
 {
   undefined: -1,
   signed_integer: 1,
@@ -338,19 +338,19 @@ class IO_Group extends IO_Reporter
         {
           case IO_Constants.group_description:
             this.members[i]=new IO_Group(bytebuffer, indices);
-            //console.log("Processeed member " + this.members[i].name);
+            //console.log("Processeed member " + this.members[i].name + " as group.");
           break;
           case IO_Constants.emptyreporter_description:
             this.members[i]=new IO_Reporter(bytebuffer, indices);
-            //console.log("Processeed member " + this.members[i].name);
+            //console.log("Processeed member " + this.members[i].name + " as empty reporter.");
           break;
           case IO_Constants.value_description:
             this.members[i]=new IO_Value(bytebuffer, indices);
-            //console.log("Processeed member " + this.members[i].name);
+            //console.log("Processeed member " + this.members[i].name + " as value.");
           break;
           case IO_Constants.modifiablevalue_description:
             this.members[i]=new IO_ModifiableValue(bytebuffer, indices);
-            //console.log("Processeed member " + this.members[i].name);
+            //console.log("Processeed member " + this.members[i].name + " as modifiable value.");
           break;
           default:
           console.log("Wrong command description = " + command_description);
@@ -461,19 +461,6 @@ class IO_System extends IO_Group
     //Remove timestamp
     retval.removeChild(retval.children[1]);
 
-    return retval;
-  }
-
-  createEpoch()
-  {
-    let retval =     {
-      timestamps : [],
-      values : new Array(this.ioValueCount)
-    };
-    for(let i=0;i<retval.values.length;i++)
-    {
-      retval.values[i]=[];
-    }
     return retval;
   }
 }

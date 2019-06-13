@@ -4,12 +4,9 @@
 #include <cmath>
 
 #ifndef TEMP_TESTING
-//ESP_Managers::IO::ESP_Internals this_device("ESP8266 Chip1", ESP_Managers::IO::System());
-//ESP_Managers::IO::BinarySwitch test_switch("Test switch1", ESP_Managers::IO::System());
-//ESP_Managers::IO::IO_SaveableValue<int> test_int("Test int1", "foobars", ESP_Managers::IO::System());
 ESP_Managers::IO::IO_SaveableValue<float> test_float("Test float1", "barfoos", ESP_Managers::IO::System());
 ESP_Managers::IO::IO_Value<float> test_input_temp("Test input0","degC",ESP_Managers::IO::System());
-//ESP_Managers::IO::PID test_PID("Test PID1", "degC", "%", ESP_Managers::IO::System());
+ESP_Managers::IO::PID test_PID("Test PID1", "degC", "%", ESP_Managers::IO::System());
 #endif
 
 const int LED_PIN = 5; // Thing's onboard, green LED
