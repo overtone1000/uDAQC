@@ -9,6 +9,7 @@ import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
+import org.apache.commons.lang3.time.StopWatch;
 import org.apache.mina.core.buffer.IoBuffer;
 
 import udaqc.io.IO_Constants;
@@ -21,11 +22,13 @@ public class UDP_Funnel implements Runnable
 	protected Thread t;
 	protected boolean continuerunning = false;
 	protected int destination_port;
+	private StopWatch broadcast_sw = new StopWatch();
+	private static final int repeat = 1000*60*10; //broadcast every 10 minutes
 	
 	public UDP_Funnel(int destination_port)
 	{
 		this.destination_port = destination_port;
-		
+		broadcast_sw.start();
 		try
 		{
 			socket = new DatagramSocket(Addresses.udp_broadcast.getPort());
@@ -107,6 +110,12 @@ public class UDP_Funnel implements Runnable
 		DatagramPacket packet = new DatagramPacket(buf, buf.length);
 		while(continuerunning)
 		{
+			if(broadcast_sw.getTime()>=repeat)
+			{
+				Announce();
+				broadcast_sw.reset();
+				broadcast_sw.start();
+			}
 			try
 			{
 				socket.receive(packet);
