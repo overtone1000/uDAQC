@@ -477,5 +477,6 @@ public class IO_Log
 	{
 		epochs.add(current_epoch);
 		current_epoch=new Epoch(values);
+		start_new_epoch=true;
 	}
 }
