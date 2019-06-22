@@ -89,39 +89,7 @@ function handleHistory(ptcom)
   console.log("History interpretation finished.");
   console.log(epochs);
 
-  let values = device.system.getIOValues();
-  for(let i=0;i<values.length;i++)
-  {
-
-    values[i].chart.data.labels = epochs.timestamps;
-    values[i].chart.options.scales.xAxes[0].ticks.suggestedMin = epochs.earliestTime();
-    values[i].chart.options.scales.xAxes[0].ticks.suggestedMin = epochs.latestTime();
-
-    values[i].chart.data.datasets=
-    [
-      {
-        label: "Data",
-        fill: false, //no filling under the curve
-        //backgroundColor: "rgb(0,0,0,0)", //transparent (this fills under the curve)
-        borderColor: "rgb(255, 0, 0, 255)",
-        data: epochs.values[i],
-        labels: epochs.timestamps,
-        //pointRadius: 0 //don't render points, but if this is don't you can't hover to get value
-        //pointBackgroundColor: "rgb(0,0,0,0)",
-        pointBorderColor: "rgb(0,0,0,0)", //transparent
-        spanGaps: false
-      }
-    ];
-
-    values[i].chart.update();
-
-    console.log(values[i].chart.data);
-  }
-}
-
-function setChartsToEpochs(epochs)
-{
-
+  device.system.setChartRegime(regime);
 }
 
 function onMessage(evt)
