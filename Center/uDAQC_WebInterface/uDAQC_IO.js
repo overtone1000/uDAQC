@@ -505,7 +505,7 @@ class IO_System extends IO_Group
 
       values[i].chart.update();
 
-      console.log(values[i].chart.data);
+      //console.log(values[i].chart.data);
     }
   }
 }
@@ -651,17 +651,17 @@ class Epochs{
 
     let flag = message.getInt8();
 
-    console.log("Flag = " + flag);
+    //console.log("Flag = " + flag);
 
     if(flag&new_epoch_flag){
         //Start a new epoch
-        console.log("New epoch flag.");
+        //console.log("New epoch flag.");
         this.startNewEpoch();
     }
 
     if(flag&split_epoch_flag){
       //Merge with first epoch
-      console.log("Split flag.");
+      //console.log("Split flag.");
       this.mergeLastAndFirst();
     }
 

@@ -61,12 +61,7 @@ function handleHistory(ptcom)
   let regime = ptcom.message.getInt32();
   let max_size = ptcom.message.getInt64();
 
-
-  if(regime!==0){console.debug("Not processing non-live history.");return;}
-
-  console.log("Regime " + regime);
-  console.log("Max size is " + max_size);
-  console.log("Received size is " + ptcom.message.Remaining());
+  console.log("History received for regime " + regime);
 
   let device = IO.devices.get(ptcom.source_ID);
   let entry_size = 1 + 8 + device.system.ioValueCount * 4;
@@ -76,20 +71,24 @@ function handleHistory(ptcom)
   let test_count=0;
   while(ptcom.message.Remaining()>entry_size)
   {
-    console.log("Processing entry.");
+    //console.log("Processing entry.");
     epochs.processEntry(ptcom.message);
     test_count++;
     if(test_count===3)
     {
-      console.debug("Test breakup of data");
+      //console.debug("Test breakup of data");
       epochs.startNewEpoch();
     }
   }
 
-  console.log("History interpretation finished.");
-  console.log(epochs);
+  //console.log("History interpretation finished.");
 
-  device.system.setChartRegime(regime);
+  if(regime===0){
+    console.debug("Setting to live regime.");
+    device.system.setChartRegime(regime);
+  }
+
+
 }
 
 function onMessage(evt)
@@ -102,7 +101,7 @@ function onMessage(evt)
     case IO_Constants.passthrough:
       {
         let ptcom = new PTCommand(c);
-        console.log("Passthrough command received. Nested command is " + ptcom.PTcommand_ID + ".");
+        //console.log("Passthrough command received. Nested command is " + ptcom.PTcommand_ID + ".");
         handlePassthroughCommand(ptcom);
       }
       break;
