@@ -58,7 +58,7 @@ public class HTTPS_Server
 {
 	private ArrayList<Session> sessions = new ArrayList<Session>();
 	
-	private static final String home_dir = "./uDAQC_WebInterface";
+	private static final String home_dir = "../uDAQC_WebInterface";
 	private static final String home_page = "index.html";
 
 	Server server;
