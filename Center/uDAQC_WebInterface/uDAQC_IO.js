@@ -440,6 +440,8 @@ class IO_System extends IO_Group
     //this.ioValueCount = this.countIOValues()-1; //subtract one for the Timestamp
     this.ioValueCount = this.countIOValues(); //timestamp is still coming across as a float32. This should be fixed.
     console.log("System has " + this.ioValueCount + " values.");
+
+    this.epochs = new Map();
   }
 
   toNode()
@@ -463,6 +465,15 @@ class IO_System extends IO_Group
     retval.removeChild(retval.children[1]);
 
     return retval;
+  }
+
+  getEpochs(regime_index)
+  {
+    if(!this.epochs.has(regime_index))
+    {
+      this.epochs.set(regime_index,new Epochs(this));
+    }
+    return this.epochs.get(regime_index);
   }
 }
 
@@ -548,5 +559,116 @@ class IO_ModifiableValue extends IO_Value
   constructor(bytebuffer, indices){
     super(bytebuffer, indices);
     this.modval_index = bytebuffer.getInt16();
+  }
+}
+
+class Epochs{
+  constructor(system)
+  {
+    this.current_epoch_index = 0;
+    this.timestamps = [];
+    this.values = new Array(system.ioValueCount);
+    for(let n = 0; n<this.values.length;n++)
+    {
+      this.values[n]=[];
+    }
+    //this.startNewEpoch();
+  }
+  startNewEpoch()
+  {
+    if(this.timestamps.length)
+    {
+      this.current_epoch_index = this.timestamps.length;
+      this.timestamps.push(this.timestamps[this.timestamps.length-1]);
+      for(let n = 0; n<this.values.length;n++)
+      {
+        this.values[n].push(null);
+      }
+    }
+  }
+
+  mergeLastAndFirst()
+  {
+    console.log("Merging first and last.");
+
+    if(this.current_epoch_index<=0 || this.current_epoch_index>=this.timestamps.length-1)
+    {
+      return;
+    }
+
+    Epochs.reorder(this.timestamps,this.current_epoch_index);
+    for(let n = 0; n<this.values.length;n++)
+    {
+      Epochs.reorder(this.timestamps[n],this.current_epoch_index);
+    }
+    this.current_epoch_index=this.timestamps.length;
+  }
+
+  static reorder(array, index)
+  {
+    let first = array.slice(0,index);
+    let last = array.slice(index);
+    array = last.concat(first);
+  }
+
+  processEntry(message)
+  {
+    const new_epoch_flag = Math.pow(2,0);
+    const split_epoch_flag = Math.pow(2,1);
+
+    let flag = message.getInt8();
+
+    console.log("Flag = " + flag);
+
+    if(flag&new_epoch_flag){
+        //Start a new epoch
+        console.log("New epoch flag.");
+        this.startNewEpoch();
+    }
+
+    if(flag&split_epoch_flag){
+      //Merge with first epoch
+      console.log("Split flag.");
+      this.mergeLastAndFirst();
+    }
+
+    let millis=message.getInt64();
+
+    let seconds=millis/1000;
+    let millis_remainder=millis%1000;
+    let timestamp=moment.unix(seconds);
+    timestamp.milliseconds(millis_remainder);
+
+    this.timestamps.push(timestamp);
+
+    for(let n=0;n<this.values.length;n++)
+    {
+      //this.value_arrays[n][this.value_arrays[n].length-1].push(message.getFloat32());
+      this.values[n].push(message.getFloat32());
+    }
+  }
+  earliestTime()
+  {
+    let retval=this.timestamps[0];
+    for(let n=0;n<this.timestamps.length;n++)
+    {
+      if(retval.isAfter(this.timestamps[n]))
+      {
+        retval = this.timestamps[n];
+      }
+    }
+    return retval;
+  }
+  latestTime()
+  {
+    let retval=this.timestamps[0];
+    for(let n=0;n<this.timestamps.length;n++)
+    {
+      if(retval.isBefore(this.timestamps[n]))
+      {
+        retval = this.timestamps[n];
+      }
+    }
+    return retval;
   }
 }

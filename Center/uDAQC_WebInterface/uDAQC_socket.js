@@ -56,117 +56,6 @@ function handlePassthroughCommand(ptcom)
   }
 }
 
-class Epochs{
-  constructor(value_count)
-  {
-    this.current_epoch_index = 0;
-    this.timestamps = [];
-    this.values = new Array(value_count);
-    for(let n = 0; n<this.values.length;n++)
-    {
-      this.values[n]=[];
-    }
-    //this.startNewEpoch();
-  }
-  startNewEpoch()
-  {
-    if(this.timestamps.length)
-    {
-      this.current_epoch_index = this.timestamps.length;
-      this.timestamps.push(this.timestamps[this.timestamps.length-1]);
-      for(let n = 0; n<this.values.length;n++)
-      {
-        this.values[n].push(null);
-      }
-    }
-  }
-
-  mergeLastAndFirst()
-  {
-    console.log("Merging first and last.");
-
-    if(this.current_epoch_index<=0 || this.current_epoch_index>=this.timestamps.length-1)
-    {
-      return;
-    }
-
-    Epochs.reorder(this.timestamps,this.current_epoch_index);
-    for(let n = 0; n<this.values.length;n++)
-    {
-      Epochs.reorder(this.timestamps[n],this.current_epoch_index);
-    }
-    this.current_epoch_index=this.timestamps.length;
-  }
-
-  static reorder(array, index)
-  {
-    let first = array.slice(0,index);
-    let last = array.slice(index);
-    array = last.concat(first);
-  }
-
-  processEntry(message)
-  {
-    const new_epoch_flag = Math.pow(2,0);
-    const split_epoch_flag = Math.pow(2,1);
-
-    let flag = message.getInt8();
-
-    console.log("Flag = " + flag);
-
-    if(flag&new_epoch_flag){
-        //Start a new epoch
-        console.log("New epoch flag.");
-        this.startNewEpoch();
-    }
-
-    if(flag&split_epoch_flag){
-      //Merge with first epoch
-      console.log("Split flag.");
-      this.mergeLastAndFirst();
-    }
-
-    let millis=message.getInt64();
-
-    let seconds=millis/1000;
-    let millis_remainder=millis%1000;
-    let timestamp=moment.unix(seconds);
-    timestamp.milliseconds(millis_remainder);
-
-    this.timestamps.push(timestamp);
-
-    for(let n=0;n<this.values.length;n++)
-    {
-      //this.value_arrays[n][this.value_arrays[n].length-1].push(message.getFloat32());
-      this.values[n].push(message.getFloat32());
-    }
-  }
-  earliestTime()
-  {
-    let retval=this.timestamps[0];
-    for(let n=0;n<this.timestamps.length;n++)
-    {
-      if(retval.isAfter(this.timestamps[n]))
-      {
-        retval = this.timestamps[n];
-      }
-    }
-    return retval;
-  }
-  latestTime()
-  {
-    let retval=this.timestamps[0];
-    for(let n=0;n<this.timestamps.length;n++)
-    {
-      if(retval.isBefore(this.timestamps[n]))
-      {
-        retval = this.timestamps[n];
-      }
-    }
-    return retval;
-  }
-}
-
 function handleHistory(ptcom)
 {
   let regime = ptcom.message.getInt32();
@@ -182,7 +71,7 @@ function handleHistory(ptcom)
   let device = IO.devices.get(ptcom.source_ID);
   let entry_size = 1 + 8 + device.system.ioValueCount * 4;
 
-  let epochs = new Epochs(device.system.ioValueCount);
+  let epochs = device.system.getEpochs(regime);
 
   let test_count=0;
   while(ptcom.message.Remaining()>entry_size)
@@ -200,10 +89,6 @@ function handleHistory(ptcom)
   console.log("History interpretation finished.");
   console.log(epochs);
 
-  //This is working but it isn't a good way to load data into charts.
-
-  //chart.labels = epochs[0].
-  //chart.datasets[0].data=;
   let values = device.system.getIOValues();
   for(let i=0;i<values.length;i++)
   {
@@ -232,6 +117,11 @@ function handleHistory(ptcom)
 
     console.log(values[i].chart.data);
   }
+}
+
+function setChartsToEpochs(epochs)
+{
+
 }
 
 function onMessage(evt)
