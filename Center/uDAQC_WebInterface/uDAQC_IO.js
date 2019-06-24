@@ -494,12 +494,16 @@ class IO_System extends IO_Group
     console.log("Setting system regime to " + regime_index);
     let values = this.getIOValues();
     let epochs = this.getEpochs(regime_index);
+
+    console.debug("Epoch:");
+    console.debug(epochs);
+
     for(let i=0;i<values.length;i++)
     {
 
       values[i].chart.data.labels = epochs.timestamps;
       values[i].chart.options.scales.xAxes[0].ticks.suggestedMin = epochs.earliestTime();
-      values[i].chart.options.scales.xAxes[0].ticks.suggestedMin = epochs.latestTime();
+      values[i].chart.options.scales.xAxes[0].ticks.suggestedMax = epochs.latestTime();
 
       values[i].chart.data.datasets=
       [
@@ -688,10 +692,13 @@ class Epochs{
 
     this.timestamps.push(timestamp);
 
+    //console.debug("Length is " + this.values.length);
+
     for(let n=0;n<this.values.length;n++)
     {
-      //this.value_arrays[n][this.value_arrays[n].length-1].push(message.getFloat32());
-      this.values[n].push(message.getFloat32());
+      let val = message.getFloat32();
+      this.values[n].push(val);
+      //console.debug("Value is " + val);
     }
   }
   earliestTime()

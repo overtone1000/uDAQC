@@ -81,6 +81,8 @@ function handleHistory(ptcom)
     }
   }
 
+  console.log(epochs);
+
   if(Globals.current_regime===regime)
   {
     //If this histroy contains data for the currently displayed regime, update the chart like so...

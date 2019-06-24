@@ -97,6 +97,12 @@ function changeRegime(regime)
   {
     IO.devices[n].system.setChartRegime(regime);
   }
+
+  for(let key of IO.devices.keys())
+  {
+    let device = IO.devices.get(key);
+    device.system.setChartRegime(regime);
+  }
 }
 
 document.getElementById("ul_regime_live").onclick=function(){changeRegime(Regimes.live);};
