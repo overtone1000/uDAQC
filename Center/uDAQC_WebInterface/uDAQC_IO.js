@@ -32,6 +32,11 @@ const Regimes =
   day: 3
 };
 
+let Globals =
+{
+  current_regime: Regimes.live
+};
+
 class ByteBuffer {
   constructor(bytes){
     //console.log("Constructing ByteBuffer");
@@ -486,6 +491,7 @@ class IO_System extends IO_Group
 
   setChartRegime(regime_index)
   {
+    console.log("Setting system regime to " + regime_index);
     let values = this.getIOValues();
     let epochs = this.getEpochs(regime_index);
     for(let i=0;i<values.length;i++)

@@ -91,9 +91,15 @@ function createChart(canvas)
 function changeRegime(regime)
 {
   console.log("Changing regime to " + regime);
+  Globals.current_regime=regime;
+  console.log(IO.devices);
+  for(let n=0;n<IO.devices.length;n++)
+  {
+    IO.devices[n].system.setChartRegime(regime);
+  }
 }
 
-jQuery("#ul_regime_live").click(function(){changeRegime(Regimes.live);});
-jQuery("#ul_regime_minute").click(function(){changeRegime(Regimes.minute);});
-jQuery("#ul_regime_hour").click(function(){changeRegime(Regimes.hour);});
-jQuery("#ul_regime_day").click(function(){changeRegime(Regimes.day);});
+document.getElementById("ul_regime_live").onclick=function(){changeRegime(Regimes.live);};
+document.getElementById("ul_regime_minute").onclick=function(){changeRegime(Regimes.minute);};
+document.getElementById("ul_regime_hour").onclick=function(){changeRegime(Regimes.hour);};
+document.getElementById("ul_regime_day").onclick=function(){changeRegime(Regimes.day);};

@@ -97,6 +97,7 @@
       "createChart" : true,
       "moment" :true,
       "Chart" : true,
-      "Regimes" : true
+      "Regimes" : true,
+      "Globals" : true
       }        // additional predefined global variables
 }

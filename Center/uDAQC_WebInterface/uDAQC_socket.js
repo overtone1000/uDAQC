@@ -81,14 +81,11 @@ function handleHistory(ptcom)
     }
   }
 
-  //console.log("History interpretation finished.");
-
-  if(regime===0){
-    console.debug("Setting to live regime.");
-    device.system.setChartRegime(regime);
+  if(Globals.current_regime===regime)
+  {
+    //If this histroy contains data for the currently displayed regime, update the chart like so...
+    device.system.setChartRegime(Globals.current_regime);
   }
-
-
 }
 
 function onMessage(evt)
