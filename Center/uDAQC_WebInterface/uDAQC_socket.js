@@ -73,12 +73,6 @@ function handleHistory(ptcom)
   {
     //console.log("Processing entry.");
     epochs.processEntry(ptcom.message);
-    test_count++;
-    if(test_count===3)
-    {
-      //console.debug("Test breakup of data");
-      epochs.startNewEpoch();
-    }
   }
 
   console.log(epochs);

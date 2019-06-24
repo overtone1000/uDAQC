@@ -627,6 +627,7 @@ class Epochs{
   }
   startNewEpoch()
   {
+    console.debug("Starting new epoch.");
     if(this.timestamps.length)
     {
       this.current_epoch_index = this.timestamps.length;
@@ -673,13 +674,13 @@ class Epochs{
 
     if(flag&new_epoch_flag){
         //Start a new epoch
-        //console.log("New epoch flag.");
+        console.debug("New epoch flag.");
         this.startNewEpoch();
     }
 
     if(flag&split_epoch_flag){
       //Merge with first epoch
-      //console.log("Split flag.");
+      console.debug("Split flag.");
       this.mergeLastAndFirst();
     }
 

@@ -31,8 +31,8 @@ public class IO_Log
 	private int max_entries;
 	private int entry_length;
 	
-	private boolean start_new_epoch;
-	private boolean split_epoch=false;
+	private boolean start_new_epoch=true; //Initialize to true
+	private boolean split_epoch_next=false;
 	
 	public long Size()
 	{
@@ -117,6 +117,7 @@ public class IO_Log
 			e.printStackTrace();
 		}
 		
+		
 		System.out.println("Points loaded from file:");
 		for(IO_Value val : values)
 		{
@@ -129,6 +130,7 @@ public class IO_Log
 				}
 			}
 		}
+		
 	}
 	public IO_Log(Path path, IO_System_Logged parent, long file_size, Duration duration)
 	{
@@ -239,8 +241,6 @@ public class IO_Log
 		}
 		
 		AddEpoch(new_epoch);
-
-		start_new_epoch=true;
 		
 		file.seek(oldest_index*entry_length);		
 	}
@@ -402,9 +402,9 @@ public class IO_Log
 		
 		ByteFlag flag = new ByteFlag();
 		flag.Set(ByteFlag.EntryFlags.NewEpoch, start_new_epoch);
-		flag.Set(ByteFlag.EntryFlags.SplitEpoch, split_epoch);
+		flag.Set(ByteFlag.EntryFlags.SplitEpoch, split_epoch_next);
 		start_new_epoch=false;
-		split_epoch=false;
+		split_epoch_next=false;
 		
 		flag.BBPut(bb);
 		bb.putLong(time.getMillis());
@@ -419,7 +419,7 @@ public class IO_Log
 			if(file.getFilePointer()>=max_file_size-1)
 			{
 				file.seek(0);
-				split_epoch=true;
+				split_epoch_next=true;
 			}
 		} catch (IOException e)
 		{
