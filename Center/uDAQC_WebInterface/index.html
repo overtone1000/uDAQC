@@ -8,6 +8,7 @@
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="libs/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" href="libs/jstree/dist/themes/default/style.min.css">
+    <link rel="stylesheet" href="udaqc.css">
 
     <title>uDAQC</title>
   </head>
@@ -17,42 +18,48 @@
     	<div class="row">
     		<div class="col">
 
-          <div class="row">
-            <div class="col-md-10">
-        			<h3>
-        				uDAQC
-        			</h3>
-            </div>
+          <div class="row fixed">
+            <div class="col-md-12">
+              <div class="row">
+                <div class="col-md-10">
+            			<h3>
+            				uDAQC
+            			</h3>
+                </div>
 
-            <div class="col">
-              <div class="row  justify-content-end">
-                <div id="connection_alert" class="alert alert-danger" role="alert">
-                  No Connection
+                <div class="col">
+                  <div class="row  justify-content-end">
+                    <div id="connection_alert" class="alert alert-danger" role="alert">
+                      No Connection
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="col-md-12">
+                  <ul class="nav nav-tabs nav-fill">
+                    <li class="nav-item dropdown">
+                      <a class="dropdown-toggle" data-toggle="dropdown" href="#">Temporal Regime<span class="caret"></span></a>
+                      <ul class="dropdown-menu">
+                        <a class="dropdown-item" id="ul_regime_live" href="#">Live</a>
+                        <a class="dropdown-item" id="ul_regime_minute" href="#">Minute</a>
+                        <a class="dropdown-item" id="ul_regime_hour" href="#">Hour</a>
+                        <a class="dropdown-item" id="ul_regime_day" href="#">Day</a>
+                      </ul>
+                    </li>
+                  </ul>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="row">
-            <div class="col-md-12">
-              <ul class="nav nav-tabs nav-fill">
-                <li class="nav-item dropdown">
-                  <a class="dropdown-toggle" data-toggle="dropdown" href="#">Temporal Regime<span class="caret"></span></a>
-                  <ul class="dropdown-menu">
-                    <a class="dropdown-item" id="ul_regime_live" href="#">Live</a>
-                    <a class="dropdown-item" id="ul_regime_minute" href="#">Minute</a>
-                    <a class="dropdown-item" id="ul_regime_hour" href="#">Hour</a>
-                    <a class="dropdown-item" id="ul_regime_day" href="#">Day</a>
-                  </ul>
-                </li>
-              </ul>
-            </div>
+          <div class="row padding">
           </div>
-
 
     			<div class="row">
 
-    				<div class="col-md-4">
+    				<div class="col-md-4 scrollable">
 
               <div id="jstree">
               </div>
@@ -61,7 +68,7 @@
 
     				</div>
 
-            <div id="chart_space" class="col-md-8">
+            <div id="chart_space" class="col-md-8 scrollable">
 
               <canvas id="test_chart"></canvas>
 
