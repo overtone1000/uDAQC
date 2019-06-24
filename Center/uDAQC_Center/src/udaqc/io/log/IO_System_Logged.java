@@ -87,7 +87,7 @@ public class IO_System_Logged extends IO_System
 				//message.putLong(-254305453037L);
 				//message.putLong(9007199254740992L); //unsafe for javascript
 				//System.err.println("Message length is still in a non-functional testing mode.");
-				
+								
 				try
 				{
 					f.read(message.array(),message.position(),message.remaining());
@@ -97,6 +97,12 @@ public class IO_System_Logged extends IO_System
 					e.printStackTrace();
 					break;
 				}
+				
+				//System.out.println("Message is: ");
+				//for(int n=0;n<message.array().length;n++)
+				//{
+				//	System.out.println(Integer.toBinaryString((char)(message.array()[n])));
+				//}
 				
 				Command hc = new Command(Command_IDs.history,message.array());
 				PT_Command pthc = new PT_Command(id,hc);
@@ -242,7 +248,8 @@ public class IO_System_Logged extends IO_System
 	{
 		for(Regime r:Regime.values())
 		{
-			IO_Log l = new IO_Log(regPath(r),this,file_size,regime_duration.get(r));	
+			System.out.println("Loading regime " + r.toString());
+			IO_Log l = new IO_Log(regPath(r),this,file_size,regime_duration.get(r));
 			logs.put(r, l);
 		}
 	}

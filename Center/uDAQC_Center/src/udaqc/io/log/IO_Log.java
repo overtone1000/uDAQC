@@ -116,6 +116,19 @@ public class IO_Log
 		{
 			e.printStackTrace();
 		}
+		
+		System.out.println("Points loaded from file:");
+		for(IO_Value val : values)
+		{
+			LinkedList<ArrayList<Point>> list = this.getPoints(val);
+			for(ArrayList<Point> al : list)
+			{
+				for(Point p : al)
+				{
+					System.out.println(p.toString());
+				}
+			}
+		}
 	}
 	public IO_Log(Path path, IO_System_Logged parent, long file_size, Duration duration)
 	{
@@ -360,7 +373,18 @@ public class IO_Log
 						size++;
 					}
 				}
+				
+				if(size==0)
+				{
+					System.out.println("Current epoch is too small. Cancelling aggregation.");
+					break;
+				}
+				
 				new_point.y/=size;
+				
+				//System.out.println("New historical point:");
+				//System.out.println(size);
+				//System.out.println(new_point.toString());
 				
 				current_epoch.points.get(value).add(new_point);
 				bb.putFloat(new_point.y);
