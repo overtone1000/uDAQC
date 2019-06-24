@@ -96,6 +96,7 @@
       "changeNodes" : true,
       "createChart" : true,
       "moment" :true,
-      "Chart" : true
+      "Chart" : true,
+      "Regimes" : true
       }        // additional predefined global variables
 }

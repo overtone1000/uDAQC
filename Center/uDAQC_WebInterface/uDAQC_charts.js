@@ -87,3 +87,13 @@ function createChart(canvas)
       }
   });
 }
+
+function changeRegime(regime)
+{
+  console.log("Changing regime to " + regime);
+}
+
+jQuery("#ul_regime_live").click(function(){changeRegime(Regimes.live);});
+jQuery("#ul_regime_minute").click(function(){changeRegime(Regimes.minute);});
+jQuery("#ul_regime_hour").click(function(){changeRegime(Regimes.hour);});
+jQuery("#ul_regime_day").click(function(){changeRegime(Regimes.day);});

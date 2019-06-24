@@ -24,6 +24,14 @@ const DataTypes =
   bool: 4
 };
 
+const Regimes =
+{
+  live: 0,
+  minute: 1,
+  hour: 2,
+  day: 3
+};
+
 class ByteBuffer {
   constructor(bytes){
     //console.log("Constructing ByteBuffer");
