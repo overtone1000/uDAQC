@@ -5,11 +5,37 @@
   width:100%;
 }
 
+.dependent {
+  height:100%;
+}
+
 .padding {
-  padding-top: 120px;
+  padding-top: 0px;
 }
 
 .scrollable {
-  height: calc(100vh - 120px);
   overflow-y: scroll;
+}
+
+.fixed2 {
+  position:fixed;
+  width:100vw;
+  height:100vh;
+}
+
+.fullheight {
+  height: 100%;
+}
+
+.fixedheight {
+  height:100vh;
+}
+
+.flexdisplay{
+  display:flex;
+  flex-flow:column;
+  height:100%;
+}
+.flexrow {
+  flex: 0 1 auto
 }
