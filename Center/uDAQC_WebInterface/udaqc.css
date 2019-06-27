@@ -1,41 +1,21 @@
 .fixed {
-  position: fixed;
-  background: #fff;
-  z-index:1;
-  width:100%;
-}
-
-.dependent {
-  height:100%;
-}
-
-.padding {
-  padding-top: 0px;
-}
-
-.scrollable {
-  overflow-y: scroll;
-}
-
-.fixed2 {
   position:fixed;
   width:100vw;
   height:100vh;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
 .fullheight {
   height: 100%;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.fixedheight {
-  height:100vh;
-}
-
-.flexdisplay{
-  display:flex;
-  flex-flow:column;
-  height:100%;
-}
-.flexrow {
-  flex: 0 1 auto
+.fillremaining {
+	height: 100%;
+	flex:1 1 auto;
+	overflow: auto;
 }
