@@ -1,5 +1,7 @@
 package udaqc.network.center;
 
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
 
 import java.nio.ByteBuffer;
@@ -7,6 +9,7 @@ import java.nio.ByteOrder;
 import java.nio.file.Path;
 import java.util.Timer;
 import java.util.TreeMap;
+import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -21,14 +24,18 @@ import network.tcp.server.TCP_Server;
 import network.udp.UDP_Funnel;
 import udaqc.io.IO_Constants;
 import udaqc.io.IO_Constants.Command_IDs;
+import udaqc.io.IO_System;
 import udaqc.io.log.IO_System_Logged;
+import udaqc.io.log.IO_System_Logged.Regime;
 import udaqc.network.Constants.Addresses;
 import udaqc.network.center.command.Command;
+import udaqc.network.interfaces.CenterHandler;
+import udaqc.network.interfaces.HistoryUpdateHandler;
 import udaqc.network.passthrough.Secondary_Server;
 import udaqc.network.passthrough.command.PT_Command;
 import logging.Loghandler_File;
 
-public class Center extends TCP_Server
+public class Center extends TCP_Server implements HistoryUpdateHandler
 {
 	protected Secondary_Server passthrough_server = null;
 
@@ -55,7 +62,7 @@ public class Center extends TCP_Server
 		passthrough_server = new Secondary_Server(Threadname, this);
 
 		// super(Threadname, IO_Constants.Constants.tcp_id_port);
-		IO_System_Logged.LoadSavedSystems(path);
+		IO_System_Logged.LoadSavedSystems(path,this);
 		
 		handler.ClientListUpdate();
 
@@ -184,6 +191,19 @@ public class Center extends TCP_Server
 		}
 		log.severe(ExceptionUtils.getStackTrace(cause));
 	}
+	
+	public void Passthrough_to_Secondaries(IO_System_Logged system, Command c)
+	{
+		PT_Command ptc = new PT_Command(system.getSystemID(),c);
+		if(passthrough_server!=null)
+		{
+			passthrough_server.broadcast(ptc);
+		}
+		if(webserver!=null)
+		{
+			webserver.Broadcast(ptc);
+		}
+	}
 
 	public void Passthrough_to_Secondaries(IoSession session, Command c)
 	{
@@ -191,15 +211,7 @@ public class Center extends TCP_Server
 		if(dd!=null)
 		{
 			IO_System_Logged system = dd.System();
-			PT_Command ptc = new PT_Command(system.getSystemID(),c);
-			if(passthrough_server!=null)
-			{
-				passthrough_server.broadcast(ptc);
-			}
-			if(webserver!=null)
-			{
-				webserver.Broadcast(ptc);
-			}
+			Passthrough_to_Secondaries(system,c);
 		}
 	}
 	
@@ -207,5 +219,25 @@ public class Center extends TCP_Server
 	{
 		Command c = ptc.containedCommand();
 		IO_System_Logged.getSystem(ptc.source_id).Device().Send_Command(c);
+	}
+
+	@Override
+	public void HistoryUpdated(IO_System_Logged system, Regime r, Long first_timestamp, ByteBuffer bb)
+	{
+		ByteArrayOutputStream message = new ByteArrayOutputStream();
+		DataOutputStream writer = new DataOutputStream(message);
+		
+		try
+		{
+			writer.writeInt(r.ordinal());
+			writer.writeLong(first_timestamp);
+			writer.write(bb.array());
+		} catch (IOException e)
+		{
+			e.printStackTrace();
+		}
+		
+		Command c=new Command(IO_Constants.Command_IDs.history_addendum,message.toByteArray());		
+		Passthrough_to_Secondaries(system,c);
 	}
 }

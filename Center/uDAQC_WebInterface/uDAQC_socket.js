@@ -51,6 +51,9 @@ function handlePassthroughCommand(ptcom)
     case IO_Constants.history:
       handleHistory(ptcom);
       break;
+    case IO_Constants.history_addendum:
+      handleHistoryAddendum(ptcom);
+      break;
     default:
     console.log("Unexpected nested command in passthrough " +  ptcom.PTcommand_ID + ".");
   }
@@ -82,6 +85,15 @@ function handleHistory(ptcom)
     //If this histroy contains data for the currently displayed regime, update the chart like so...
     device.system.setChartRegime(Globals.current_regime);
   }
+}
+
+function handleHistoryAddendum(ptcom)
+{
+  let regime = ptcom.message.getInt32();
+  let first_timestamp = ptcom.message.getInt64();
+
+  console.debug("History addendum received for regime " + regime);
+  console.debug("Oldest = " + first_timestamp);
 }
 
 function onMessage(evt)

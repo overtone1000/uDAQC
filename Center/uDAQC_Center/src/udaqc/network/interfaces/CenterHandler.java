@@ -1,4 +1,4 @@
-package udaqc.network.center;
+package udaqc.network.interfaces;
 
 public interface CenterHandler
 {

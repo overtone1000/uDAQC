@@ -18,6 +18,7 @@ import org.joda.time.Interval;
 
 import logging.Point;
 import udaqc.io.IO_Value;
+import udaqc.io.log.IO_System_Logged.Regime;
 
 public class IO_Log
 {	
@@ -79,13 +80,18 @@ public class IO_Log
 		}
 	}
 	
-	public IO_Log(Path path, IO_System_Logged parent,long file_size)
+	private IO_System_Logged parent;
+	private Regime regime;
+	public IO_Log(Path path, Regime r, IO_System_Logged parent, long file_size)
 	{
 		if(path==null || parent==null)
 		{
 			return;
 		}
-				
+		
+		this.parent = parent;
+		this.regime=r;
+		
 		this.values = parent.GetNestedValues();
 		current_epoch = new Epoch(values);
 		
@@ -132,9 +138,10 @@ public class IO_Log
 		}
 		
 	}
-	public IO_Log(Path path, IO_System_Logged parent, long file_size, Duration duration)
+	public IO_Log(Path path, Regime r, IO_System_Logged parent, long file_size, Duration duration)
 	{
-		this(path,parent,file_size);
+		this(path,r,parent,file_size);
+		
 		if(duration!=null)
 		{
 			this.datum_duration=duration;
@@ -279,6 +286,7 @@ public class IO_Log
 		
 		WriteEntry(bb);
 	}
+	
 	public void Trim()
 	{
 		//This is called by WriteEntry function
@@ -295,6 +303,7 @@ public class IO_Log
 			//System.out.println("Removed " + removed);
 		}
 	}
+	
 	private int RemoveOldest(int number_to_remove)
 	{
 		int removed=0;
@@ -309,6 +318,7 @@ public class IO_Log
 		}
 		return removed;
 	}
+	
 	private Epoch OldestEpoch()
 	{
 		for(int n=0;n<epochs.size();n++)
@@ -413,6 +423,19 @@ public class IO_Log
 	
 	private void WriteEntry(ByteBuffer bb)
 	{
+		Epoch oldest = OldestEpoch();
+		Long first_timestamp;
+		if(oldest!=null)
+		{
+			first_timestamp=oldest.StartTime().getMillis();
+		}
+		else
+		{
+			first_timestamp=0L;
+		}
+		parent.HistoryUpdate(regime, first_timestamp, bb);
+		bb.rewind();
+		
 		try
 		{
 			file.write(bb.array());

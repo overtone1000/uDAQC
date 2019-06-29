@@ -20,7 +20,7 @@ public class DirectDevice implements Device
 	{
 		this.parent=parent;
 		this.session=session;
-		system = IO_System_Logged.processSystemDescription(path, data);
+		system = IO_System_Logged.processSystemDescription(path, data, parent);
 		system.setDevice(this);
 	}
 

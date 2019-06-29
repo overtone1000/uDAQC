@@ -26,7 +26,9 @@ import logging.Point;
 import udaqc.io.IO_System;
 import udaqc.io.IO_Value;
 import udaqc.io.IO_Constants.Command_IDs;
+import udaqc.network.center.Center;
 import udaqc.network.center.command.Command;
+import udaqc.network.interfaces.HistoryUpdateHandler;
 import udaqc.network.passthrough.command.PT_Command;
 import udaqc.network.passthrough.endpoints.Endpoint;
 
@@ -115,7 +117,7 @@ public class IO_System_Logged extends IO_System
 	{
 		return new LinkedList<IO_System_Logged>(systems.values());
 	}
-	public static void LoadSavedSystems(Path path)
+	public static void LoadSavedSystems(Path path, HistoryUpdateHandler his_update_handler)
 	{
 		try
 		{
@@ -138,7 +140,7 @@ public class IO_System_Logged extends IO_System
 						ByteBuffer data = ByteBuffer.wrap(Files.readAllBytes(descfile.toPath()));
 						data.position(0);
 						data.order(ByteOrder.LITTLE_ENDIAN);
-						processSystemDescription(path,data); //use the getSystem function for thread safety because it uses the mutex and makes sure this isn't a duplicate
+						processSystemDescription(path,data,his_update_handler); //use the getSystem function for thread safety because it uses the mutex and makes sure this isn't a duplicate
 					}
 				}
 			}
@@ -148,7 +150,7 @@ public class IO_System_Logged extends IO_System
 		}
 	}
 	
-	public static IO_System_Logged processSystemDescription(Path path, ByteBuffer data)
+	public static IO_System_Logged processSystemDescription(Path path, ByteBuffer data, HistoryUpdateHandler his_update_handler)
 	{
 		try
 		{
@@ -158,7 +160,7 @@ public class IO_System_Logged extends IO_System
 			e.printStackTrace();
 			return null;
 		}
-		IO_System_Logged new_system = new IO_System_Logged(path,data);
+		IO_System_Logged new_system = new IO_System_Logged(path,data,his_update_handler);
 		if(new_system.system_IsKnown())
 		{
 			for(IO_System_Logged sys:systems.values())
@@ -229,14 +231,19 @@ public class IO_System_Logged extends IO_System
 		aggregate_from.put(Regime.Day, Regime.Hour);
 	}
 	
-	private IO_System_Logged(Path path, ByteBuffer data)
+	private HistoryUpdateHandler his_update_handler;
+	private IO_System_Logged(Path path, ByteBuffer data, HistoryUpdateHandler his_update_handler)
 	{
 		super(data);
 				
 		this.storage_path = Paths.get(path.toString() + filesep + this.FullName());
-		
+		this.his_update_handler = his_update_handler;
 		// need to check whether basis is already stored in storage path and that it's
 		// the same. If it isn't, wipe out the history.
+	}
+	public void HistoryUpdate(Regime r, Long first_timestamp, ByteBuffer bb)
+	{
+		his_update_handler.HistoryUpdated(this, r, first_timestamp, bb);
 	}
 	
 	private Path regPath(Regime reg)
@@ -249,7 +256,7 @@ public class IO_System_Logged extends IO_System
 		for(Regime r:Regime.values())
 		{
 			System.out.println("Loading regime " + r.toString());
-			IO_Log l = new IO_Log(regPath(r),this,file_size,regime_duration.get(r));
+			IO_Log l = new IO_Log(regPath(r),r,this,file_size,regime_duration.get(r));
 			logs.put(r, l);
 		}
 	}
@@ -315,7 +322,7 @@ public class IO_System_Logged extends IO_System
 		System.out.println("Replacing IO_Log.");
 		
 		
-		logs.put(r,new IO_Log(regPath(r),this,filesize));
+		logs.put(r,new IO_Log(regPath(r),r,this,filesize));
 		
 		System.out.println("Finished processing history.");
 	}

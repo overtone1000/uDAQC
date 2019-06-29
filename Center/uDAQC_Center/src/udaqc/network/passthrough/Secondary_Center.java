@@ -1,6 +1,7 @@
 package udaqc.network.passthrough;
 
 import java.net.InetSocketAddress;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
@@ -8,11 +9,13 @@ import org.apache.mina.core.session.IoSession;
 import network.tcp.client.TCP_Client;
 import udaqc.io.IO_Constants.Command_IDs;
 import udaqc.io.log.IO_System_Logged;
-import udaqc.network.center.CenterHandler;
+import udaqc.io.log.IO_System_Logged.Regime;
 import udaqc.network.center.command.Command;
+import udaqc.network.interfaces.CenterHandler;
+import udaqc.network.interfaces.HistoryUpdateHandler;
 import udaqc.network.passthrough.command.PT_Command;
 
-public class Secondary_Center extends TCP_Client
+public class Secondary_Center extends TCP_Client implements HistoryUpdateHandler
 {
 	//private HashMap<Short,IO_System_Logged> systems = new HashMap<Short,IO_System_Logged>();
 	private Path path=null;
@@ -57,7 +60,7 @@ public class Secondary_Center extends TCP_Client
 	{
 		if(c.Header().command_id==Command_IDs.group_description)
 		{
-			IO_System_Logged new_system = IO_System_Logged.processSystemDescription(path, c.getmessage());
+			IO_System_Logged new_system = IO_System_Logged.processSystemDescription(path, c.getmessage(), this);
 			if (parent != null)
 			{
 				parent.ClientListUpdate();
@@ -120,5 +123,11 @@ public class Secondary_Center extends TCP_Client
 	public void exceptionCaught(IoSession session, Throwable cause)
 	{
 		super.exceptionCaught(session, cause);
+	}
+
+	@Override
+	public void HistoryUpdated(IO_System_Logged system, Regime r, Long first_timestamp, ByteBuffer bb)
+	{
+		//Does nothing...
 	}
 }

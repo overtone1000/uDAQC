@@ -5,7 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import udaqc.network.center.Center;
-import udaqc.network.center.CenterHandler;
+import udaqc.network.interfaces.CenterHandler;
 public class Console_Center
 {
 	protected static class DummyHandler implements CenterHandler
