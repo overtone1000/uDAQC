@@ -68,6 +68,8 @@ This class description is equal to its parent class IO_Group
 # Data Message Structure
 When a data message for an IO_System is sent from a Device to a Center, the message contains an entry for each IO_Reporter in that system in the order that each IO_Reporter is found in the description for that IO_System. The size of that entry is equal to the data byte count found in the description for that IO_Reporter. In practice, the byte count will only be non-zero for IO_Value objects and any classes that inherit from IO_Value, although custom IO_Reporter objects not derived from IO_Value objects could conceivably be created that might be included in the data message for an IO_System.
 
+There is currently a timing discrepancy. The Device sends microseconds since the last epoch, but Java converts to milliseconds. This is simply due to a desire to use JodaTime in the Java IO_System class. This would be okay with javascript, as 2,147,483,647,000,000 microseconds per epoch is still less than the safe integer value for Javascript.
+
 # History Structure
 This message contains the logged data for a single regime. Its structure is as follows:
 1. int_32 indicating the temporal regime (0 for live, 1 for minute, 2 for hour, 3 for day). This might be improved by instead sending the number of nanoseconds or milliseconds over which this time series has been averaged or otherwise consolidated.
@@ -86,8 +88,6 @@ This message contains an additional datum for a single regime. Its structure is 
 1. int_32 indicating the temporal regime.
 2. int_64 indicating the timestamp of the first datum in the archive. If a datum is older, it is expired and should be deleted.
 3. byte[] containing the log file with the same structure as in the above but containing only a single datum
-
-There is currently a timing discrepancy. The Device sends microseconds since the last epoch, but Java converts to milliseconds. This is simply due to a desire to use JodaTime in the Java IO_System class. This would be okay with javascript, as 2,147,483,647,000,000 microseconds per epoch is still less than the safe integer value for Javascript.
 
 # Value Modification Structure
 IO_ModifiableValue modification message is a command whose message has the following structure:
