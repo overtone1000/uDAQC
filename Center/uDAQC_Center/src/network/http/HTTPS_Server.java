@@ -10,6 +10,8 @@ import java.nio.file.Paths;
 import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Iterator;
+import java.util.concurrent.Semaphore;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -26,6 +28,7 @@ import udaqc.network.center.command.Command;
 import udaqc.network.passthrough.command.PT_Command;
 import udaqc.network.passthrough.endpoints.WS_Endpoint;
 
+import org.apache.felix.framework.util.Mutex;
 import org.apache.mina.core.session.IoSession;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.security.ConstraintMapping;
@@ -60,6 +63,8 @@ public class HTTPS_Server
 	
 	private static final String home_dir = "../uDAQC_WebInterface";
 	private static final String home_page = "index.html";
+	
+	private Semaphore session_mutex=new Semaphore(1);
 
 	Server server;
 	Servlet_uD ws_servlet;
@@ -205,35 +210,74 @@ public class HTTPS_Server
 	public void SessionOpened(Session new_session)
 	{
 		IO_System_Logged.PassthroughInitialization(new WS_Endpoint(new_session));
-		sessions.add(new_session);
+		try
+		{
+			session_mutex.acquire();
+			sessions.add(new_session);
+			session_mutex.release();
+		} catch (InterruptedException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public void SessionClosed(Session closed_session)
 	{
-		sessions.remove(closed_session);
+		try
+		{
+			session_mutex.acquire();
+			sessions.remove(closed_session);
+			session_mutex.release();
+		} catch (InterruptedException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
 	}
 	
 	public void Broadcast(PT_Command command)
     {
-    	for(Session s:sessions)
-    	{
-    		SendCommand(s,command);
-    	}
+		try
+		{
+			session_mutex.acquire();
+			Iterator<Session> it=sessions.iterator();
+			while(it.hasNext())
+	    	{
+				Session s = it.next();
+				if(!s.isOpen())
+				{
+					System.out.println("Trying to close abandoned session.");
+					it.remove();
+				}
+				else
+				{
+					SendCommand(s,command);
+				}
+	    	}
+			session_mutex.release();
+		} catch (InterruptedException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
     
-    public static void SendCommand(Session sess, Command command)
+    public static boolean SendCommand(Session sess, Command command)
     {
     	if(!sess.isOpen())
     	{
     		System.out.println("Tried sending command, but the session closed.");
-    		return;
+    		return false;
     	}
     	try
 		{
 			sess.getRemote().sendBytes(ByteBuffer.wrap(command.toBuffer().array()));
+			return true;
 		} catch (IOException e)
 		{
 			e.printStackTrace();
+			return false;
 		}
     }
 }

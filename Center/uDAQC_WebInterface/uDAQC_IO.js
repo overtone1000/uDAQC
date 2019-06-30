@@ -496,13 +496,16 @@ class IO_System extends IO_Group
     let values = this.getIOValues();
     let epochs = this.getEpochs(regime_index);
 
-    console.debug("Epoch:");
-    console.debug(epochs);
+    //console.debug("Epoch:");
+    //console.debug(epochs);
+
+    //console.debug("Values:");
+    //console.debug(values);
 
     for(let i=0;i<values.length;i++)
     {
-
-      values[i].chart.data.labels = epochs.timestamps;
+      //console.debug("Modifying chart " + i);
+      values[i].chart.data.labels = epochs.times;
       values[i].chart.options.scales.xAxes[0].ticks.suggestedMin = epochs.earliestTime();
       values[i].chart.options.scales.xAxes[0].ticks.suggestedMax = epochs.latestTime();
 
@@ -514,7 +517,7 @@ class IO_System extends IO_Group
           //backgroundColor: "rgb(0,0,0,0)", //transparent (this fills under the curve)
           borderColor: "rgb(255, 0, 0, 255)",
           data: epochs.values[i],
-          labels: epochs.timestamps,
+          labels: epochs.times,
           //pointRadius: 0 //don't render points, but if this is don't you can't hover to get value
           //pointBackgroundColor: "rgb(0,0,0,0)",
           pointBorderColor: "rgb(0,0,0,0)", //transparent
@@ -524,7 +527,7 @@ class IO_System extends IO_Group
 
       values[i].chart.update();
 
-      //console.log(values[i].chart.data);
+      //console.debug(values[i].chart.data);
     }
   }
 }
@@ -618,7 +621,7 @@ class Epochs{
   constructor(system)
   {
     this.current_epoch_index = 0;
-    this.timestamps = [];
+    this.times = [];
     this.values = new Array(system.ioValueCount);
     for(let n = 0; n<this.values.length;n++)
     {
@@ -629,10 +632,10 @@ class Epochs{
   startNewEpoch()
   {
     console.debug("Starting new epoch.");
-    if(this.timestamps.length)
+    if(this.times.length)
     {
-      this.current_epoch_index = this.timestamps.length;
-      this.timestamps.push(this.timestamps[this.timestamps.length-1]);
+      this.current_epoch_index = this.times.length;
+      this.times.push(this.times[this.times.length-1]);
       for(let n = 0; n<this.values.length;n++)
       {
         this.values[n].push(null);
@@ -644,17 +647,17 @@ class Epochs{
   {
     console.log("Merging first and last.");
 
-    if(this.current_epoch_index<=0 || this.current_epoch_index>=this.timestamps.length-1)
+    if(this.current_epoch_index<=0 || this.current_epoch_index>=this.times.length-1)
     {
       return;
     }
 
-    Epochs.reorder(this.timestamps,this.current_epoch_index);
+    Epochs.reorder(this.times,this.current_epoch_index);
     for(let n = 0; n<this.values.length;n++)
     {
-      Epochs.reorder(this.timestamps[n],this.current_epoch_index);
+      Epochs.reorder(this.times[n],this.current_epoch_index);
     }
-    this.current_epoch_index=this.timestamps.length;
+    this.current_epoch_index=this.times.length;
   }
 
   static reorder(array, index)
@@ -662,6 +665,15 @@ class Epochs{
     let first = array.slice(0,index);
     let last = array.slice(index);
     array = last.concat(first);
+  }
+
+  static getTime(millis)
+  {
+    let seconds=millis/1000;
+    let millis_remainder=millis%1000;
+    let time=moment.unix(seconds);
+    time.milliseconds(millis_remainder);
+    return time;
   }
 
   processEntry(message)
@@ -685,14 +697,7 @@ class Epochs{
       this.mergeLastAndFirst();
     }
 
-    let millis=message.getInt64();
-
-    let seconds=millis/1000;
-    let millis_remainder=millis%1000;
-    let timestamp=moment.unix(seconds);
-    timestamp.milliseconds(millis_remainder);
-
-    this.timestamps.push(timestamp);
+    this.times.push(Epochs.getTime(message.getInt64()));
 
     //console.debug("Length is " + this.values.length);
 
@@ -703,26 +708,43 @@ class Epochs{
       //console.debug("Value is " + val);
     }
   }
+
+  trim(first_timestamp)
+  {
+    let first_time=Epochs.getTime(first_timestamp);
+    let n=0;
+    while(first_time.isAfter(this.times[n]) && n<this.times.length)
+    {
+        n++;
+    }
+    console.debug("Trimming " + n + " of " + this.times.length);
+    this.times.splice(0,n);
+    for(let n = 0; n<this.values.length;n++)
+    {
+      this.values[n].splice(0,n);
+    }
+  }
+
   earliestTime()
   {
-    let retval=this.timestamps[0];
-    for(let n=0;n<this.timestamps.length;n++)
+    let retval=this.times[0];
+    for(let n=0;n<this.times.length;n++)
     {
-      if(retval.isAfter(this.timestamps[n]))
+      if(retval.isAfter(this.times[n]))
       {
-        retval = this.timestamps[n];
+        retval = this.times[n];
       }
     }
     return retval;
   }
   latestTime()
   {
-    let retval=this.timestamps[0];
-    for(let n=0;n<this.timestamps.length;n++)
+    let retval=this.times[0];
+    for(let n=0;n<this.times.length;n++)
     {
-      if(retval.isBefore(this.timestamps[n]))
+      if(retval.isBefore(this.times[n]))
       {
-        retval = this.timestamps[n];
+        retval = this.times[n];
       }
     }
     return retval;

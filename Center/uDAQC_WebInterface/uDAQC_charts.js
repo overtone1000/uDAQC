@@ -40,7 +40,8 @@ function createChart(canvas)
           xAxes: [{
             type: "time"
           }]
-        }
+        },
+        animation:false
       }
   });
 }

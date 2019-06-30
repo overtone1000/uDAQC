@@ -192,16 +192,21 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 		log.severe(ExceptionUtils.getStackTrace(cause));
 	}
 	
+	public void Passtrhought_to_Webserver(IO_System_Logged system, Command c)
+	{
+		PT_Command ptc = new PT_Command(system.getSystemID(),c);
+		if(webserver!=null)
+		{
+			webserver.Broadcast(ptc);
+		}
+	}
+	
 	public void Passthrough_to_Secondaries(IO_System_Logged system, Command c)
 	{
 		PT_Command ptc = new PT_Command(system.getSystemID(),c);
 		if(passthrough_server!=null)
 		{
 			passthrough_server.broadcast(ptc);
-		}
-		if(webserver!=null)
-		{
-			webserver.Broadcast(ptc);
 		}
 	}
 
@@ -224,20 +229,13 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 	@Override
 	public void HistoryUpdated(IO_System_Logged system, Regime r, Long first_timestamp, ByteBuffer bb)
 	{
-		ByteArrayOutputStream message = new ByteArrayOutputStream();
-		DataOutputStream writer = new DataOutputStream(message);
+		ByteBuffer message = ByteBuffer.allocate(Integer.BYTES + Long.BYTES + bb.capacity());
+		message.order(ByteOrder.LITTLE_ENDIAN);
+		message.putInt(r.ordinal());
+		message.putLong(first_timestamp);
+		message.put(bb.array());
 		
-		try
-		{
-			writer.writeInt(r.ordinal());
-			writer.writeLong(first_timestamp);
-			writer.write(bb.array());
-		} catch (IOException e)
-		{
-			e.printStackTrace();
-		}
-		
-		Command c=new Command(IO_Constants.Command_IDs.history_addendum,message.toByteArray());		
-		Passthrough_to_Secondaries(system,c);
+		Command c=new Command(IO_Constants.Command_IDs.history_addendum,message.array());		
+		Passtrhought_to_Webserver(system,c);
 	}
 }

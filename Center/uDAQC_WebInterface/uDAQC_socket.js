@@ -72,7 +72,7 @@ function handleHistory(ptcom)
   let epochs = device.system.getEpochs(regime);
 
   let test_count=0;
-  while(ptcom.message.Remaining()>entry_size)
+  while(ptcom.message.Remaining()>=entry_size)
   {
     //console.log("Processing entry.");
     epochs.processEntry(ptcom.message);
@@ -94,6 +94,31 @@ function handleHistoryAddendum(ptcom)
 
   console.debug("History addendum received for regime " + regime);
   console.debug("Oldest = " + first_timestamp);
+
+  let device = IO.devices.get(ptcom.source_ID);
+  let entry_size = 1 + 8 + device.system.ioValueCount * 4;
+
+  let epochs = device.system.getEpochs(regime);
+
+  console.debug("Remaining: " + ptcom.message.Remaining());
+  console.debug("Size: " + entry_size);
+  let test_count=0;
+  while(ptcom.message.Remaining()>=entry_size)
+  {
+    console.debug("Processing addendum entry.");
+    epochs.processEntry(ptcom.message);
+  }
+
+  epochs.trim(first_timestamp);
+
+  console.log(epochs);
+
+  if(Globals.current_regime===regime)
+  {
+    console.log("...");
+    //If this histroy contains data for the currently displayed regime, update the chart like so...
+    device.system.setChartRegime(Globals.current_regime);
+  }
 }
 
 function onMessage(evt)
