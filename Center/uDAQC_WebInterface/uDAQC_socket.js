@@ -75,7 +75,7 @@ function handleHistory(ptcom)
   while(ptcom.message.Remaining()>=entry_size)
   {
     //console.log("Processing entry.");
-    epochs.processEntry(ptcom.message);
+    epochs.processEntry(ptcom.message, false);
   }
 
   console.log(epochs);
@@ -106,7 +106,7 @@ function handleHistoryAddendum(ptcom)
   while(ptcom.message.Remaining()>=entry_size)
   {
     console.debug("Processing addendum entry.");
-    epochs.processEntry(ptcom.message);
+    epochs.processEntry(ptcom.message, true);
   }
 
   epochs.trim(first_timestamp);

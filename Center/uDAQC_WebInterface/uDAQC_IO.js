@@ -676,7 +676,7 @@ class Epochs{
     return time;
   }
 
-  processEntry(message)
+  processEntry(message, addendum)
   {
     const new_epoch_flag = Math.pow(2,0);
     const split_epoch_flag = Math.pow(2,1);
@@ -691,7 +691,7 @@ class Epochs{
         this.startNewEpoch();
     }
 
-    if(flag&split_epoch_flag){
+    if(flag&split_epoch_flag && !addendum){
       //Merge with first epoch
       console.debug("Split flag.");
       this.mergeLastAndFirst();
