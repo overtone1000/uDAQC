@@ -697,31 +697,51 @@ class Epochs{
       this.mergeLastAndFirst();
     }
 
-    this.times.push(Epochs.getTime(message.getInt64()));
+    if(addendum)
+    {
+      console.log("Times were:");
+      console.log(this.times.slice());
+      console.log("Values were:");
+      for(let n=0;n<this.values.length;n++)
+      {
+        console.log(this.values[n].slice());
+      }
+    }
 
-    //console.debug("Length is " + this.values.length);
+    this.times.push(Epochs.getTime(message.getInt64()));
 
     for(let n=0;n<this.values.length;n++)
     {
       let val = message.getFloat32();
       this.values[n].push(val);
-      //console.debug("Value is " + val);
+      if(addendum){console.debug("Value is " + val);}
+    }
+
+    if(addendum)
+    {
+      console.log("Times are now:");
+      console.log(this.times.slice());
+      console.log("Values are now:");
+      for(let n=0;n<this.values.length;n++)
+      {
+        console.log(this.values[n].slice());
+      }
     }
   }
 
   trim(first_timestamp)
   {
     let first_time=Epochs.getTime(first_timestamp);
-    let n=0;
-    while(first_time.isAfter(this.times[n]) && n<this.times.length)
+    let first_index=0;
+    while(first_time.isAfter(this.times[first_index]) && first_index<this.times.length)
     {
-        n++;
+        first_index++;
     }
-    console.debug("Trimming " + n + " of " + this.times.length);
-    this.times.splice(0,n);
+    console.debug("Trimming " + first_index + " of " + this.times.length);
+    this.times.splice(0,first_index);
     for(let n = 0; n<this.values.length;n++)
     {
-      this.values[n].splice(0,n);
+      this.values[n].splice(0,first_index);
     }
   }
 
