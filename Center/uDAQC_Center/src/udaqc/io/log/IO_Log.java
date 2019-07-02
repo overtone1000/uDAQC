@@ -125,6 +125,7 @@ public class IO_Log
 		
 		
 		System.out.println("Points loaded from file:");
+		int count=0;
 		for(IO_Value val : values)
 		{
 			LinkedList<ArrayList<Point>> list = this.getPoints(val);
@@ -132,10 +133,12 @@ public class IO_Log
 			{
 				for(Point p : al)
 				{
-					System.out.println(p.toString());
+					//System.out.println(p.toString());
+					count++;
 				}
 			}
 		}
+		System.out.println(count + " points in total. That's " + entry_length*count + " bytes.");
 		
 	}
 	public IO_Log(Path path, Regime r, IO_System_Logged parent, long file_size, Duration duration)
@@ -249,7 +252,18 @@ public class IO_Log
 		
 		AddEpoch(new_epoch);
 		
-		file.seek(oldest_index*entry_length);		
+		int file_position;
+		if(oldest_index>0) 
+		{
+			file_position = oldest_index*entry_length;
+		}
+		else
+		{
+			file_position = this_index*entry_length;
+		}
+		System.out.println("Seeking file to position " + file_position + ", max size is " + max_file_size);
+		file.seek(file_position);
+		
 	}
 	private void AddEpoch(Epoch new_epoch)
 	{
