@@ -64,7 +64,7 @@ function handleHistory(ptcom)
   let regime = ptcom.message.getInt32();
   let max_size = ptcom.message.getInt64();
 
-  console.log("History received for regime " + regime);
+  //console.log("History received for regime " + regime);
 
   let device = IO.devices.get(ptcom.source_ID);
   let entry_size = 1 + 8 + device.system.ioValueCount * 4;
@@ -78,7 +78,7 @@ function handleHistory(ptcom)
     epochs.processEntry(ptcom.message, false);
   }
 
-  console.log(epochs);
+  //console.log(epochs);
 
   if(Globals.current_regime===regime)
   {
@@ -92,30 +92,30 @@ function handleHistoryAddendum(ptcom)
   let regime = ptcom.message.getInt32();
   let first_timestamp = ptcom.message.getInt64();
 
-  console.debug("History addendum received for regime " + regime);
-  console.debug("Oldest = " + first_timestamp);
+  //console.debug("History addendum received for regime " + regime);
+  //console.debug("Oldest = " + first_timestamp);
 
   let device = IO.devices.get(ptcom.source_ID);
   let entry_size = 1 + 8 + device.system.ioValueCount * 4;
 
   let epochs = device.system.getEpochs(regime);
 
-  console.debug("Remaining: " + ptcom.message.Remaining());
-  console.debug("Size: " + entry_size);
+  //console.debug("Remaining: " + ptcom.message.Remaining());
+  //console.debug("Size: " + entry_size);
   let test_count=0;
   while(ptcom.message.Remaining()>=entry_size)
   {
-    console.debug("Processing addendum entry.");
+    //console.debug("Processing addendum entry.");
     epochs.processEntry(ptcom.message, true);
   }
 
   epochs.trim(first_timestamp);
 
-  console.log(epochs);
+  //console.log(epochs);
 
   if(Globals.current_regime===regime)
   {
-    console.log("...");
+    //console.log("...");
     //If this histroy contains data for the currently displayed regime, update the chart like so...
     device.system.setChartRegime(Globals.current_regime);
   }
@@ -152,6 +152,7 @@ function update_devices()
     dashboard.removeChild(dashboard.firstChild);
   }
 
+  //First create jstree
   for(let key of IO.devices.keys())
   {
     let device = IO.devices.get(key);
@@ -159,11 +160,11 @@ function update_devices()
     //Add this to the jsTree list
     new_data = new_data.concat(device.system.toNode());
 
-    //Add thsi to the chart nodes
+    //And create the dashboards
     dashboard.appendChild(device.system.createDashboard());
   }
-  console.log("Changing nodes with " + new_data.length + " members.");
-  console.log(new_data);
+  //console.log("Changing nodes with " + new_data.length + " members.");
+  //console.log(new_data);
   changeNodes(new_data);
 }
 

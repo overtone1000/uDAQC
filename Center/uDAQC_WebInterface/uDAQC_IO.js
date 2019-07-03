@@ -283,7 +283,7 @@ class IO_Reporter
     //console.log("Name length is " + this.name_length);
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
     this.name = bytebuffer.ReadString(this.name_length);
-    console.log("New reporter = " + this.name);
+    //console.log("New reporter = " + this.name);
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
 
     this.device_index=indices.device;
@@ -376,15 +376,12 @@ class IO_Group extends IO_Reporter
   toNode(parent)
   {
     let new_data = [];
-    console.log("Turning " + this.name + " into nodes.");
 
     let group_node_arr = super.toNode(parent);
     new_data = new_data.concat(group_node_arr[0]);
 
-    console.log(new_data);
     for(let child of this.members)
     {
-      console.log("Adding child " + child.name + " of group " + this.name);
       new_data = new_data.concat(child.toNode(group_node_arr[0]));
     }
 
@@ -453,7 +450,7 @@ class IO_System extends IO_Group
     super(bytebuffer, indices);
     //this.ioValueCount = this.countIOValues()-1; //subtract one for the Timestamp
     this.ioValueCount = this.countIOValues(); //timestamp is still coming across as a float32. This should be fixed.
-    console.log("System has " + this.ioValueCount + " values.");
+    //console.log("System has " + this.ioValueCount + " values.");
 
     this.epochs = new Map();
   }
@@ -464,9 +461,6 @@ class IO_System extends IO_Group
 
     //Remove timestamp
     new_data.splice(1,1);
-
-    console.log("Updated nodes:");
-    console.log(new_data);
 
     return new_data;
   }
@@ -492,7 +486,7 @@ class IO_System extends IO_Group
 
   setChartRegime(regime_index)
   {
-    console.log("Setting system regime to " + regime_index);
+    //console.log("Setting system regime to " + regime_index);
     let values = this.getIOValues();
     let epochs = this.getEpochs(regime_index);
 
@@ -631,7 +625,7 @@ class Epochs{
   }
   startNewEpoch()
   {
-    console.debug("Starting new epoch.");
+    //console.debug("Starting new epoch.");
     if(this.times.length)
     {
       this.current_epoch_index = this.times.length;
@@ -645,7 +639,7 @@ class Epochs{
 
   mergeLastAndFirst()
   {
-    console.log("Merging first and last.");
+    //console.log("Merging first and last.");
 
     if(this.current_epoch_index<=0 || this.current_epoch_index>=this.times.length-1)
     {
@@ -687,26 +681,16 @@ class Epochs{
 
     if(flag&new_epoch_flag){
         //Start a new epoch
-        console.debug("New epoch flag.");
+        //console.debug("New epoch flag.");
         this.startNewEpoch();
     }
 
     if(flag&split_epoch_flag && !addendum){
       //Merge with first epoch
-      console.debug("Split flag.");
+      //console.debug("Split flag.");
       this.mergeLastAndFirst();
     }
 
-    if(addendum)
-    {
-      console.log("Times were:");
-      console.log(this.times.slice());
-      console.log("Values were:");
-      for(let n=0;n<this.values.length;n++)
-      {
-        console.log(this.values[n].slice());
-      }
-    }
 
     this.times.push(Epochs.getTime(message.getInt64()));
 
@@ -714,18 +698,6 @@ class Epochs{
     {
       let val = message.getFloat32();
       this.values[n].push(val);
-      if(addendum){console.debug("Value is " + val);}
-    }
-
-    if(addendum)
-    {
-      console.log("Times are now:");
-      console.log(this.times.slice());
-      console.log("Values are now:");
-      for(let n=0;n<this.values.length;n++)
-      {
-        console.log(this.values[n].slice());
-      }
     }
   }
 
@@ -737,7 +709,7 @@ class Epochs{
     {
         first_index++;
     }
-    console.debug("Trimming " + first_index + " of " + this.times.length);
+    //console.debug("Trimming " + first_index + " of " + this.times.length);
     this.times.splice(0,first_index);
     for(let n = 0; n<this.values.length;n++)
     {
