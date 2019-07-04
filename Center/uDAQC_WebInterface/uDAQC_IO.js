@@ -484,6 +484,54 @@ class IO_System extends IO_Group
     return this.epochs.get(regime_index);
   }
 
+  updateChartXAxis(min_frac,max_frac)
+  {
+    let values = this.getIOValues();
+
+    for(let i=0;i<values.length;i++)
+    {
+      let abs_min=values[i].dashstate.chart.current_min;
+      let abs_max=values[i].dashstate.chart.current_max;
+
+      let interval=abs_max-abs_min;
+
+      let new_min=min_frac*interval+abs_min;
+      let new_max=abs_max-(1.0-max_frac)*interval;
+
+      values[i].chart.options.scales.xAxes[0].time.min = moment(new_min);
+      values[i].chart.options.scales.xAxes[0].time.max = moment(new_max);
+
+      values[i].chart.update();
+    }
+  }
+
+  trimChartXAxis()
+  {
+    let values = this.getIOValues();
+
+    for(let i=0;i<values.length;i++)
+    {
+      values[i].dashstate.chart.current_min=moment(values[i].chart.options.scales.xAxes[0].time.min);
+      values[i].dashstate.chart.current_max=moment(values[i].chart.options.scales.xAxes[0].time.max);
+    }
+  }
+
+  resetChartXAxis()
+  {
+    let values = this.getIOValues();
+
+    for(let i=0;i<values.length;i++)
+    {
+      values[i].dashstate.chart.current_min=values[i].dashstate.chart.absolute_min;
+      values[i].dashstate.chart.current_max=values[i].dashstate.chart.absolute_max;
+
+      values[i].chart.options.scales.xAxes[0].time.min = values[i].dashstate.chart.current_min;
+      values[i].chart.options.scales.xAxes[0].time.max = values[i].dashstate.chart.current_max;
+
+      values[i].chart.update();
+    }
+  }
+
   setChartRegime(regime_index)
   {
     //console.log("Setting system regime to " + regime_index);
@@ -500,8 +548,16 @@ class IO_System extends IO_Group
     {
       //console.debug("Modifying chart " + i);
       values[i].chart.data.labels = epochs.times;
-      values[i].chart.options.scales.xAxes[0].ticks.suggestedMin = epochs.earliestTime();
-      values[i].chart.options.scales.xAxes[0].ticks.suggestedMax = epochs.latestTime();
+
+      values[i].dashstate.chart.absolute_min=epochs.earliestTime();
+      values[i].dashstate.chart.absolute_max=epochs.latestTime();
+
+      values[i].dashstate.chart.current_min=epochs.earliestTime();
+      values[i].dashstate.chart.current_max=epochs.latestTime();
+
+      values[i].chart.options.scales.xAxes[0].time.min = values[i].dashstate.chart.absolute_min;
+      values[i].chart.options.scales.xAxes[0].time.max = values[i].dashstate.chart.absolute_max;
+
 
       values[i].chart.data.datasets=
       [
@@ -587,6 +643,14 @@ class IO_Value extends IO_Reporter
     this.units = bytebuffer.ReadString(this.units_length);
     this.data_type = bytebuffer.getInt16();
     this.chart = null;
+    this.dashstate = {
+      chart : {
+        absolute_min:0,
+        absolute_max:0,
+        current_min:0,
+        current_max:0
+      }
+    };
   }
 
   createDashboard()
@@ -663,10 +727,12 @@ class Epochs{
 
   static getTime(millis)
   {
-    let seconds=millis/1000;
-    let millis_remainder=millis%1000;
-    let time=moment.unix(seconds);
-    time.milliseconds(millis_remainder);
+    //let seconds=millis/1000;
+    //let millis_remainder=millis%1000;
+    //let time=moment.unix(seconds);
+    //time.milliseconds(millis_remainder);
+
+    let time=moment(millis);
     return time;
   }
 
