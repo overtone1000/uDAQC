@@ -506,7 +506,7 @@ class IO_System extends IO_Group
       values[i].chart.data.datasets=
       [
         {
-          label: "Data",
+          label: values[i].name + " (" + values[i].units + ")",
           fill: false, //no filling under the curve
           //backgroundColor: "rgb(0,0,0,0)", //transparent (this fills under the curve)
           borderColor: "rgb(255, 0, 0, 255)",
