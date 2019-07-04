@@ -98,6 +98,7 @@
       "moment" :true,
       "Chart" : true,
       "Regimes" : true,
-      "Globals" : true
+      "Globals" : true,
+      "Slider" : true
       }        // additional predefined global variables
 }
