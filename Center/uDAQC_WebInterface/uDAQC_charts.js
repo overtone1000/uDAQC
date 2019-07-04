@@ -41,7 +41,8 @@ function createChart(canvas)
             type: "time"
           }]
         },
-        animation:false
+        animation:false,
+        elements:{line:{tension:0}}
       }
   });
 }
