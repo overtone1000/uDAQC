@@ -13,6 +13,7 @@ namespace ESP_Managers
 		String read_network_password(int index);
 		void add_network(ESP8266WiFiMulti* wifiMulti, String SSID, String password);
 		void delete_network(int nw_index);
+		void clear_networks();
 
 		struct Credentials
 		{

@@ -111,6 +111,7 @@ namespace ESP_Managers
 			void add_network(ESP8266WiFiMulti* wifiMulti, String SSID, String password)
 			{
 			  DEBUG_println("Adding a network.");
+
 			  File f;
 			  f=SPIFFS.open(file_networks,"a");
 			  if(f){
@@ -162,7 +163,7 @@ namespace ESP_Managers
 			  {
 				//WiFi.disconnect(false); //false keeps wifi mode the same
 				 DEBUG_println("Current network deleted. Resetting.");
-				ESP.restart(); //this looks safer. The below caused a Panic error and triggered a reset.
+				 ESP.restart(); //this looks safer. The below caused a Panic error and triggered a reset.
 
 				//delete &wifiMulti; //wifiMulti has an appropriate destructor. This will clear the list of networks, so it needs to be completely repopulated with the next statement.
 				//wifiMulti=ESP8266WiFiMulti();
@@ -170,6 +171,13 @@ namespace ESP_Managers
 				//initWiFi_station();
 				//init_server();
 			  }
+			}
+
+			void clear_networks()
+			{
+				DEBUG_println("Clearing list of networks.");
+				File f=SPIFFS.open(file_networks,"w"); //open as a brand new file, discard old contents
+				f.close();
 			}
 
 			Credentials read_credentials()
