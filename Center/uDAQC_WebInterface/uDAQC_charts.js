@@ -102,6 +102,16 @@ let resetX = function(e)
   x_adjust.setValue([0,1]);
 };
 
+let stopStreaming= function()
+{
+  console.log("Stopping updates.");
+  for(let key of IO.devices.keys())
+  {
+    let device = IO.devices.get(key);
+    device.system.chart_stream=false;
+  }
+};
+
 window.onload=function(){
   console.log("Window loaded.");
   document.getElementById("ul_regime_live").onclick=function(){changeRegime(Regimes.live);};
@@ -109,6 +119,7 @@ window.onload=function(){
   document.getElementById("ul_regime_hour").onclick=function(){changeRegime(Regimes.hour);};
   document.getElementById("ul_regime_day").onclick=function(){changeRegime(Regimes.day);};
   x_adjust = $("#x_adjust_rangeselector").slider().on("slideStop", adjustX).data("slider");
+  x_adjust.on("slideStart", stopStreaming);
 
   $("#x_trim_button").on("click",trimX);
   $("#x_reset_button").on("click",resetX);

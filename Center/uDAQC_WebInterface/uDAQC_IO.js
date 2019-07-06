@@ -453,6 +453,8 @@ class IO_System extends IO_Group
     //console.log("System has " + this.ioValueCount + " values.");
 
     this.epochs = new Map();
+
+    this.chart_stream = true;
   }
 
   toNode()
@@ -488,18 +490,28 @@ class IO_System extends IO_Group
   {
     let values = this.getIOValues();
 
+    if(max_frac<1)
+    {
+      this.chart_stream=false;
+    }
+
     for(let i=0;i<values.length;i++)
     {
-      let abs_min=values[i].dashstate.chart.current_min;
-      let abs_max=values[i].dashstate.chart.current_max;
+      let min=values[i].dashstate.chart.current_min;
+      let max=values[i].dashstate.chart.current_max;
+      if(!min){min=values[i].dashstate.chart.absolute_min;}
+      if(!max){max=values[i].dashstate.chart.absolute_max;}
+      let interval=max-min;
 
-      let interval=abs_max-abs_min;
-
-      let new_min=min_frac*interval+abs_min;
-      let new_max=abs_max-(1.0-max_frac)*interval;
+      let new_min=min_frac*interval+min;
+      let new_max=max-(1.0-max_frac)*interval;
 
       values[i].chart.options.scales.xAxes[0].time.min = moment(new_min);
-      values[i].chart.options.scales.xAxes[0].time.max = moment(new_max);
+
+      if(!this.chart_stream)
+      {
+        values[i].chart.options.scales.xAxes[0].time.max = moment(new_max);
+      }
 
       values[i].chart.update();
     }
@@ -513,6 +525,8 @@ class IO_System extends IO_Group
     {
       values[i].dashstate.chart.current_min=moment(values[i].chart.options.scales.xAxes[0].time.min);
       values[i].dashstate.chart.current_max=moment(values[i].chart.options.scales.xAxes[0].time.max);
+
+      values[i].chart.update();
     }
   }
 
@@ -520,13 +534,15 @@ class IO_System extends IO_Group
   {
     let values = this.getIOValues();
 
+    this.chart_stream=true;
+
     for(let i=0;i<values.length;i++)
     {
       values[i].dashstate.chart.current_min=values[i].dashstate.chart.absolute_min;
       values[i].dashstate.chart.current_max=values[i].dashstate.chart.absolute_max;
 
-      values[i].chart.options.scales.xAxes[0].time.min = values[i].dashstate.chart.current_min;
-      values[i].chart.options.scales.xAxes[0].time.max = values[i].dashstate.chart.current_max;
+      values[i].chart.options.scales.xAxes[0].time.min = null;
+      values[i].chart.options.scales.xAxes[0].time.max = null;
 
       values[i].chart.update();
     }
@@ -552,11 +568,11 @@ class IO_System extends IO_Group
       values[i].dashstate.chart.absolute_min=epochs.earliestTime();
       values[i].dashstate.chart.absolute_max=epochs.latestTime();
 
-      values[i].dashstate.chart.current_min=epochs.earliestTime();
-      values[i].dashstate.chart.current_max=epochs.latestTime();
+      //values[i].dashstate.chart.current_min=epochs.earliestTime();
+      //values[i].dashstate.chart.current_max=epochs.latestTime();
 
-      values[i].chart.options.scales.xAxes[0].time.min = values[i].dashstate.chart.absolute_min;
-      values[i].chart.options.scales.xAxes[0].time.max = values[i].dashstate.chart.absolute_max;
+      //values[i].chart.options.scales.xAxes[0].time.min = values[i].dashstate.chart.absolute_min;
+      //values[i].chart.options.scales.xAxes[0].time.max = values[i].dashstate.chart.absolute_max;
 
 
       values[i].chart.data.datasets=
@@ -575,9 +591,7 @@ class IO_System extends IO_Group
         }
       ];
 
-      values[i].chart.update();
-
-      //console.debug(values[i].chart.data);
+      values[i].chart.update(); //need to force update regardless of whether its enabled;
     }
   }
 }
