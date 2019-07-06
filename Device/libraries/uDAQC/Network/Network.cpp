@@ -141,15 +141,15 @@ namespace ESP_Managers
 			  }
 		  }
 		  Network::laststatus=wifistatus;
+			yield();
 		  Network::dnsServer.processNextRequest(); //for AP mode only
+			yield();
 		  Network::webserver.handleClient(); //handle client communications
-			//securewebserver.handleClient();
-
+			yield();
 			#ifndef TEMP_TESTING
 			IO::System()->LoopUDP();
+			yield();
 			#endif
-
-		  delay(0);
 
 			//Testing time
 			//timeval tv;
@@ -247,11 +247,14 @@ namespace ESP_Managers
 			//return server.requestAuthentication(DIGEST_AUTH, www_realm);
 			//Digest Auth Method with Custom realm and Failure Response
 			{
+				DEBUG_println("Already authenticated.");
 				return true;
 			}
 			else
 			{
+				DEBUG_println("Requesting authentication.");
 				webserver.requestAuthentication(DIGEST_AUTH);
+				DEBUG_println("Sending redirect.");
 				redirect();
 				return false;
 			}
@@ -286,6 +289,7 @@ namespace ESP_Managers
 
 		void init_server(SecurityBundle bundle)
 		{
+			DEBUG_println("Initializing webserver.");
 			#ifdef TLS
 			//BearSSL::X509List *serverCertList = new BearSSL::X509List(server_cert);
 			//BearSSL::PrivateKey *serverPrivKey = new BearSSL::PrivateKey(server_private_key);
@@ -333,6 +337,7 @@ namespace ESP_Managers
 		  webserver.sendHeader("Location", url, true);
 		  webserver.send ( 302, "text/plain", ""); // Empty content inhibits Content-length header so we have to close the socket ourselves.
 		  webserver.client().stop(); // Stop is needed because we sent no content length
+			DEBUG_println("Redirected.");
 		}
 
 		IPAddress my_ip()
