@@ -328,11 +328,19 @@ class IO_Reporter
     let retval = document.createElement("div");
     retval.id = IO.getDashboardID(this.id());
 
+    let title_row = document.createElement("div");
+    title_row.className="row align-items-center";
+
     let title = document.createElement("div");
-    title.innerHTML = this.name;
+    title.className="col";
 
-    retval.appendChild(title);
+    let label = document.createElement("span");
+    label.innerHTML=this.name;
+    label.className="badge badge-pill badge-primary";
 
+    title.appendChild(label);
+    title_row.appendChild(title);
+    retval.appendChild(title_row);
     return retval;
   }
 }
@@ -673,7 +681,6 @@ class IO_Value extends IO_Reporter
 
     let dash = document.createElement("canvas");
     dash.id = IO.getChartID(this.id());
-    dash.innerHTML = "Chart for " + this.name;
     this.chart = createChart(dash);
     retval.appendChild(dash);
 
@@ -686,6 +693,26 @@ class IO_ModifiableValue extends IO_Value
   constructor(bytebuffer, indices){
     super(bytebuffer, indices);
     this.modval_index = bytebuffer.getInt16();
+  }
+
+  createDashboard()
+  {
+    let retval = super.createDashboard(); //get the default IO_Reporter Dashboard, which is just a div
+
+    let title = retval.childNodes[0]; //title row will be first child
+
+    let textbox = document.createElement("input");
+    textbox.type = "number";
+    textbox.className = "col form-control";
+    textbox.step = "any";
+    title.appendChild(textbox);
+
+    let button = document.createElement("button");
+    button.innerHTML = "Modify";
+    button.className = "col btn btn-primary";
+    title.appendChild(button);
+
+    return retval;
   }
 }
 
