@@ -131,7 +131,7 @@ public class HTTPS_Server
         Constraint constraint = new Constraint();
         constraint.setName("auth");
         constraint.setAuthenticate(true);
-        constraint.setRoles(new String[] { "user", "admin" });
+        constraint.setRoles(new String[] { "admin_role", "guest_role" });
         
         ConstraintMapping mapping = new ConstraintMapping();
         mapping.setPathSpec("/*");
