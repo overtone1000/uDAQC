@@ -53,6 +53,7 @@ namespace ESP_Managers
 
 		void Initialize(Network::SecurityBundle bundle)
 		{
+			ESP.eraseConfig(); //This may fix some problems with AP connectivity
 			WiFi.persistent(false); //This fixed the flash write poison block bug on the ESP-12 module
 			Network::initWiFi_station();
 			Network::init_server(bundle);
@@ -126,14 +127,10 @@ namespace ESP_Managers
 			  //DEBUG_println("disconnected loop");
 			  if(Network::laststatus!=wifistatus)
 				{
-					//DEBUG_println("Wifi status changed to " + (String)wifistatus);
+					DEBUG_println("Wifi status changed to " + (String)wifistatus);
 				}
 			  if(Network::connected){Network::connected=false;}
 			  if(!Network::STA_disconnected_timer.isrunning()){Network::STA_disconnected_timer.start();}
-			  if(Network::STA_disconnected_timer.elapsed()<15000)
-				{
-					//DEBUG_println("Disconnected for " + (String)STA_disconnected_timer.elapsed() + "ms.");
-			  }
 			  if(!Network::enable_AP && Network::STA_disconnected_timer.elapsed()>15000)
 			  {
 					Network::enable_AP=true;
