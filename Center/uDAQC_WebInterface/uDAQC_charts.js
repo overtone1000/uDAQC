@@ -33,7 +33,7 @@ function createChart(canvas)
         legend:
         {
           display: true,
-          position: "right"
+          position: "bottom"
         },
         scales:
         {

@@ -327,19 +327,22 @@ class IO_Reporter
   {
     let retval = document.createElement("div");
     retval.id = IO.getDashboardID(this.id());
+    retval.className="col border border-primary no-gutters";
 
     let title_row = document.createElement("div");
-    title_row.className="row align-items-center";
+    title_row.className="row align-items-center mt-1 mb-1 no-gutters";
 
-    let title = document.createElement("div");
-    title.className="col";
+    let title_col = document.createElement("div");
+    title_col.className="col no-gutters ";
 
-    let label = document.createElement("span");
-    label.innerHTML=this.name;
-    label.className="badge badge-pill badge-primary";
+    let title = document.createElement("span");
+    title.className="badge badge-secondary";
+    title.innerHTML=this.name;
+    title.style.height="100%";
+    title.style.width="100%";
 
-    title.appendChild(label);
-    title_row.appendChild(title);
+    title_col.appendChild(title);
+    title_row.appendChild(title_col);
     retval.appendChild(title_row);
     return retval;
   }
@@ -681,6 +684,7 @@ class IO_Value extends IO_Reporter
 
     let dash = document.createElement("canvas");
     dash.id = IO.getChartID(this.id());
+    dash.class="row";
     this.chart = createChart(dash);
     retval.appendChild(dash);
 
@@ -699,18 +703,23 @@ class IO_ModifiableValue extends IO_Value
   {
     let retval = super.createDashboard(); //get the default IO_Reporter Dashboard, which is just a div
 
-    let title = retval.childNodes[0]; //title row will be first child
+    let chart = retval.childNodes[1]; //chart will be second child
+
+    let modification_row = document.createElement("div");
+    modification_row.className = "row mb-1 no-gutters";
 
     let textbox = document.createElement("input");
     textbox.type = "number";
-    textbox.className = "col form-control";
+    textbox.className = "col md-6 form-control ml-1";
     textbox.step = "any";
-    title.appendChild(textbox);
+    modification_row.appendChild(textbox);
 
     let button = document.createElement("button");
     button.innerHTML = "Modify";
-    button.className = "col btn btn-primary";
-    title.appendChild(button);
+    button.className = "col btn btn-primary ml-1 mr-1";
+    modification_row.appendChild(button);
+
+    retval.insertBefore(modification_row,chart);
 
     return retval;
   }
