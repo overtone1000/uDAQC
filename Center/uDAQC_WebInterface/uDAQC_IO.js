@@ -327,7 +327,7 @@ class IO_Reporter
   {
     let retval = document.createElement("div");
     retval.id = IO.getDashboardID(this.id());
-    retval.className="col border border-primary no-gutters";
+    retval.className="col border-bottom  border-primary no-gutters";
 
     let title_row = document.createElement("div");
     title_row.className="row align-items-center mt-1 mb-1 no-gutters";

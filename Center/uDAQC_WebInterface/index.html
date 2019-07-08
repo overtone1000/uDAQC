@@ -17,10 +17,7 @@
 
   <body>
 
-    <div class="container-fluid fixed">
-    	<div class="row fullheight">
-    		<div class="col fullheight">
-
+    <div class="container-fluid fixed pl-0 pr-0">
   				<div class="row">
             <div class="col-md-12">
               <div class="row">
@@ -57,13 +54,13 @@
             </div>
           </div>
 
-    			<div class="row fullheight fillremaining">
+    			<div class="row fullheight fillremaining no-gutters">
 
     				<div class="col-md-4 fullheight fillremaining" id="jstree">
     				</div>
 
   					<div  class="col-md-8 fullheight fillremaining">
-              <div class="row mt-1">
+              <div class="row mt-1 no-gutters">
                 <div class="col d-flex  align-items-center justify-content-end">
                   <div class="ml-md-3"></div>
                   <input id="x_adjust_rangeselector" range="true" data-slider-min="0" data-slider-max="1" data-slider-step="0.001" data-slider-value="[0,1]"/>
@@ -71,16 +68,13 @@
                   <button id="x_reset_button" type="button" class="btn btn-primary ml-md-1">Reset</button>
                 </div>
               </div>
-              <div class="row fullheight fillremaining">
-                <div class="col fullheight fillremaining scrollable no-gutters" id="chart_space">
-                </div>
+
+              <div class="row fullheight fillremaining scrollable border border-primary no-gutters" id="chart_space">
               </div>
+
   					</div>
 
     			</div>
-        </div>
-
-  		</div>
   	</div>
 
     <script src=
