@@ -510,9 +510,12 @@ class IO_System extends IO_Group
     {
       let min=values[i].dashstate.chart.current_min;
       let max=values[i].dashstate.chart.current_max;
-      if(!min){min=values[i].dashstate.chart.absolute_min;}
-      if(!max){max=values[i].dashstate.chart.absolute_max;}
+      if(!min || isNaN(min)){min=values[i].dashstate.chart.absolute_min;}
+      if(!max || isNaN(max)){max=values[i].dashstate.chart.absolute_max;}
       let interval=max-min;
+
+      console.log("min = " + min);
+      console.log("max = " + max);
 
       let new_min=min_frac*interval+min;
       let new_max=max-(1.0-max_frac)*interval;
@@ -535,8 +538,12 @@ class IO_System extends IO_Group
     for(let i=0;i<values.length;i++)
     {
       values[i].dashstate.chart.current_min=moment(values[i].chart.options.scales.xAxes[0].time.min);
-      values[i].dashstate.chart.current_max=moment(values[i].chart.options.scales.xAxes[0].time.max);
 
+      if(!this.chart_stream)
+      {
+        values[i].dashstate.chart.current_max=moment(values[i].chart.options.scales.xAxes[0].time.max);
+      }
+      
       values[i].chart.update();
     }
   }
