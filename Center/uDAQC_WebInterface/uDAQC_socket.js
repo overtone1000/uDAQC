@@ -27,7 +27,7 @@ function testWebSocket()
 function onOpen(evt)
 {
   let x = document.getElementById("connection_alert");
-  x.className = "alert alert-success";
+  x.className = "alert alert-success mb-0";
   x.innerHTML = "Connected";
   console.log(evt);
 }
@@ -35,7 +35,7 @@ function onOpen(evt)
 function onClose(evt)
 {
   let x = document.getElementById("connection_alert");
-  x.className = "alert alert-warning";
+  x.className = "alert alert-warning mb-0";
   x.innerHTML = "No connection";
   console.log(evt);
 }

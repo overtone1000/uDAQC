@@ -327,7 +327,7 @@ class IO_Reporter
   {
     let retval = document.createElement("div");
     retval.id = IO.getDashboardID(this.id());
-    retval.className="col border-bottom  border-primary no-gutters";
+    retval.className="col border-top  border-primary no-gutters";
 
     let title_row = document.createElement("div");
     title_row.className="row align-items-center mt-1 mb-1 no-gutters";
@@ -543,7 +543,7 @@ class IO_System extends IO_Group
       {
         values[i].dashstate.chart.current_max=moment(values[i].chart.options.scales.xAxes[0].time.max);
       }
-      
+
       values[i].chart.update();
     }
   }
