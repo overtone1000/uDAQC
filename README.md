@@ -1,17 +1,19 @@
 # uDAQC
-An architecture for data acquisition, visualization, and control using the ESP8266 and a Java application with a Javascript UI.
+An architecture for data acquisition, visualization, and control using the ESP8266 and a Java application with a JavaScript UI.
 
 # IO Objects
-uDAQC is based on the conceptual organization of IO Objects into heirarchical systems.
+uDAQC is based on the conceptual organization of IO Objects into hierarchical systems.
 -IO_Node: This is the fundamental IO Object class. All other IO Objects inherit from this class or one of the other IO Object classes. The IO_Node has:
-  A String name
-  An int16 command description
-  An IO_Group parent
-  An int32 byte count
--IO_Value: This is an IO Object that extends/inherits IO_Node. It is to be used as an IO Object that represents an underlying value and so exends the class with:
-  A String for the units of the value
-  An int16 format type
-  An oject value (in Devices, this is handled with templates, in Java with a generic Object)
+  -A String name
+  -An int16 command description
+  -An IO_Group parent
+  -An int32 byte count
+-IO_Value: This is an IO Object that extends/inherits IO_Node. It is to be used as an IO Object that represents an underlying value and so extends the class with:
+  -A String for the units of the value
+  -An int16 format type
+  -An object value (in Devices, this is handled with templates, in Java with a generic Object)
+  Of note, the IO_Node byte count is equal to the size of the type of the value (e.g. a uint32 will have an IO_Node byte count of 4)
+
 -IO_ModifiableValue: This is an IO Object that extends/inherits IO_Value. It adds functionality allowing the IO_Value to be modified remotely and saved on the device.
 -IO_Group: This is an IO Object that extends/inherits IO_Node and extends the class with a list of child IO_Nodes.
 -IO_System: This is an IO Object that extends/inherits IO_Group and extends the class with functions that encapsulate network communication.
