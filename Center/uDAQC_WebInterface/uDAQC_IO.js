@@ -730,6 +730,61 @@ class IO_ModifiableValue extends IO_Value
 
     return retval;
   }
+
+  ModifyValue(new_value)
+  {
+    const headersize = 2; //one short before the value
+    let buffer = new ArrayBuffer(this.byte_count + headersize);
+    let view = new DataView(buffer);
+    view.setInt16(0,this.modval_index);
+    switch(this.data_type)
+    {
+      case DataTypes.signed_integer:
+        switch(this.byte_count)
+        {
+          case 2:
+            view.setInt16(headersize,new_value);
+          break;
+          case 4:
+            view.setInt32(headersize,new_value);
+          break;
+          case 8:
+            console.error("No write for 64 bit integers yet implemented.");
+          break;
+          default:
+            console.error("Wrong byte count.");
+        }
+      break;
+      case DataTypes.unsigned_integer:
+        console.error("No support for unsigned integers in Java server?");
+      break;
+      case DataTypes.floating_point:
+        switch(this.byte_count)
+        {
+          case 4:
+            view.setFloat32(headersize,new_value);
+          break;
+          case 8:
+            view.setFloat64(headersize,new_value);
+          break;
+          default:
+            console.error("Wrong byte count.");
+        }
+      break;
+      case DataTypes.bool:
+        switch(this.byte_count)
+        {
+          case 1:
+            view.setInt8(headersize,new_value);
+          break;
+          default:
+            console.error("Wrong byte count.");
+        }
+      break;
+    }
+
+    console.error("Still need to package as a command, then as a PTCommand, then send it...");
+  }
 }
 
 class Epochs{
