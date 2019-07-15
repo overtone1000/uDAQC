@@ -231,9 +231,9 @@ namespace ESP_Managers{ namespace IO
     page +="     " + (String)(((float)(ESP.getFreeHeap()))) + " bytes used by the heap" + HTML_Builder::breakline;
 
     page += String(members.size()) + R"( devices.)" + HTML_Builder::breakline;
-    if(ESP_Managers::IO::IO_Reporter::errcnt>0)
+    if(ESP_Managers::IO::IO_Node::errcnt>0)
     {
-      page += String(ESP_Managers::IO::IO_Reporter::errcnt) + R"( unsuccessful device addition attempts.)" + HTML_Builder::breakline;
+      page += String(ESP_Managers::IO::IO_Node::errcnt) + R"( unsuccessful device addition attempts.)" + HTML_Builder::breakline;
     }
 
     for(auto it=members.begin();it!=members.end();it++)

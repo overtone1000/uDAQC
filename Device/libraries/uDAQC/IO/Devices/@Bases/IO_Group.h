@@ -6,22 +6,22 @@
 #include <ESP_Utilities.h>
 #include <algorithm>
 
-#include "IO_Reporter.h"
+#include "IO_Node.h"
 
 namespace ESP_Managers{ namespace IO
 {
-  class IO_Reporter;
+  class IO_Node;
 
-  class IO_Group:public IO_Reporter
+  class IO_Group:public IO_Node
   /*
-  This class is a reporter that groups IO_Reporters together to allow nesting of devices in an IO_System
+  This class is a node that groups IO_Nodes together to allow nesting of devices in an IO_System
   */
   {
   public:
     IO_Group(String name, IO_Group* collection);
     ~IO_Group(){}
 
-  //IO_Reporter stuff
+  //IO_Node stuff
     //For the web interface
     virtual String Report();
     unsigned int NameSize();
@@ -34,10 +34,10 @@ namespace ESP_Managers{ namespace IO
     virtual const int16_t* DescriptionCommand(){return &(NetworkCommands::group_description);}
 
   //IO_Group stuff
-    void add_reporter(IO_Reporter* new_member);
+    void add_node(IO_Node* new_member);
 
   protected:
-    std::vector<IO_Reporter*> members;
+    std::vector<IO_Node*> members;
     unsigned int current_size=0;
   };
 }};

@@ -2,11 +2,11 @@
 
 namespace ESP_Managers{ namespace IO
 {
-  IO_Group::IO_Group(String name, IO_Group* collection):IO_Reporter(name,collection)
+  IO_Group::IO_Group(String name, IO_Group* collection):IO_Node(name,collection)
   {
   }
 
-  void IO_Group::add_reporter(IO_Reporter* new_member)
+  void IO_Group::add_node(IO_Node* new_member)
   {
     members.push_back(new_member);
   }
@@ -80,7 +80,7 @@ namespace ESP_Managers{ namespace IO
 
     /*
     Structure:
-    Standard Reporter description header
+    Standard Node description header
     short containing number of members to look for
     each member's description
     */
@@ -88,20 +88,20 @@ namespace ESP_Managers{ namespace IO
 
     uint16_t membercount = members.size();
 
-    retval+=IO_Reporter::SendDescription(client);
+    retval+=IO_Node::SendDescription(client);
     retval+=client->write((uint8_t*)&membercount,sizeof(membercount));
 
     /*
 <<<<<<< HEAD
     To handle description, recipient will need to:
       1. Process members until the number of members has been reached, then return to the parent loop
-      2. Handle IO_Reporters, IO_SaveableValues, IO_Values, and IO_Groups as different possible members
+      2. Handle IO_Nodes, IO_SaveableValues, IO_Values, and IO_Groups as different possible members
     To handle data, recipient will need to:
       1. Keep track of IO_SaveableValues and IO_Values, which will report the length of data they will transmit.
 =======
     Recipient will need to:
       1. Process members until the number of members has been reached, then return to the parent loop
-      2. Handle IO_Reporters, IO_SaveableValues, IO_Values, and IO_Groups as different possible members
+      2. Handle IO_Nodes, IO_SaveableValues, IO_Values, and IO_Groups as different possible members
 >>>>>>> ac8e61fb9d488ba97c5f66ed94f58d391b9fdcb5
     */
 

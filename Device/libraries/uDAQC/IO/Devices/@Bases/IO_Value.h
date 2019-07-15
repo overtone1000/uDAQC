@@ -3,16 +3,16 @@
 
 #include <Arduino.h>
 
-#include "IO_Reporter.h"
+#include "IO_Node.h"
 
 namespace ESP_Managers{ namespace IO
 {
   class IO_Group;
 
   template<typename T>
-  class IO_Value:public IO_Reporter
+  class IO_Value:public IO_Node
   /*
-  A class based on IO_Reporter containing a value of type T.
+  A class based on IO_Node containing a value of type T.
   A prior iteration only contained a pointer to a T value, with memory being instantiated somewhere elapsed (IO_System)
   But this was likely not an improvement in efficiency and was more complicated. Reverted to simply having a T in the class
   */
@@ -22,10 +22,10 @@ namespace ESP_Managers{ namespace IO
     String units_str="";
 
   public:
-    IO_Value<T>(String name, IO_Group* collection) : IO_Reporter(name, collection)
+    IO_Value<T>(String name, IO_Group* collection) : IO_Node(name, collection)
     {}
 
-    IO_Value<T>(String name, String units, IO_Group* collection) : IO_Reporter(name, collection)
+    IO_Value<T>(String name, String units, IO_Group* collection) : IO_Node(name, collection)
     {units_str=units;}
 
     virtual T Get(){
@@ -52,7 +52,7 @@ namespace ESP_Managers{ namespace IO
     {
       /*
       Structure:
-      Standard Reporter description header
+      Standard Node description header
 
       int containing the length of the units
       String units
@@ -64,7 +64,7 @@ namespace ESP_Managers{ namespace IO
 
       const int16_t* type_int = GetTypeInt();
 
-      retval+=IO_Reporter::SendDescription(client);
+      retval+=IO_Node::SendDescription(client);
 
       retval+=SendString(client,&units_str);
 

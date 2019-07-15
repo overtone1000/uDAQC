@@ -1,4 +1,4 @@
-#include "IO_Reporter.h"
+#include "IO_Node.h"
 
 namespace ESP_Managers{ namespace IO
 {
@@ -22,15 +22,15 @@ namespace ESP_Managers{ namespace IO
     return total;
   }
 
-  int IO_Reporter::errcnt=-1; //Start at -1 because there is always one unsuccessful attempt at device addition with the main group.
-  IO_Reporter::IO_Reporter(String name, IO_Group* collection)
+  int IO_Node::errcnt=-1; //Start at -1 because there is always one unsuccessful attempt at device addition with the main group.
+  IO_Node::IO_Node(String name, IO_Group* collection)
   {
     device_name=name;
 
     parent = collection;
     if(parent)
     {
-      parent->add_reporter(this);
+      parent->add_node(this);
     }
     else
     {
@@ -38,25 +38,25 @@ namespace ESP_Managers{ namespace IO
     }
   }
 
-  void IO_Reporter::Rename(String name)
+  void IO_Node::Rename(String name)
   {
     device_name=name;
   }
 
-  int32_t IO_Reporter::DescriptionSize()
+  int32_t IO_Node::DescriptionSize()
   {
     PseudoWiFiClient pclient;
     SendDescription(&pclient);
     return pclient.total_written();
   }
-  int32_t IO_Reporter::DataSize()
+  int32_t IO_Node::DataSize()
   {
     PseudoWiFiClient pclient;
     SendData(&pclient);
     return pclient.total_written();
   }
 
-  String IO_Reporter::FullName()
+  String IO_Node::FullName()
   {
     String fullname;
     if(parent)
@@ -72,7 +72,7 @@ namespace ESP_Managers{ namespace IO
     return fullname;
   }
 
-  String IO_Reporter::SafeFullName()
+  String IO_Node::SafeFullName()
   {
     String safefullname = FullName();
     for(unsigned int n = 0; n<safefullname.length();n++)
@@ -86,12 +86,12 @@ namespace ESP_Managers{ namespace IO
     return safefullname;
   }
 
-  unsigned int IO_Reporter::SendDescription(WiFiClient* client)
+  unsigned int IO_Node::SendDescription(WiFiClient* client)
   {
     /*
     Structure:
     int16_t containing the command
-    int32_t containing the length of the data for this reporter in the data dump
+    int32_t containing the length of the data for this node in the data dump
     int16_t containing the length of the name
     the name string
     String name

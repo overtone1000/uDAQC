@@ -1,5 +1,5 @@
-#ifndef IO_Reporter_h
-#define IO_Reporter_h
+#ifndef IO_Node_h
+#define IO_Node_h
 
 #include <Arduino.h>
 #include <vector>
@@ -22,7 +22,7 @@ namespace ESP_Managers{ namespace IO
     unsigned int total=0;
   };
 
-  class IO_Reporter
+  class IO_Node
   /*
   This class is used to create the fundamental members of an IO_System
   Their primary function (even before saving a value) is to:
@@ -33,8 +33,8 @@ namespace ESP_Managers{ namespace IO
   */
   {
   public:
-    IO_Reporter(String name, IO_Group* collection);
-    virtual ~IO_Reporter(){}
+    IO_Node(String name, IO_Group* collection);
+    virtual ~IO_Node(){}
     void Rename(String name);
 
     //For the web interface
@@ -56,7 +56,7 @@ namespace ESP_Managers{ namespace IO
 
   protected:
     String device_name="Undefined";
-    virtual const int16_t* DescriptionCommand(){return &(NetworkCommands::emptyreporter_description);}
+    virtual const int16_t* DescriptionCommand(){return &(NetworkCommands::emptynode_description);}
 
   public:
     String Name(){return device_name;}

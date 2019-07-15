@@ -3,7 +3,7 @@ package udaqc.io;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-public class IO_Value extends IO_Reporter
+public class IO_Value extends IO_Node
 {
 	protected String units;
 	protected short format_type;
@@ -15,7 +15,7 @@ public class IO_Value extends IO_Reporter
 		return units;
 	}
 
-	public IO_Value(IO_Reporter basis, ByteBuffer data)
+	public IO_Value(IO_Node basis, ByteBuffer data)
 	{
 		super(basis);
 		Construct(data);

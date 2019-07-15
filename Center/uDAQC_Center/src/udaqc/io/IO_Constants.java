@@ -7,7 +7,7 @@ public class IO_Constants {
 	public static class Command_IDs
 	{
 		public static final short group_description=1;
-		public static final short emptyreporter_description=2;		
+		public static final short emptynode_description=2;		
 		public static final short value_description=3;		
 		public static final short modifiablevalue_description=4;		
 		public static final short data=5;

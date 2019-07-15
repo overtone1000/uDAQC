@@ -8,16 +8,16 @@ import java.util.Iterator;
 import java.util.Vector;
 
 
-public class IO_Group extends IO_Reporter
+public class IO_Group extends IO_Node
 {
-	protected Vector<IO_Reporter> members = new Vector<IO_Reporter>();
+	protected Vector<IO_Node> members = new Vector<IO_Node>();
 
-	public final Vector<IO_Reporter> GetMembers()
+	public final Vector<IO_Node> GetMembers()
 	{
 		return members;
 	}
 
-	public IO_Group(IO_Reporter basis, ByteBuffer data)
+	public IO_Group(IO_Node basis, ByteBuffer data)
 	{
 		super(basis);
 		Construct(data);
@@ -32,7 +32,7 @@ public class IO_Group extends IO_Reporter
 	public Vector<IO_Value> GetNestedValues()
 	{
 		Vector<IO_Value> retval=new Vector<IO_Value>();
-		for(IO_Reporter member:members)
+		for(IO_Node member:members)
 		{
 			switch(member.command_description)
 			{
@@ -56,11 +56,11 @@ public class IO_Group extends IO_Reporter
 		members.clear();
 		for (short n = 0; n < member_count; n++)
 		{
-			IO_Reporter new_item = new IO_Reporter(this, data);
+			IO_Node new_item = new IO_Node(this, data);
 
 			switch (new_item.command_description)
 			{
-			case IO_Constants.Command_IDs.emptyreporter_description:
+			case IO_Constants.Command_IDs.emptynode_description:
 				// Nothing else, so do nothing.
 				break;
 			case IO_Constants.Command_IDs.group_description:
@@ -76,7 +76,7 @@ public class IO_Group extends IO_Reporter
 				new_item = new IO_Value(new_item, data);
 				break;
 			default:
-				System.out.println("Unanticipated reporter command description. Description interpretation likely erronious.");
+				System.out.println("Unanticipated node command description. Description interpretation likely erronious.");
 				break;
 			}
 			members.add(new_item);
@@ -88,7 +88,7 @@ public class IO_Group extends IO_Reporter
 	{
 		// System.out.println("Iterating through group " + name + " to interpret
 		// data.");
-		Iterator<IO_Reporter> it = members.iterator();
+		Iterator<IO_Node> it = members.iterator();
 		while (it.hasNext())
 		{
 			it.next().InterpretData(data);

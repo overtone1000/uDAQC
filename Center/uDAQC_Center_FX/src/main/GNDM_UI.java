@@ -6,7 +6,7 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.concurrent.Semaphore;
 
-import gndm.io.IO_Reporter;
+import gndm.io.IO_Node;
 import gndm.io.log.IO_System_Logged;
 import gndm.io.log.IO_System_Logged.Regime;
 import gndm.network.center.GNDM_Handler;
@@ -74,10 +74,10 @@ public abstract class GNDM_UI extends Application implements GNDM_Handler
 		root.setBottom(statustext);
 
 		// resize();
-		treeview.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<TreeItem<IO_Reporter>>()
+		treeview.getSelectionModel().selectedItemProperty().addListener(new ChangeListener<TreeItem<IO_Node>>()
 		{
 			@Override
-			public void changed(ObservableValue<? extends TreeItem<IO_Reporter>> observable, TreeItem<IO_Reporter> old_value, TreeItem<IO_Reporter> new_value)
+			public void changed(ObservableValue<? extends TreeItem<IO_Node>> observable, TreeItem<IO_Node> old_value, TreeItem<IO_Node> new_value)
 			{
 				setchartareas();
 			}
@@ -90,7 +90,7 @@ public abstract class GNDM_UI extends Application implements GNDM_Handler
 	{
 		try
 		{
-			IO_Reporter selected = treeview.getSelectionModel().getSelectedItem().getValue();
+			IO_Node selected = treeview.getSelectionModel().getSelectedItem().getValue();
 			trm_chart.Set_IO(selected,active_device);
 			trm_live.Set_IO(selected,active_device);
 		}
@@ -107,12 +107,12 @@ public abstract class GNDM_UI extends Application implements GNDM_Handler
 		return stage;
 	}
 
-	private TreeView<IO_Reporter> treeview = new TreeView<IO_Reporter>();
+	private TreeView<IO_Node> treeview = new TreeView<IO_Node>();
 
 	public void DeviceSwitched(IO_System_Logged device)
 	{
 		active_device = device;
-		TreeItem<IO_Reporter> root = IO_System_Manipulations.Build_Tree(active_device);
+		TreeItem<IO_Node> root = IO_System_Manipulations.Build_Tree(active_device);
 		treeview.setRoot(root);
 		treeview.getSelectionModel().select(root);
 		

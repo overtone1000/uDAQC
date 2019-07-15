@@ -119,8 +119,8 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 				log.info("Group description message for " + new_device.System().Name() + " received.");
 			}
 			break;
-		  case Command_IDs.emptyreporter_description:
-			log.info("Empty reporter description message from server: " + c.getString());
+		  case Command_IDs.emptynode_description:
+			log.info("Empty node description message from server: " + c.getString());
 			break;
 		  case Command_IDs.value_description:
 			log.info("Value description message from server: " + c.getString());

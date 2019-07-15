@@ -31,7 +31,7 @@ namespace IO
   namespace NetworkCommands //Use sign 16 bit integer. Java doesn't support unsigned shorts.
   {
     const int16_t group_description=1;
-    const int16_t emptyreporter_description=2;
+    const int16_t emptynode_description=2;
     const int16_t value_description=3;
     const int16_t modifiablevalue_description=4;
     const int16_t data=5;
@@ -67,7 +67,7 @@ namespace IO
 
 #include "Devices/TCP/CommandCodec.cpp"
 
-#include "Devices/@Bases/IO_Reporter.cpp"
+#include "Devices/@Bases/IO_Node.cpp"
 #include "Devices/@Bases/IO_Group.cpp"
 #include "Devices/@Bases/IO_Timestamp.cpp"
 #include "Devices/@Bases/IO_System.cpp"

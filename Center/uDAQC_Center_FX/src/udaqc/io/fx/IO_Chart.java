@@ -12,7 +12,7 @@ import fx.chart.areas.ChartArea;
 import fx.chart.children.CurveSet;
 import gndm.io.IO_Constants;
 import gndm.io.IO_Group;
-import gndm.io.IO_Reporter;
+import gndm.io.IO_Node;
 import gndm.io.IO_Value;
 import gndm.io.log.IO_System_Logged;
 import gndm.io.log.IO_System_Logged.Regime;
@@ -50,7 +50,7 @@ public class IO_Chart extends Chart implements IO_Display
 	}
 
 	@Override
-	public void Set_IO(IO_Reporter selected_item, IO_System_Logged system)
+	public void Set_IO(IO_Node selected_item, IO_System_Logged system)
 	{
 		this.clearAreas();
 		this.system = system;
@@ -125,10 +125,10 @@ public class IO_Chart extends Chart implements IO_Display
 		TreeMap<String, LinkedList<IO_Value>> sub_values = new TreeMap<String, LinkedList<IO_Value>>();
 
 		// Sort members into the above groups
-		Iterator<IO_Reporter> it = parent.GetMembers().iterator();
+		Iterator<IO_Node> it = parent.GetMembers().iterator();
 		while (it.hasNext())
 		{
-			IO_Reporter child = it.next();
+			IO_Node child = it.next();
 			switch (child.IO_Type())
 			{
 			case IO_Constants.Command_IDs.group_description:

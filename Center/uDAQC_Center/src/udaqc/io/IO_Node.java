@@ -3,16 +3,16 @@ package udaqc.io;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
-public class IO_Reporter 
+public class IO_Node 
 {
 	protected short command_description;
 	protected String name;
 	protected IO_Group parent;
 	protected int data_bytecount;
 	
-	public IO_Reporter(IO_Reporter basis)
+	public IO_Node(IO_Node basis)
 	{
-		//This is for creating children from an already populated parent IO_Reporter.
+		//This is for creating children from an already populated parent IO_Node.
 		//The bytebuffer has already been read partially by the basis argument.
 		//Call this to copy members into the child instance and then further read through the bytebuffer with the child's constructor.
 		this.command_description=basis.command_description;
@@ -21,7 +21,7 @@ public class IO_Reporter
 		this.data_bytecount=basis.data_bytecount;
 	}
 	
-	public IO_Reporter(ByteBuffer data)
+	public IO_Node(ByteBuffer data)
 	{
 		command_description=data.getShort();
 		data_bytecount = data.getInt();
@@ -35,7 +35,7 @@ public class IO_Reporter
 		//System.out.println(name + ", size = " + data_bytecount);
 	}
 	
-	public IO_Reporter(IO_Group parent, ByteBuffer data)
+	public IO_Node(IO_Group parent, ByteBuffer data)
 	{		
 		this(data);
 		this.parent = parent;

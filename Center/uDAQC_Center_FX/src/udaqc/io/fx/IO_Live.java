@@ -8,7 +8,7 @@ import org.apache.mina.core.buffer.IoBuffer;
 import gndm.io.IO_Constants;
 import gndm.io.IO_Group;
 import gndm.io.IO_ModifiableValue;
-import gndm.io.IO_Reporter;
+import gndm.io.IO_Node;
 import gndm.io.IO_Value;
 import gndm.io.log.IO_System_Logged;
 import javafx.application.Platform;
@@ -213,7 +213,7 @@ public class IO_Live extends VBox implements IO_Display
 		super();
 	}
 	
-	public void Set_IO(IO_Reporter selected_item, IO_System_Logged system)
+	public void Set_IO(IO_Node selected_item, IO_System_Logged system)
 	{
 		this.getChildren().clear();
 		values.clear();
@@ -222,12 +222,12 @@ public class IO_Live extends VBox implements IO_Display
 	}
 	
 	private Vector<Value> values=new Vector<Value>();
-	private void Add_IO(IO_Reporter val)
+	private void Add_IO(IO_Node val)
 	{
 		switch (val.IO_Type())
 		{
 		case IO_Constants.Command_IDs.group_description:
-			for(IO_Reporter r:((IO_Group)val).GetMembers())
+			for(IO_Node r:((IO_Group)val).GetMembers())
 			{
 				Add_IO(r);
 			}

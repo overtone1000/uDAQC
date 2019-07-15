@@ -3,7 +3,7 @@
 const IO_Constants =
 {
     group_description: 1,
-		emptyreporter_description: 2,
+		emptynode_description: 2,
 		value_description: 3,
 		modifiablevalue_description: 4,
 		data_package: 5,
@@ -271,7 +271,7 @@ class PTCommand
   }
 }
 
-class IO_Reporter
+class IO_Node
 {
   constructor(bytebuffer, indices){
     this.command_description = bytebuffer.getInt16();
@@ -283,18 +283,18 @@ class IO_Reporter
     //console.log("Name length is " + this.name_length);
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
     this.name = bytebuffer.ReadString(this.name_length);
-    //console.log("New reporter = " + this.name);
+    //console.log("New node = " + this.name);
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
 
     this.device_index=indices.device;
-    this.reporter_index=indices.next_reporter();
+    this.node_index=indices.next_node();
 
-    IO.nodeid_to_reporter.set(this.getNodeID,this);
+    IO.nodeid_to_node.set(this.getNodeID,this);
   }
 
   id()
   {
-    return this.device_index + "_" + this.reporter_index;
+    return this.device_index + "_" + this.node_index;
   }
 
   toNode(parent)
@@ -348,7 +348,7 @@ class IO_Reporter
   }
 }
 
-class IO_Group extends IO_Reporter
+class IO_Group extends IO_Node
 {
   constructor(bytebuffer, indices){
     super(bytebuffer, indices);
@@ -366,9 +366,9 @@ class IO_Group extends IO_Reporter
             this.members[i]=new IO_Group(bytebuffer, indices);
             //console.log("Processeed member " + this.members[i].name + " as group.");
           break;
-          case IO_Constants.emptyreporter_description:
-            this.members[i]=new IO_Reporter(bytebuffer, indices);
-            //console.log("Processeed member " + this.members[i].name + " as empty reporter.");
+          case IO_Constants.emptynode_description:
+            this.members[i]=new IO_Node(bytebuffer, indices);
+            //console.log("Processeed member " + this.members[i].name + " as empty node.");
           break;
           case IO_Constants.value_description:
             this.members[i]=new IO_Value(bytebuffer, indices);
@@ -401,7 +401,7 @@ class IO_Group extends IO_Reporter
 
   createDashboard()
   {
-    let retval = super.createDashboard(); //get the default IO_Reporter Dashboard, which is just a div
+    let retval = super.createDashboard(); //get the default IO_Node Dashboard, which is just a div
 
     for(let child of this.members)
     {
@@ -422,7 +422,7 @@ class IO_Group extends IO_Reporter
           case IO_Constants.group_description:
             retval+=this.members[i].countIOValues();
           break;
-          case IO_Constants.emptyreporter_description:
+          case IO_Constants.emptynode_description:
           break;
           case IO_Constants.value_description:
           case IO_Constants.modifiablevalue_description:
@@ -443,7 +443,7 @@ class IO_Group extends IO_Reporter
           case IO_Constants.group_description:
             retval=retval.concat(this.members[i].getIOValues());
           break;
-          case IO_Constants.emptyreporter_description:
+          case IO_Constants.emptynode_description:
           break;
           case IO_Constants.value_description:
           case IO_Constants.modifiablevalue_description:
@@ -480,7 +480,7 @@ class IO_System extends IO_Group
 
   createDashboard()
   {
-    let retval = super.createDashboard(); //get the default IO_Reporter Dashboard, which is just a div
+    let retval = super.createDashboard(); //get the default IO_Node Dashboard, which is just a div
 
     //Remove timestamp
     retval.removeChild(retval.children[1]);
@@ -621,10 +621,10 @@ class IO_Device
     let indices =
     {
       device:device_index,
-      reporter:0,
-      next_reporter:function(){
-        let retval=this.reporter;
-        this.reporter++;
+      node:0,
+      next_node:function(){
+        let retval=this.node;
+        this.node++;
         return retval;
       }
     };
@@ -650,24 +650,24 @@ class IO{
     return derived_id.substring(0,lastindexof);
   }
 
-  static getNodeID(reporter_id)
+  static getNodeID(node_id)
   {
-    return reporter_id + "_node";
+    return node_id + "_node";
   }
 
-  static getDashboardID(reporter_id)
+  static getDashboardID(node_id)
   {
-    return reporter_id + "_div";
+    return node_id + "_div";
   }
-  static getChartID(reporter_id)
+  static getChartID(node_id)
   {
-    return reporter_id + "_chart";
+    return node_id + "_chart";
   }
 }
 IO.devices = new Map();
-IO.nodeid_to_reporter = new Map();
+IO.nodeid_to_node = new Map();
 
-class IO_Value extends IO_Reporter
+class IO_Value extends IO_Node
 {
   constructor(bytebuffer, indices){
     super(bytebuffer, indices);
@@ -687,7 +687,7 @@ class IO_Value extends IO_Reporter
 
   createDashboard()
   {
-    let retval = super.createDashboard(); //get the default IO_Reporter Dashboard, which is just a div
+    let retval = super.createDashboard(); //get the default IO_Node Dashboard, which is just a div
 
     let dash = document.createElement("canvas");
     dash.id = IO.getChartID(this.id());
@@ -708,7 +708,7 @@ class IO_ModifiableValue extends IO_Value
 
   createDashboard()
   {
-    let retval = super.createDashboard(); //get the default IO_Reporter Dashboard, which is just a div
+    let retval = super.createDashboard(); //get the default IO_Node Dashboard, which is just a div
 
     let chart = retval.childNodes[1]; //chart will be second child
 

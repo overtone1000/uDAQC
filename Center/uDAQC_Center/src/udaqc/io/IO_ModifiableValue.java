@@ -6,7 +6,7 @@ public class IO_ModifiableValue extends IO_Value
 {
 	protected short index;
 	
-	public IO_ModifiableValue(IO_Reporter basis, ByteBuffer data)
+	public IO_ModifiableValue(IO_Node basis, ByteBuffer data)
 	{
 		super(basis, data);
 		Construct(data);
