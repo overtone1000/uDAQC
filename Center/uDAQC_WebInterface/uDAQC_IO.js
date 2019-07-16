@@ -63,17 +63,32 @@ class ByteBuffer {
     this.pointer+=1;
     return retval;
   }
+	
+  putInt8(value){
+    this.view.setInt8(this.pointer, this.view.isLittleEndian);
+    this.pointer+=1;
+  }
 
   getInt16(){
     let retval = this.view.getInt16(this.pointer, this.view.isLittleEndian);
     this.pointer+=2;
     return retval;
   }
+		
+  putInt16(value){
+    this.view.setInt16(this.pointer, this.view.isLittleEndian);
+    this.pointer+=2;
+  }
 
   getInt32(){
     let retval = this.view.getInt32(this.pointer, this.view.isLittleEndian);
     this.pointer+=4;
     return retval;
+  }
+	
+  putInt132(value){
+    this.view.setInt32(this.pointer, this.view.isLittleEndian);
+    this.pointer+=4;
   }
 
   getInt64(){
@@ -107,7 +122,13 @@ class ByteBuffer {
     {
         console.warn("Unsafe integer size = " + retval);
     }
+	  
     return retval;
+  }
+	
+  putInt64(value){
+    console.error("Int64 put not yet implemented");
+    this.pointer+=8;
   }
 
   getUint8(){
@@ -116,35 +137,65 @@ class ByteBuffer {
     return retval;
   }
 
+  putUint8(value){
+    this.view.setUint8(this.pointer, this.view.isLittleEndian);
+    this.pointer+=1;
+  }
+
   getUint16(){
     let retval = this.view.getUint16(this.pointer, this.view.isLittleEndian);
     this.pointer+=2;
     return retval;
   }
+	
+  putUint16(value){
+    this.view.setUint16(this.pointer, this.view.isLittleEndian);
+    this.pointer+=2;
+  }	
 
   getUint32(){
     let retval = this.view.getUint32(this.pointer, this.view.isLittleEndian);
     this.pointer+=4;
     return retval;
   }
+	
+  putUint32(value){
+    this.view.setUint32(this.pointer, this.view.isLittleEndian);
+    this.pointer+=4;
+  }	
 
   getUint64(){
     let retval = this.view.getUint64(this.pointer, this.view.isLittleEndian);
     this.pointer+=8;
     return retval;
   }
+	
+  putUint64(value){
+    console.error("Uint64 put not yet implemented.");
+    this.pointer+=8;
+  }	
 
   getFloat32(){
     let retval = this.view.getFloat32(this.pointer, this.view.isLittleEndian);
     this.pointer+=4;
     return retval;
   }
+	
+  putFloat32(value){
+    this.view.setFloat32(this.pointer, this.view.isLittleEndian);
+    this.pointer+=4;
+  }	
 
   getFloat64(){
     let retval = this.view.getFloat64(this.pointer, this.view.isLittleEndian);
     this.pointer+=4;
     return retval;
   }
+	
+  putFloat64(value){
+    this.view.setFloat64(this.pointer, this.view.isLittleEndian);
+    this.pointer+=8;
+  }		
 
   Read(type,length)
   {
@@ -734,6 +785,7 @@ class IO_ModifiableValue extends IO_Value
   ModifyValue(new_value)
   {
     const headersize = 2; //one short before the value
+    const little_endian = true;
     let buffer = new ArrayBuffer(this.byte_count + headersize);
     let view = new DataView(buffer);
     view.setInt16(0,this.modval_index);
@@ -743,10 +795,10 @@ class IO_ModifiableValue extends IO_Value
         switch(this.byte_count)
         {
           case 2:
-            view.setInt16(headersize,new_value);
+            view.setInt16(headersize,new_value,little_endian);
           break;
           case 4:
-            view.setInt32(headersize,new_value);
+            view.setInt32(headersize,new_value,little_endian);
           break;
           case 8:
             console.error("No write for 64 bit integers yet implemented.");
@@ -762,10 +814,10 @@ class IO_ModifiableValue extends IO_Value
         switch(this.byte_count)
         {
           case 4:
-            view.setFloat32(headersize,new_value);
+            view.setFloat32(headersize,new_value,little_endian);
           break;
           case 8:
-            view.setFloat64(headersize,new_value);
+            view.setFloat64(headersize,new_value,little_endian);
           break;
           default:
             console.error("Wrong byte count.");
@@ -775,7 +827,7 @@ class IO_ModifiableValue extends IO_Value
         switch(this.byte_count)
         {
           case 1:
-            view.setInt8(headersize,new_value);
+            view.setInt8(headersize,new_value,little_endian);
           break;
           default:
             console.error("Wrong byte count.");
