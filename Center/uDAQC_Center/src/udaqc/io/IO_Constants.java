@@ -20,6 +20,8 @@ public class IO_Constants {
 		public static final short passthrough=12;
 		public static final short new_device_available=13;
 		public static final short history_addendum=14;
+		public static final short timesync_request=15;
+		public static final short timesync_response=16;
 	}
 	
 	public static class DataTypes

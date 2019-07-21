@@ -15,10 +15,32 @@ namespace CommandCodec
 
   TCP_Command_Client::~TCP_Command_Client()
   {
+    DEBUG_println("Client deletion called.");
     if(command.message)
     {
       delete[] command.message;
     }
+  }
+
+  int TCP_Command_Client::connect(IPAddress host, int center_port, int timesync_port)
+  {
+    int connection_result = WiFiClientSecure::connect(host,center_port);
+    if(!connection_result)
+    {
+      DEBUG_println("WiFiClientSecure connection failed = " + connection_result);
+      return connection_result;
+    }
+    DEBUG_println("Need to perform timesynchronization here and reject the client if it fails.");
+    DEBUG_println("Really should be multithreaded operation.");
+
+
+    time_synchronized=true; //Once synchronization is done.
+    return 0;
+  }
+
+  bool TCP_Command_Client::Initialized()
+  {
+    return time_synchronized;
   }
 
   unsigned int TCP_Command_Client::send_command_header(TCP_Command_Header com)

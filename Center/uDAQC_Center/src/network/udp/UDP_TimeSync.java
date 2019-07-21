@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
@@ -11,35 +12,36 @@ import java.nio.ByteOrder;
 
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.mina.core.buffer.IoBuffer;
+import org.joda.time.DateTime;
 
 import network.Constants;
 import udaqc.io.IO_Constants;
 import udaqc.network.Constants.Addresses;
 import udaqc.network.center.command.Command;
 
-public class UDP_Funnel implements Runnable
+public class UDP_TimeSync implements Runnable
 {
 	private DatagramSocket socket=null;
 	protected Thread t;
 	protected boolean continuerunning = false;
-	protected int destination_port;
-	private StopWatch broadcast_sw = new StopWatch();
-	private static final int repeat = 1000*60*10; //broadcast every 10 minutes
-	private UDP_TimeSync time_sync=new UDP_TimeSync();
-	public UDP_Funnel(int destination_port)
+	
+	public UDP_TimeSync()
 	{
-		this.destination_port = destination_port;
-		broadcast_sw.start();
 		try
 		{
-			socket = new DatagramSocket(Addresses.udp_broadcast.getPort());
-			socket.setSoTimeout(1000);
+			socket = new DatagramSocket();
+			socket.setSoTimeout(5000);
 			start();
 		} catch (SocketException e)
 		{
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	public Integer port()
+	{
+		return socket.getLocalPort();
 	}
 	
 	public void send(Command c, InetSocketAddress add)
@@ -59,29 +61,10 @@ public class UDP_Funnel implements Runnable
                 
         System.out.println("UDP of length " + buf.length + " sent.");
 	}
-	
-	public Command formCommand()
-	{
-		IoBuffer message = IoBuffer.allocate(Integer.BYTES);
-		message.order(ByteOrder.LITTLE_ENDIAN);
-		message.putInt(destination_port);
-		message.putInt(time_sync.port());
-		return new Command(IO_Constants.Command_IDs.request_subscription, message.array());
-	}
-	
-	public void Announce()
-	{
-		broadcast(formCommand());
-	}
-	
-    public void broadcast(Command c)
-    {
-        send(c,Addresses.udp_broadcast);
-    }
     
     protected void start(){
 		if(t==null || !t.isAlive() || t.isInterrupted()){
-			t=new Thread(this,"UDP Manager");
+			t=new Thread(this,"UDP TimeSync");
 			continuerunning=true;
 			t.start();
 		}
@@ -112,12 +95,7 @@ public class UDP_Funnel implements Runnable
 		DatagramPacket packet = new DatagramPacket(buf, buf.length);
 		while(continuerunning)
 		{
-			if(broadcast_sw.getTime()>=repeat)
-			{
-				Announce();
-				broadcast_sw.reset();
-				broadcast_sw.start();
-			}
+
 			try
 			{
 				socket.receive(packet);
@@ -126,18 +104,32 @@ public class UDP_Funnel implements Runnable
 				
 				switch(c.Header().command_id)
 				{
-					case IO_Constants.Command_IDs.new_device_available:
+					case IO_Constants.Command_IDs.timesync_request:
 					{
-						System.out.println("New device available command received.");
+						System.out.println("Timesync command received.");
 						InetSocketAddress add = new InetSocketAddress(packet.getAddress(), packet.getPort());
-						send(formCommand(),add);
+						
+						Long source_time = c.getmessage().getLong();
+						Long current_time = java.time.Clock.systemDefaultZone().millis();
+						
+						Command response;
+						ByteBuffer response_message = ByteBuffer.allocate(Long.BYTES*2);
+						response_message.order(ByteOrder.LITTLE_ENDIAN);
+						response_message.putLong(source_time);
+						response_message.putLong(current_time);
+						
+						response = new Command(IO_Constants.Command_IDs.timesync_response,response_message.array());
+						
+						send(response,add);
 					}
 				}
 			}
+			
 			catch(SocketTimeoutException timeout)
 			{
 				Thread.yield();
 			}
+			
 			catch(Exception e)
 			{
 				e.printStackTrace();

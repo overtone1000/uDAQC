@@ -13,7 +13,9 @@ const IO_Constants =
 		history: 11,
     passthrough: 12,
     new_device_available: 13,
-    history_addendum: 14
+    history_addendum: 14,
+    timesync_request: 15,
+    timesync_response: 16
 };
 
 const DataTypes =

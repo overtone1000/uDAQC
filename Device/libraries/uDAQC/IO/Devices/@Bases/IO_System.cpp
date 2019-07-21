@@ -68,23 +68,23 @@ namespace ESP_Managers{ namespace IO
     //tcp_server.begin();
   }
 
-  void IO_System::add_center(IPAddress host, int port)
+  void IO_System::add_center(IPAddress host, int center_port, int timesync_port)
   {
     DEBUG_println("Adding uDAQC Center.");
 
-    DEBUG_println("Checking whether client " + host.toString() + ":" + (String)port + "exists.");
+    DEBUG_println("Checking whether client " + host.toString() + ":" + (String)center_port + "exists.");
     for(auto it = tcp_clients.begin();it!=tcp_clients.end();it++)
     {
       DEBUG_println("Comparing to client " + it->remoteIP().toString() + ":" + (String)(it->remotePort()));
-      if(it->remoteIP()==host && it->remotePort() == port)
+      if(it->remoteIP()==host && it->remotePort() == center_port)
       {
         DEBUG_println("Already exists.");
         return;
       }
     }
 
-    CommandCodec::TCP_Command_Client new_client;
-    new_client.connect(host,port);
+    CommandCodec::TCP_Command_Client new_client; //apparently this method of creation is okay although this is within the scope of this function...
+    new_client.connect(host,center_port,timesync_port);
 
     CommandCodec::TCP_Command_Header header;
 
@@ -175,7 +175,7 @@ namespace ESP_Managers{ namespace IO
     for(auto it=tcp_clients.begin();it!=tcp_clients.end();it++)
     {
       CommandCodec::TCP_Command_Client* client = &*it;
-      if(client->connected())
+      if(client->connected() && client->Initialized())
       {
         client->flush(); //Don't start sending new data until old data send is finished.
 
@@ -312,10 +312,11 @@ namespace ESP_Managers{ namespace IO
 
 			if(header.command_id == ESP_Managers::IO::NetworkCommands::request_subscription && header.message_length>0)
 			{
-        int32_t port;
-        udp.read((uint8_t*)(&port),sizeof(port));
-
-        add_center(udp.remoteIP(), port);
+        int32_t center_port;
+        int32_t timesync_port;
+        udp.read((uint8_t*)(&center_port),sizeof(center_port));
+        udp.read((uint8_t*)(&timesync_port),sizeof(timesync_port));
+        add_center(udp.remoteIP(), center_port, timesync_port);
 
         /*
         DEBUG_println("Sending response to " + udp.remoteIP().toString() + ":" + (String)port);
