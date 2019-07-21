@@ -38,16 +38,135 @@ let Globals =
   current_regime: Regimes.live
 };
 
-class ByteBuffer {
+class DataViewWriter{
+  constructor(size){
+    //console.log("Constructing DataViewReader");
+    this.view = new DataView(new ArrayBuffer(size));
+    this.view.isLittleEndian = true;
+    this.pointer = 0;
+  }
+
+  toBytes()
+  {
+    return new Uint8Array(this.view.buffer);
+  }
+
+  put(type,byte_count,value){
+
+    switch(type)
+    {
+      case DataTypes.signed_integer:
+        switch(byte_count)
+        {
+          case 2:
+            this.putInt16(value);
+          break;
+          case 4:
+            this.putInt32(value);
+          break;
+          case 8:
+            console.error("No write for 64 bit integers yet implemented.");
+          break;
+          default:
+            console.error("Wrong byte count.");
+        }
+      break;
+      case DataTypes.unsigned_integer:
+        console.error("No support for unsigned integers in Java server?");
+      break;
+      case DataTypes.floating_point:
+        switch(byte_count)
+        {
+          case 4:
+            this.putFloat32(value);
+            console.debug("Writing float " + value);
+          break;
+          case 8:
+            this.putFloat64(value);
+          break;
+          default:
+            console.error("Wrong byte count.");
+        }
+      break;
+      case DataTypes.bool:
+        switch(byte_count)
+        {
+          case 1:
+            this.putInt8(value);
+          break;
+          default:
+            console.error("Wrong byte count.");
+        }
+      break;
+    }
+  }
+
+  putArray(source)
+  {
+    this.toBytes().set(source, this.pointer);
+    this.pointer+=source.length;
+  }
+
+  putInt8(value){
+    this.view.setInt8(this.pointer, value, this.view.isLittleEndian);
+    this.pointer+=1;
+  }
+
+  putInt16(value){
+    this.view.setInt16(this.pointer, value, this.view.isLittleEndian);
+    this.pointer+=2;
+  }
+
+  putInt32(value){
+    this.view.setInt32(this.pointer, value, this.view.isLittleEndian);
+    this.pointer+=4;
+  }
+
+  putInt64(value){
+    console.error("Int64 put not yet implemented");
+    this.pointer+=8;
+  }
+
+  putUint8(value){
+    this.view.setUint8(this.pointer, value, this.view.isLittleEndian);
+    this.pointer+=1;
+  }
+
+  putUint16(value){
+    this.view.setUint16(this.pointer, value, this.view.isLittleEndian);
+    this.pointer+=2;
+  }
+
+  putUint32(value){
+    this.view.setUint32(this.pointer, value, this.view.isLittleEndian);
+    this.pointer+=4;
+  }
+
+  putUint64(value){
+    console.error("Uint64 put not yet implemented.");
+    this.pointer+=8;
+  }
+
+  putFloat32(value){
+    this.view.setFloat32(this.pointer, value, this.view.isLittleEndian);
+    this.pointer+=4;
+  }
+
+  putFloat64(value){
+    this.view.setFloat64(this.pointer, value, this.view.isLittleEndian);
+    this.pointer+=8;
+  }
+}
+
+class DataViewReader {
   constructor(bytes){
-    //console.log("Constructing ByteBuffer");
+    //console.log("Constructing DataViewReader");
     this.view = new DataView(bytes);
     this.view.isLittleEndian = true;
     this.pointer = 0;
   }
 
-  ReadString(length)
-  {
+  getString(length){
     let retval = "";
     for (let i = 0; i < length; i++) {
       let char = this.view.getUint8(this.pointer+i);
@@ -63,32 +182,17 @@ class ByteBuffer {
     this.pointer+=1;
     return retval;
   }
-	
-  putInt8(value){
-    this.view.setInt8(this.pointer, this.view.isLittleEndian);
-    this.pointer+=1;
-  }
 
   getInt16(){
     let retval = this.view.getInt16(this.pointer, this.view.isLittleEndian);
     this.pointer+=2;
     return retval;
   }
-		
-  putInt16(value){
-    this.view.setInt16(this.pointer, this.view.isLittleEndian);
-    this.pointer+=2;
-  }
 
   getInt32(){
     let retval = this.view.getInt32(this.pointer, this.view.isLittleEndian);
     this.pointer+=4;
     return retval;
-  }
-	
-  putInt132(value){
-    this.view.setInt32(this.pointer, this.view.isLittleEndian);
-    this.pointer+=4;
   }
 
   getInt64(){
@@ -122,13 +226,8 @@ class ByteBuffer {
     {
         console.warn("Unsafe integer size = " + retval);
     }
-	  
+
     return retval;
-  }
-	
-  putInt64(value){
-    console.error("Int64 put not yet implemented");
-    this.pointer+=8;
   }
 
   getUint8(){
@@ -137,75 +236,43 @@ class ByteBuffer {
     return retval;
   }
 
-  putUint8(value){
-    this.view.setUint8(this.pointer, this.view.isLittleEndian);
-    this.pointer+=1;
-  }
-
   getUint16(){
     let retval = this.view.getUint16(this.pointer, this.view.isLittleEndian);
     this.pointer+=2;
     return retval;
   }
-	
-  putUint16(value){
-    this.view.setUint16(this.pointer, this.view.isLittleEndian);
-    this.pointer+=2;
-  }	
 
   getUint32(){
     let retval = this.view.getUint32(this.pointer, this.view.isLittleEndian);
     this.pointer+=4;
     return retval;
   }
-	
-  putUint32(value){
-    this.view.setUint32(this.pointer, this.view.isLittleEndian);
-    this.pointer+=4;
-  }	
 
   getUint64(){
     let retval = this.view.getUint64(this.pointer, this.view.isLittleEndian);
     this.pointer+=8;
     return retval;
   }
-	
-  putUint64(value){
-    console.error("Uint64 put not yet implemented.");
-    this.pointer+=8;
-  }	
 
   getFloat32(){
     let retval = this.view.getFloat32(this.pointer, this.view.isLittleEndian);
     this.pointer+=4;
     return retval;
   }
-	
-  putFloat32(value){
-    this.view.setFloat32(this.pointer, this.view.isLittleEndian);
-    this.pointer+=4;
-  }	
 
   getFloat64(){
     let retval = this.view.getFloat64(this.pointer, this.view.isLittleEndian);
     this.pointer+=4;
     return retval;
   }
-	
-  putFloat64(value){
-    this.view.setFloat64(this.pointer, this.view.isLittleEndian);
-    this.pointer+=8;
-  }		
 
-  Read(type,length)
-  {
-    let retval = this.Peek(type,length);
+  get(type,length){
+    let retval = this.peek(type,length);
     this.pointer+=length; //no matter what, advance the pointer
     return retval;
   }
 
-  Peek(type,length)
-  {
+  peek(type,length){
     let retval;
     switch(type)
     {
@@ -294,31 +361,76 @@ class ByteBuffer {
     return retval;
   }
 
-  Remaining()
-  {
+  remaining(){
     return (this.view.byteLength - this.pointer);
   }
 }
 
 class Command
 {
-  constructor(bytes)
+  constructor(message_length, command_ID, message)
   {
-    this.message = new ByteBuffer(bytes); //message is initially set to the whole bytebuffer
-    this.message_length = this.message.getInt32();
-    this.command_ID = this.message.getInt16();
-    //after the above are consumed, the remaining contents of the bytebuffer is the message_length
-
+    this.message = message;
+    this.message_length = message_length;
+    this.command_ID = command_ID;
+  }
+  static headerSize()
+  {
+    return 4 + 2;
+  }
+  static interpret(bytes)
+  {
+    let message = new DataViewReader(bytes);
+    let message_length = message.getInt32();
+    let command_ID = message.getInt16();
+    //after the above are consumed, the remaining contents of the DataViewReader is the message_length
+    let retval = new Command(message_length,command_ID,message);
+    return retval;
+  }
+  static createArrayBuffer(command_ID, message)
+  {
+    let writer = new DataViewWriter(Command.headerSize() + message.length);
+    writer.putInt32(message.length);
+    writer.putInt16(command_ID);
+    writer.putArray(message);
+    return writer.view.buffer;
   }
 }
 
 class PTCommand
 {
-  constructor(command)
+  constructor(source_ID, internal_command_ID, message)
   {
-    this.message = command.message;
-    this.source_ID = this.message.getInt16();
-    this.PTcommand_ID = this.message.getInt16();
+    this.source_ID = source_ID;
+    this.internal_command_ID = internal_command_ID;
+    this.message = message;
+  }
+  static headerSize()
+  {
+    return 2*2;
+  }
+  static interpret(command)
+  {
+    let source_ID = command.message.getInt16();
+    let internal_command_ID = command.message.getInt16();
+    //after the above are consumed, the remaining contents of the DataViewReader is the internal command
+    let retval = new PTCommand(source_ID,internal_command_ID,command.message);
+    return retval;
+  }
+  static createArrayBuffer(source_ID, internal_command_ID, message)
+  {
+    //Would be more maintainable code to call the Command version of this function,
+    //But would result in an extra memory allocation.
+    let writer = new DataViewWriter(Command.headerSize() + PTCommand.headerSize() + message.length);
+    console.debug("Writer created.");
+    writer.putInt32(PTCommand.headerSize() + message.length);
+    writer.putInt16(IO_Constants.passthrough);
+    writer.putInt16(source_ID);
+    writer.putInt16(internal_command_ID);
+    console.debug("Header written.");
+    writer.putArray(message);
+    console.debug("Message of size " + message.length + " written.");
+    return writer.view.buffer;
   }
 }
 
@@ -333,7 +445,7 @@ class IO_Node
     this.name_length = bytebuffer.getInt16();
     //console.log("Name length is " + this.name_length);
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
-    this.name = bytebuffer.ReadString(this.name_length);
+    this.name = bytebuffer.getString(this.name_length);
     //console.log("New node = " + this.name);
     //console.log("Byte buffer pointer at " + bytebuffer.pointer);
 
@@ -410,7 +522,7 @@ class IO_Group extends IO_Node
     for(let i=0;i<this.member_count;i++)
     {
         //need to peek the command_description for the next object to decide what kind to add
-        let command_description = bytebuffer.Peek(DataTypes.signed_integer,2);
+        let command_description = bytebuffer.peek(DataTypes.signed_integer,2);
         switch(command_description)
         {
           case IO_Constants.group_description:
@@ -723,7 +835,7 @@ class IO_Value extends IO_Node
   constructor(bytebuffer, indices){
     super(bytebuffer, indices);
     this.units_length = bytebuffer.getInt16();
-    this.units = bytebuffer.ReadString(this.units_length);
+    this.units = bytebuffer.getString(this.units_length);
     this.data_type = bytebuffer.getInt16();
     this.chart = null;
     this.dashstate = {
@@ -755,7 +867,8 @@ class IO_ModifiableValue extends IO_Value
   constructor(bytebuffer, indices){
     super(bytebuffer, indices);
     this.modval_index = bytebuffer.getInt16();
-  }
+    this.input_field = null;
+    }
 
   createDashboard()
   {
@@ -766,15 +879,18 @@ class IO_ModifiableValue extends IO_Value
     let modification_row = document.createElement("div");
     modification_row.className = "row mb-1 no-gutters";
 
-    let textbox = document.createElement("input");
-    textbox.type = "number";
-    textbox.className = "col md-6 form-control ml-1";
-    textbox.step = "any";
-    modification_row.appendChild(textbox);
+    let modpar = this;
+
+    this.input_field = document.createElement("input");
+    this.input_field.type = "number";
+    this.input_field.className = "col md-6 form-control ml-1";
+    this.input_field.step = "any";
+    modification_row.appendChild(this.input_field);
 
     let button = document.createElement("button");
     button.innerHTML = "Modify";
     button.className = "col btn btn-primary ml-1 mr-1";
+    button.onclick=function(){modpar.ModifyValue();};
     modification_row.appendChild(button);
 
     retval.insertBefore(modification_row,chart);
@@ -782,60 +898,19 @@ class IO_ModifiableValue extends IO_Value
     return retval;
   }
 
-  ModifyValue(new_value)
+  ModifyValue()
   {
-    const headersize = 2; //one short before the value
-    const little_endian = true;
-    let buffer = new ArrayBuffer(this.byte_count + headersize);
-    let view = new DataView(buffer);
-    view.setInt16(0,this.modval_index);
-    switch(this.data_type)
-    {
-      case DataTypes.signed_integer:
-        switch(this.byte_count)
-        {
-          case 2:
-            view.setInt16(headersize,new_value,little_endian);
-          break;
-          case 4:
-            view.setInt32(headersize,new_value,little_endian);
-          break;
-          case 8:
-            console.error("No write for 64 bit integers yet implemented.");
-          break;
-          default:
-            console.error("Wrong byte count.");
-        }
-      break;
-      case DataTypes.unsigned_integer:
-        console.error("No support for unsigned integers in Java server?");
-      break;
-      case DataTypes.floating_point:
-        switch(this.byte_count)
-        {
-          case 4:
-            view.setFloat32(headersize,new_value,little_endian);
-          break;
-          case 8:
-            view.setFloat64(headersize,new_value,little_endian);
-          break;
-          default:
-            console.error("Wrong byte count.");
-        }
-      break;
-      case DataTypes.bool:
-        switch(this.byte_count)
-        {
-          case 1:
-            view.setInt8(headersize,new_value,little_endian);
-          break;
-          default:
-            console.error("Wrong byte count.");
-        }
-      break;
-    }
-
-    console.error("Still need to package as a command, then as a PTCommand, then send it...");
+    let message_size = 2+this.byte_count;
+    console.debug("Message size is " + message_size);
+    let message = new DataViewWriter(message_size);
+    console.debug("Created message.");
+    message.putInt16(this.modval_index);
+    message.put(this.data_type,this.byte_count,this.input_field.value);
+    console.debug("Message written.");
+    let ptcom = PTCommand.createArrayBuffer(this.device_index,IO_Constants.modifiablevalue_modification,message.toBytes());
+    console.debug("Created command.");
+    console.debug(new Uint8Array(ptcom));
+    websocket.send(ptcom);
   }
 }
 

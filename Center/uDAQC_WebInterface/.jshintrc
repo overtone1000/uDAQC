@@ -99,6 +99,7 @@
       "Chart" : true,
       "Regimes" : true,
       "Globals" : true,
-      "Slider" : true
+      "Slider" : true,
+      "websocket" : true
       }        // additional predefined global variables
 }

@@ -42,7 +42,7 @@ function onClose(evt)
 
 function handlePassthroughCommand(ptcom)
 {
-  switch(ptcom.PTcommand_ID)
+  switch(ptcom.internal_command_ID)
   {
     case IO_Constants.group_description:
       new IO_Device(ptcom.message,ptcom.source_ID);
@@ -55,7 +55,8 @@ function handlePassthroughCommand(ptcom)
       handleHistoryAddendum(ptcom);
       break;
     default:
-    console.log("Unexpected nested command in passthrough " +  ptcom.PTcommand_ID + ".");
+    console.debug("Unexpected nested command in passthrough " +  ptcom.internal_command_ID + ".");
+    console.debug(ptcom);
   }
 }
 
@@ -72,7 +73,7 @@ function handleHistory(ptcom)
   let epochs = device.system.getEpochs(regime);
 
   let test_count=0;
-  while(ptcom.message.Remaining()>=entry_size)
+  while(ptcom.message.remaining()>=entry_size)
   {
     //console.log("Processing entry.");
     epochs.processEntry(ptcom.message, false);
@@ -100,10 +101,10 @@ function handleHistoryAddendum(ptcom)
 
   let epochs = device.system.getEpochs(regime);
 
-  //console.debug("Remaining: " + ptcom.message.Remaining());
+  //console.debug("remaining: " + ptcom.message.remaining());
   //console.debug("Size: " + entry_size);
   let test_count=0;
-  while(ptcom.message.Remaining()>=entry_size)
+  while(ptcom.message.remaining()>=entry_size)
   {
     //console.debug("Processing addendum entry.");
     epochs.processEntry(ptcom.message, true);
@@ -123,15 +124,15 @@ function handleHistoryAddendum(ptcom)
 
 function onMessage(evt)
 {
-  let c = new Command(evt.data);
+  let c = Command.interpret(evt.data);
 
   //All commands should be passthrough as of now
   switch(c.command_ID)
   {
     case IO_Constants.passthrough:
       {
-        let ptcom = new PTCommand(c);
-        //console.log("Passthrough command received. Nested command is " + ptcom.PTcommand_ID + ".");
+        let ptcom = PTCommand.interpret(c);
+        //console.log("Passthrough command received. Nested command is " + ptcom.internal_command_ID + ".");
         handlePassthroughCommand(ptcom);
       }
       break;

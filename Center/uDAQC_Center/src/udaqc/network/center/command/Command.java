@@ -70,7 +70,7 @@ public class Command {
 		
 		if(bb.remaining()<CommandHeader.header_length) 
 		{
-			//System.out.println("Waiting for header, only " + in.remaining() + " currently available.");
+			//System.out.println("Waiting for header, only " + bb.remaining() + " currently available.");
 			bb.position(start);
 			return null;
 		}
@@ -89,7 +89,7 @@ public class Command {
 		}
 		else
 		{
-			//System.out.println("Waiting for command " + header.command_id + " of length " + (Integer)(header.message_length));
+			//System.out.println("Waiting for command " + header.command_id + " of length " + (Integer)(header.message_length) + ", " + bb.remaining() + " available.");
 			bb.position(start);
 			return null;
 		}

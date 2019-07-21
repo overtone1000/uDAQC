@@ -22,8 +22,10 @@ import javax.net.ssl.TrustManagerFactory;
 import network.http.websocket.Servlet_uD;
 import network.tcp.TCP_Commons;
 import network.SecurityBundle;
+import udaqc.io.IO_Constants;
 import udaqc.io.log.IO_System_Logged;
 import udaqc.network.Constants.Addresses;
+import udaqc.network.center.Center;
 import udaqc.network.center.command.Command;
 import udaqc.network.passthrough.command.PT_Command;
 import udaqc.network.passthrough.endpoints.WS_Endpoint;
@@ -66,12 +68,15 @@ public class HTTPS_Server
 	
 	private Semaphore session_mutex=new Semaphore(1);
 
-	Server server;
-	Servlet_uD ws_servlet;
+	private Center parent;
+	private Server server;
+	private Servlet_uD ws_servlet;
 	private SecurityBundle bundle = new SecurityBundle("security");
 	
-	public HTTPS_Server(int insecure_port, int secure_port)
+	public HTTPS_Server(Center parent, int insecure_port, int secure_port)
 	{
+		this.parent = parent;
+		
         server = new Server();
         //Server server2 = new Server(8080);
         
@@ -279,5 +284,18 @@ public class HTTPS_Server
 			e.printStackTrace();
 			return false;
 		}
+    }
+    
+    public void HandleCommand(Command command)
+    {
+    	switch(command.Header().command_id)
+    	{
+    	case IO_Constants.Command_IDs.passthrough:
+    		PT_Command ptc = new PT_Command(command);
+    		parent.Passthrough_from_Secondary(ptc);
+    		break;
+    	default:
+    		System.out.println("Unknown command received from web client.");
+    	}
     }
 }

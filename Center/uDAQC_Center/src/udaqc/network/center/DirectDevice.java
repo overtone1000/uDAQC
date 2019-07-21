@@ -29,6 +29,7 @@ public class DirectDevice implements Device
 	{
 		if(session.isConnected())
 		{
+			System.out.println("Sending command " + command.Header().command_id + " to device " + this.system.FullName());
 			session.write(command);
 		}
 		else

@@ -33,12 +33,14 @@ Commands between a Center and a Device have the following format:
 2. int_16 containing the command ID
 3. byte[] containing the message, which has a length equal to that provided in 1.
 
-There are special commands between a Center and a Secondary device that called PassthroughCommands. They have the following format:
-1. int_32 containing the length of the message (which, in this case, includes two additional int_16, numbers 3 and 4 below)
+There are special commands between Centers (usually between the Primary Center and the WebSocket) that are called PassthroughCommands. These allow Centers and Secondary interfaces to communicate about specific IO_Devices. They have the following format:
+1. int_32 containing the length of the message (which is larger than a normal command because of two additional int_16s, which are numbers 3 and 4 below)
 2. int_16 containing the command ID for a PassthroughCommand
 3. int_16 containing the source_id
 4. int_16 containing the command ID for the nested command
 5. byte[] containing the message, which does NOT have length equal to the that provided in 1.
+
+A PassthroughCommand can be interpreted by receiving a normal Command and then interpreting the rest of the message to parse the  PassthroughCommand values above before returning the message to a handling function.
 
 # Constants
 A set of int_16 constants is maintained for communications. They must be identical for each language. There are two categories:
