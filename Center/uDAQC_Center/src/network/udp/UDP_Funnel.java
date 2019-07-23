@@ -65,7 +65,6 @@ public class UDP_Funnel implements Runnable
 		IoBuffer message = IoBuffer.allocate(Integer.BYTES);
 		message.order(ByteOrder.LITTLE_ENDIAN);
 		message.putInt(destination_port);
-		message.putInt(time_sync.port());
 		return new Command(IO_Constants.Command_IDs.request_subscription, message.array());
 	}
 	

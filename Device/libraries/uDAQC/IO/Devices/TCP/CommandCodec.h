@@ -26,14 +26,12 @@ namespace CommandCodec
     TCP_Command_Client(WiFiClientSecure client);
     ~TCP_Command_Client(); //This object DOES manage "message", need to delete[]
     bool command_available(); //message must be handled immediately, next call will start next command
-    int connect(IPAddress host, int center_port, int timesync_port);
-    bool Initialized();
+    int connect(IPAddress host, int center_port);
     TCP_Command get_command();
     unsigned int send_command_header(TCP_Command_Header com);
   private:
     TCP_Command command;
     bool new_command_read=true;
-    bool time_synchronized=false;
   };
 };
 

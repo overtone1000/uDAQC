@@ -104,11 +104,13 @@ public class UDP_TimeSync implements Runnable
 				
 				switch(c.Header().command_id)
 				{
-					case IO_Constants.Command_IDs.timesync_request:
+					case IO_Constants.Command_IDs.timesync_response:
 					{
-						System.out.println("Timesync command received.");
+						System.out.println("Timesync response received.");
 						InetSocketAddress add = new InetSocketAddress(packet.getAddress(), packet.getPort());
 						
+						//From when the relationship was inverted...
+						/*
 						Long source_time = c.getmessage().getLong();
 						Long current_time = java.time.Clock.systemDefaultZone().millis();
 						
@@ -121,6 +123,7 @@ public class UDP_TimeSync implements Runnable
 						response = new Command(IO_Constants.Command_IDs.timesync_response,response_message.array());
 						
 						send(response,add);
+						*/
 					}
 				}
 			}

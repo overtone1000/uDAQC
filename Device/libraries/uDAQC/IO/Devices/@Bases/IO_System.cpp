@@ -68,7 +68,7 @@ namespace ESP_Managers{ namespace IO
     //tcp_server.begin();
   }
 
-  void IO_System::add_center(IPAddress host, int center_port, int timesync_port)
+  void IO_System::add_center(IPAddress host, int center_port)
   {
     DEBUG_println("Adding uDAQC Center.");
 
@@ -84,7 +84,7 @@ namespace ESP_Managers{ namespace IO
     }
 
     CommandCodec::TCP_Command_Client new_client; //apparently this method of creation is okay although this is within the scope of this function...
-    new_client.connect(host,center_port,timesync_port);
+    new_client.connect(host,center_port);
 
     CommandCodec::TCP_Command_Header header;
 
@@ -175,7 +175,7 @@ namespace ESP_Managers{ namespace IO
     for(auto it=tcp_clients.begin();it!=tcp_clients.end();it++)
     {
       CommandCodec::TCP_Command_Client* client = &*it;
-      if(client->connected() && client->Initialized())
+      if(client->connected())
       {
         client->flush(); //Don't start sending new data until old data send is finished.
 
@@ -310,40 +310,27 @@ namespace ESP_Managers{ namespace IO
       DEBUG_println("Received message of length " + (String)header.message_length);
       DEBUG_println("Received command id " + (String)header.command_id);
 
-			if(header.command_id == ESP_Managers::IO::NetworkCommands::request_subscription && header.message_length>0)
-			{
-        int32_t center_port;
-        int32_t timesync_port;
-        udp.read((uint8_t*)(&center_port),sizeof(center_port));
-        udp.read((uint8_t*)(&timesync_port),sizeof(timesync_port));
-        add_center(udp.remoteIP(), center_port, timesync_port);
-
-        /*
-        DEBUG_println("Sending response to " + udp.remoteIP().toString() + ":" + (String)port);
-
-        WiFiClient client;
-				if (client.connect(udp.remoteIP(), port))
-				{
-				// we are connected to the host!
-          CommandCodec::TCP_Command_Header reply_header;
-
-          reply_header.message_length = sizeof(ESP_Managers::IO::Constants::tcp_main_port);
-          reply_header.command_id = ESP_Managers::IO::NetworkCommands::declare_identity;
-
-          int returnbytecount = 0;
-          returnbytecount+=client.write((uint8_t*)&(reply_header.message_length),sizeof(reply_header.message_length));
-          returnbytecount+=client.write((uint8_t*)&(reply_header.command_id),sizeof(reply_header.command_id));
-          returnbytecount+=client.write((uint8_t*)&(ESP_Managers::IO::Constants::tcp_main_port),reply_header.message_length);
-
-          client.stop();
-          DEBUG_println("ID response of length " + (String)returnbytecount + " sent.");
-				}
-				else
-				{
-          DEBUG_println("Couldn't connect back via TCP.");
-				}
-        */
-			}
+      if(header.message_length>0)
+      {
+        switch(header.command_id)
+        {
+          case ESP_Managers::IO::NetworkCommands::request_subscription:
+    			{
+            int32_t center_port;
+            udp.read((uint8_t*)(&center_port),sizeof(center_port));
+            add_center(udp.remoteIP(), center_port);
+    			}
+          break;
+          case ESP_Managers::IO::NetworkCommands::timesync_request:
+          {
+            DEBUG_println("Received time sync request.");
+          }
+          break;
+          default:
+          DEBUG_println("Unrecognized UDP command " + header.command_id);
+          break;
+        }
+      }
 		}
 	}
 }

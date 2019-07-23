@@ -50,7 +50,7 @@ namespace ESP_Managers{ namespace IO
     //uint8_t* data=nullptr;
     static std::vector<IO_Saveable*> saveable_members;
 
-    void add_center(IPAddress host, int center_port, int timesync_port);
+    void add_center(IPAddress host, int center_port);
 
     IO_Timestamp ts; //This is used to send the timestamp with the data. It's the first member of the group.
     //void Resize();
