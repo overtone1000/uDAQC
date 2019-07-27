@@ -59,6 +59,7 @@ namespace ESP_Managers{ namespace IO
     //Repeater debug_timer;
 
     void announceUDP();
+    void handleTimeSync(IPAddress center_address, uint32_t center_port, int64_t current_center_time);
   };
 }};
 

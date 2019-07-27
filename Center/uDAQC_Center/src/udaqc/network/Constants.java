@@ -13,7 +13,8 @@ public class Constants
 		//public static final Integer tcp_id_port = 49153;
 		public static final Integer webserver_insecure_port = 49153;
 		public static final Integer webserver_secure_port = 49154;
+		public static final Integer udp_port = 49155;
 		
-		public static final InetSocketAddress udp_broadcast = new InetSocketAddress("255.255.255.255",49154); //This should just broadcast it.
+		public static final InetSocketAddress udp_broadcast = new InetSocketAddress("255.255.255.255",49155); //This should just broadcast it.
 	}
 }

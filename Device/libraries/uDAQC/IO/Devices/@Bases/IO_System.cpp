@@ -285,6 +285,23 @@ namespace ESP_Managers{ namespace IO
     DEBUG_println("UDP announcement sent.");
   }
 
+  void IO_System::handleTimeSync(IPAddress center_address, uint32_t center_port, int64_t current_center_time)
+  {
+    CommandCodec::TCP_Command_Header header;
+    header.message_length = sizeof(int64_t)*2;
+    header.command_id = ESP_Managers::IO::NetworkCommands::timesync_response;
+
+    udp.beginPacket(center_address, center_port);
+    udp.write((uint8_t*)&(header.message_length),sizeof(header.message_length));
+    udp.write((uint8_t*)&(header.command_id),sizeof(header.command_id));
+    udp.write((uint8_t*)&(current_center_time),sizeof(current_center_time));
+    int64_t mics = (int64_t)(micros());
+    udp.write((uint8_t*)&(mics),sizeof(mics));
+    udp.endPacket();
+
+    DEBUG_println("Timesync reponse sent.");
+  }
+
 	void IO_System::LoopUDP()
 	{
 		//max packet size is 65,507 bytes
@@ -324,6 +341,11 @@ namespace ESP_Managers{ namespace IO
           case ESP_Managers::IO::NetworkCommands::timesync_request:
           {
             DEBUG_println("Received time sync request.");
+            int64_t current_center_time;
+            udp.read((uint8_t*)(&current_center_time),sizeof(current_center_time));
+            DEBUG_println("Current time on server is ");
+            DEBUG_println((long)current_center_time);
+            handleTimeSync(udp.remoteIP(), udp.remotePort(),current_center_time);
           }
           break;
           default:

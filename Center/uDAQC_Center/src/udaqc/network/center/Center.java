@@ -18,10 +18,12 @@ import org.apache.commons.lang3.time.StopWatch;
 import org.apache.mina.core.buffer.IoBuffer;
 import org.apache.mina.core.session.IdleStatus;
 import org.apache.mina.core.session.IoSession;
+import org.apache.mina.transport.socket.nio.NioSession;
 
 import network.http.HTTPS_Server;
 import network.tcp.server.TCP_Server;
 import network.udp.UDP_Funnel;
+import network.udp.UDP_TimeSync;
 import udaqc.io.IO_Constants;
 import udaqc.io.IO_Constants.Command_IDs;
 import udaqc.io.IO_System;
@@ -51,6 +53,7 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 	private Path path;
 	
 	private UDP_Funnel udp;
+	private UDP_TimeSync udp_ts = new UDP_TimeSync();
 
 	public Center(String Threadname, Path path, CenterHandler handler)
 	{
@@ -108,9 +111,9 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 				//The only time a group description command ID is received in this setting is when an entire IO_System is being sent.
 				//Initialize as an IO_System, not an IO_Group. IO_Groups within IO_Groups are all initialized within the function call to construct an IO_System
 				
-				DirectDevice new_device = new DirectDevice(path, data, this, session);
+				DirectDevice new_device = new DirectDevice(path, data, this, (NioSession)session);
 				devices.put(session.getId(), new_device);
-				
+				udp_ts.synchronize(new_device);
 				if (handler != null)
 				{
 					handler.ClientListUpdate();
@@ -130,7 +133,12 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 			break;
 		  case Command_IDs.data:
 		  {
-			IO_System_Logged system = devices.get(session.getId()).System();
+			DirectDevice device = devices.get(session.getId());
+			if(!device.Synced())
+			{
+				System.out.println("Device not yet time synced. Discarding data.");
+			}
+			IO_System_Logged system = device.System();
 			if(system != null)
 			{				
 				handler.ReceivingDataUpdate();

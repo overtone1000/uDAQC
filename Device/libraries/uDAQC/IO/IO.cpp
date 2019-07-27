@@ -24,7 +24,7 @@ namespace IO
   namespace Constants
   {
     //const uint32_t tcp_main_port = 49152;
-    const uint32_t udp_multicast_port = 49154;
+    const uint32_t udp_multicast_port = 49155;
     const IPAddress udp_multicast_IP = IPAddress(255,255,255,255);
   }
 

@@ -9,6 +9,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.concurrent.ConcurrentLinkedDeque;
 
 import org.apache.commons.lang3.time.StopWatch;
 import org.apache.mina.core.buffer.IoBuffer;
@@ -24,6 +25,9 @@ public class UDP_TimeSync implements Runnable
 	private DatagramSocket socket=null;
 	protected Thread t;
 	protected boolean continuerunning = false;
+	
+	private ConcurrentLinkedDeque<TimeSynchronizable> syncs_to_perform = new ConcurrentLinkedDeque<TimeSynchronizable>();
+	TimeSynchronizable current_sync = null;
 	
 	public UDP_TimeSync()
 	{
@@ -87,7 +91,12 @@ public class UDP_TimeSync implements Runnable
 		System.out.println("Stop running called successfully.");
 		continuerunning=false;
 	}
-
+	
+	public void synchronize(TimeSynchronizable target)
+	{
+		syncs_to_perform.add(target);
+	}
+	
 	@Override
 	public void run()
 	{
@@ -95,10 +104,12 @@ public class UDP_TimeSync implements Runnable
 		DatagramPacket packet = new DatagramPacket(buf, buf.length);
 		while(continuerunning)
 		{
-
+			System.out.println("UDP Loop.");
 			try
 			{
 				socket.receive(packet);
+				long receipt_time=java.time.Clock.systemDefaultZone().millis()*1000;
+				
 				ByteBuffer bb = ByteBuffer.wrap(packet.getData());
 				Command c = Command.tryDecode(bb);
 				
@@ -109,33 +120,60 @@ public class UDP_TimeSync implements Runnable
 						System.out.println("Timesync response received.");
 						InetSocketAddress add = new InetSocketAddress(packet.getAddress(), packet.getPort());
 						
-						//From when the relationship was inverted...
-						/*
-						Long source_time = c.getmessage().getLong();
-						Long current_time = java.time.Clock.systemDefaultZone().millis();
+						ByteBuffer message = c.getmessage();
 						
-						Command response;
-						ByteBuffer response_message = ByteBuffer.allocate(Long.BYTES*2);
-						response_message.order(ByteOrder.LITTLE_ENDIAN);
-						response_message.putLong(source_time);
-						response_message.putLong(current_time);
+						long request_time = message.getLong();
+						long device_time = message.getLong();
 						
-						response = new Command(IO_Constants.Command_IDs.timesync_response,response_message.array());
+						System.out.println(request_time + ", request time");
+						System.out.println(device_time + ", device time");
+						System.out.println(receipt_time + ", response time");
 						
-						send(response,add);
-						*/
 					}
 				}
 			}
 			
 			catch(SocketTimeoutException timeout)
 			{
+				System.out.println("Timeout.");
 				Thread.yield();
 			}
 			
 			catch(Exception e)
 			{
 				e.printStackTrace();
+			}
+			
+			System.out.println(current_sync);
+			if(current_sync==null)
+			{
+				System.out.println("Trying dequeue.");
+				current_sync=syncs_to_perform.pollFirst();
+			}
+			else
+			{
+				System.out.println("Trying synchronization.");
+				Long current_time = java.time.Clock.systemDefaultZone().millis()*1000;
+				
+				Command request;
+				ByteBuffer response_message = ByteBuffer.allocate(Long.BYTES*1);
+				response_message.order(ByteOrder.LITTLE_ENDIAN);
+				response_message.putLong(current_time);
+				
+				request = new Command(IO_Constants.Command_IDs.timesync_request,response_message.array());
+				
+				InetSocketAddress add = current_sync.Address();
+				if(add!=null)
+				{
+					System.out.println("Sending timesync request to " + add.toString());
+					send(request,add);
+				}
+				else
+				{
+					System.out.println("Null address for TimeSync.");
+					current_sync = null;
+					syncs_to_perform.removeFirst();
+				}
 			}
 		}
 	}
