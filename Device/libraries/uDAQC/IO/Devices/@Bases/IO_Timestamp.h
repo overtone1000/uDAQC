@@ -17,6 +17,7 @@ namespace ESP_Managers{ namespace IO
     IO_Timestamp(String name, IO_System* collection);
     ~IO_Timestamp(){};
     void SetTime(timeval tv);
+    void SetTime(int64_t micros);
     void SetTimeToNow();
   };
 }};
