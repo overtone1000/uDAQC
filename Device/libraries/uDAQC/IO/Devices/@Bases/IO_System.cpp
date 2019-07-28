@@ -295,7 +295,7 @@ namespace ESP_Managers{ namespace IO
     udp.write((uint8_t*)&(header.message_length),sizeof(header.message_length));
     udp.write((uint8_t*)&(header.command_id),sizeof(header.command_id));
     udp.write((uint8_t*)&(current_center_time),sizeof(current_center_time));
-    int64_t mics = (int64_t)(micros());
+    int64_t mics = (int64_t)(micros64());
     udp.write((uint8_t*)&(mics),sizeof(mics));
     udp.endPacket();
 

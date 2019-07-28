@@ -26,8 +26,6 @@ import logging.Point;
 import udaqc.io.IO_System;
 import udaqc.io.IO_Value;
 import udaqc.io.IO_Constants.Command_IDs;
-import udaqc.network.center.Center;
-import udaqc.network.center.DirectDevice;
 import udaqc.network.center.command.Command;
 import udaqc.network.interfaces.HistoryUpdateHandler;
 import udaqc.network.passthrough.command.PT_Command;

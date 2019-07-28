@@ -72,11 +72,18 @@ This class description is equal to its parent class IO_Group
 # Data Message Structure
 When a data message for an IO_System is sent from a Device to a Center, the message contains an entry for each IO_Node in that system in the order that each IO_Node is found in the description for that IO_System. The size of that entry is equal to the data byte count found in the description for that IO_Node. In practice, the byte count will only be non-zero for IO_Value objects and any classes that inherit from IO_Value, although custom IO_Node objects not derived from IO_Value objects could conceivably be created that might be included in the data message for an IO_System.
 
-There is currently a timing discrepancy. The Device sends microseconds since the last epoch, but Java converts to milliseconds. This is simply due to a desire to use JodaTime in the Java IO_System class. This would be okay with javascript, as 2,147,483,647,000,000 microseconds per epoch is still less than the safe integer value for Javascript.
+# Time
+When a Center connects to a Device, it will perform a time synchronization over UDP before accepting data messages. Any data messages received before this synchronization will be discarded. The result is that the time of the Device boot (the time at which the micros64() function would have been zero) is stored by the Center.
+
+A raw timestamp is included in every data message by use a IO_Timestamp instance. This instance is added as the first member of every IO_System when it is created. The IO_Timestamp class inherits from the class IO_Value<int64_t>. The contents of int64_t is set to the result of the ESP8266 Arduino function micros64() when IO_Timestamp::SetTimeToNow() is called. The sketch should call this function at the time that should be used as the effective timestamp for this data update before sending the update.
+
+The raw data message contains this raw timestamp. When the server receives the message and stores it as a history structure (see below) it calculates a complete Unix timestamp from its own clock and the prior synchronization.
+
+There is currently a timing discrepancy. The raw tiemstamp is in microseconds since but, but Java converts to milliseconds since Unix epoch. This is simply due Java's limited compatibility with microsecond times. Use of microseconds would be alright from a type perspective even in Javascript, as 2,147,483,647,000,000 microseconds per epoch is still less than the safe integer value for Javascript.
 
 # History Structure
 This message contains the logged data for a single regime. Its structure is as follows:
-1. int_32 indicating the temporal regime (0 for live, 1 for minute, 2 for hour, 3 for day). This might be improved by instead sending the number of nanoseconds or milliseconds over which this time series has been averaged or otherwise consolidated.
+1. int_32 indicating the temporal regime (0 for live, 1 for minute, 2 for hour, 3 for day). This might be improved by instead sending the number of microseconds or milliseconds over which this time series has been averaged or otherwise consolidated.
 2. int_64 indicating the maximum size of the following byte array (NOT necessarily the number provided in this message). Although javascript does not handle 64-bit integers well, this is likely large enough for practical purposes.
 3. byte[] containing the log file
 

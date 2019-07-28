@@ -138,14 +138,17 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 			{
 				System.out.println("Device not yet time synced. Discarding data.");
 			}
-			IO_System_Logged system = device.System();
-			if(system != null)
-			{				
-				handler.ReceivingDataUpdate();
-				system.ReceiveData(data);
-				handler.ReceivedDataUpdate();
-				
-				log.info("Received data from " + system.Name());
+			else
+			{
+				IO_System_Logged system = device.System();
+				if(system != null)
+				{				
+					handler.ReceivingDataUpdate();
+					system.ReceiveData(data);
+					handler.ReceivedDataUpdate();
+					
+					log.info("Received data from " + system.Name());
+				}
 			}
 		  }
 		  break;

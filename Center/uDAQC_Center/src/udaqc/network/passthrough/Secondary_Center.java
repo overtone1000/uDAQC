@@ -69,11 +69,12 @@ public class Secondary_Center extends TCP_Client implements HistoryUpdateHandler
 		}
 		
 		IO_System_Logged system = IO_System_Logged.getSystem(c.source_id);
-		system.setDevice(new Secondary_Device(this,system));
 		if(system==null)
 		{
 			return;
 		}
+		
+		system.setDevice(new Secondary_Device(this,system));
 		
 		switch(c.Header().command_id)
 		{

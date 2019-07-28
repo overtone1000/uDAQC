@@ -32,7 +32,7 @@ public class IO_System extends IO_Group
 		DateTime retval=null;
 		if(members!=null)
 		{
-			long us = (long)(((IO_Value)members.firstElement()).value);
+			long us = (long)(((IO_Value)members.firstElement()).value)+device.timeZeroMicros();
 			retval = new DateTime(us/1000);
 		}
 		return retval;

@@ -24,7 +24,7 @@ namespace ESP_Managers{ namespace IO
     //gettimeofday(&tv,nullptr);
     //SetTime(tv);
 
-    SetTime((int64_t)micros());
+    SetTime((int64_t)micros64());
   }
 }
 };

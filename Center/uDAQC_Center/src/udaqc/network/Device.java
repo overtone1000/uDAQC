@@ -1,8 +1,9 @@
 package udaqc.network;
 
+import network.udp.TimeSynchronizer;
 import udaqc.network.center.command.Command;
 
-public interface Device
+public abstract class Device extends TimeSynchronizer
 {
-	public void Send_Command(Command update_command);
+	public abstract void Send_Command(Command update_command);
 }
