@@ -113,7 +113,7 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 				
 				DirectDevice new_device = new DirectDevice(path, data, this, (NioSession)session);
 				devices.put(session.getId(), new_device);
-				udp_ts.synchronize(new_device);
+				udp_ts.addSynchronizer(new_device);
 				if (handler != null)
 				{
 					handler.ClientListUpdate();

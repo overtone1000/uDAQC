@@ -25,7 +25,7 @@ public class UDP_Funnel implements Runnable
 	protected int destination_port;
 	private StopWatch broadcast_sw = new StopWatch();
 	private static final int repeat = 1000*60*10; //broadcast every 10 minutes
-	private UDP_TimeSync time_sync=new UDP_TimeSync();
+
 	public UDP_Funnel(int destination_port)
 	{
 		this.destination_port = destination_port;

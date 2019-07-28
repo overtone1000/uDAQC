@@ -10,7 +10,7 @@ public abstract class TimeSynchronizer
 	protected boolean synced=false;
 	protected long time_zero=0;
 	protected long last_sync_millis=0;
-	protected static final long resync_interval=1000*60*60*6; //Every 6 hours
+	protected static final long resync_interval=1000*10;//60*60*6; //Every 6 hours
 	
 	public TimeSynchronizer()
 	{

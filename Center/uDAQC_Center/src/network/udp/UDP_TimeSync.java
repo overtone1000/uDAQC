@@ -107,9 +107,12 @@ public class UDP_TimeSync implements Runnable
 		continuerunning=false;
 	}
 	
-	public void synchronize(TimeSynchronizer target)
+	public void addSynchronizer(TimeSynchronizer target)
 	{
-		syncs_to_perform.add(target);
+		if(!syncs_to_perform.contains(target))
+		{
+			syncs_to_perform.add(target);
+		}
 	}
 	
 	public void finishCurrent()
@@ -163,22 +166,17 @@ public class UDP_TimeSync implements Runnable
 		}
 		else
 		{
-			System.out.println("Insufficient sync data.");
-			if(current_sync.SynchronizeNow())
-			{
-				System.out.println("Synchronization for " + current_sync + " will reattempted.");
-				syncs_to_perform.add(current_sync);
-				System.out.println("Total of " + syncs_to_perform.size() + " in list.");
-			}
-			else
-			{
-				System.out.println("Sync no longer necessary.");
-			}
+			System.out.println("Insufficient sync data for " + current_sync);
 		}
 		
 		points.clear();
-		
-		if(current_sync.KeepSynchronized()) {syncs_to_perform.add(current_sync);};
+
+		syncs_to_perform.remove(current_sync);
+		if(current_sync.KeepSynchronized())
+		{
+			System.out.println(current_sync + " requests continued synchronization. Moving to end of list.");
+			syncs_to_perform.add(current_sync);
+		};
 		current_sync=null;
 	}
 	
@@ -202,9 +200,9 @@ public class UDP_TimeSync implements Runnable
 		}
 		else
 		{
-			System.out.println("Null address for TimeSync.");
+			System.out.println("Null address for TimeSync. Removing.");
+			syncs_to_perform.remove(current_sync);
 			current_sync = null;
-			syncs_to_perform.removeFirst();
 		}
 	}
 	
@@ -249,6 +247,7 @@ public class UDP_TimeSync implements Runnable
 		{
 			if(current_sync==null)
 			{
+				System.out.println("There are " + syncs_to_perform.size() + " synchronizations being managed by " + this);
 				Iterator<TimeSynchronizer> i = syncs_to_perform.iterator();
 				TimeSynchronizer next = null;
 				while(i.hasNext())
@@ -257,7 +256,6 @@ public class UDP_TimeSync implements Runnable
 					if(next.SynchronizeNow())
 					{
 						current_sync = next;
-						i.remove();
 						last_sync_message=java.time.Clock.systemDefaultZone().millis();
 						break;
 					}

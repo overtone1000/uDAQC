@@ -50,6 +50,7 @@ public class DirectDevice extends Device
 	public InetSocketAddress TimeSyncAddress()
 	{
 		InetAddress add = ((InetSocketAddress)session.getRemoteAddress()).getAddress();
+		if(add==null) {return null;}
 		InetSocketAddress retval = new InetSocketAddress(add,Constants.Addresses.udp_port);
 		return retval;
 	}
