@@ -123,7 +123,7 @@ public class IO_Log
 			e.printStackTrace();
 		}
 		
-		
+		/*
 		System.out.println("Points loaded from file:");
 		for(IO_Value val : values)
 		{
@@ -136,6 +136,7 @@ public class IO_Log
 				}
 			}
 		}
+		*/
 		
 	}
 	public IO_Log(Path path, Regime r, IO_System_Logged parent, long file_size, Duration duration)

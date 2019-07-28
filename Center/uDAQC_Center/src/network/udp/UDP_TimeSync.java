@@ -3,6 +3,7 @@ package network.udp;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
 import java.net.SocketException;
@@ -273,7 +274,11 @@ public class UDP_TimeSync implements Runnable
 				{
 					case IO_Constants.Command_IDs.timesync_response:
 					{
-						handleResponse(c);						
+						InetAddress expected = current_sync.TimeSyncAddress().getAddress();
+						if(packet.getAddress().equals(expected)) //only handle the response if this packet is from the expected source. Don't want to mix up time syncs. This is also a security issue.
+						{
+							handleResponse(c);
+						}
 					}
 				}
 			}

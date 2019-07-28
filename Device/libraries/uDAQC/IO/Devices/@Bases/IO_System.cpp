@@ -318,14 +318,13 @@ namespace ESP_Managers{ namespace IO
     //Process a packet if received in full.
 		if (packetSize>=CommandCodec::TCP_Command_Header::bytelength())
 		{
-			DEBUG_printf("Received %d bytes from %s, port %d\n", packetSize, udp.remoteIP().toString().c_str(), udp.remotePort());
+			DEBUG_printf("UDP Packet received: %d bytes from %s, port %d,", packetSize, udp.remoteIP().toString().c_str(), udp.remotePort());
 
 			CommandCodec::TCP_Command_Header header;
 			udp.read((uint8_t*)&(header.message_length),sizeof(header.message_length));
 			udp.read((uint8_t*)&(header.command_id),sizeof(header.command_id));
 
-      DEBUG_println("Received message of length " + (String)header.message_length);
-      DEBUG_println("Received command id " + (String)header.command_id);
+      DEBUG_println("Command id " + (String)header.command_id);
 
       if(header.message_length>0)
       {
@@ -340,11 +339,11 @@ namespace ESP_Managers{ namespace IO
           break;
           case ESP_Managers::IO::NetworkCommands::timesync_request:
           {
-            DEBUG_println("Received time sync request.");
+            //DEBUG_println("Received time sync request.");
             int64_t current_center_time;
             udp.read((uint8_t*)(&current_center_time),sizeof(current_center_time));
-            DEBUG_println("Current time on server is ");
-            DEBUG_println((long)current_center_time);
+            //DEBUG_println("Current time on server is ");
+            //DEBUG_println((long)current_center_time);
             handleTimeSync(udp.remoteIP(), udp.remotePort(),current_center_time);
           }
           break;
