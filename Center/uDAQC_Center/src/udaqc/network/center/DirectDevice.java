@@ -55,8 +55,8 @@ public class DirectDevice extends Device
 	}
 
 	@Override
-	public boolean SynchronizationNeeded()
+	public boolean KeepSynchronized()
 	{
-		return !synced && session.isConnected();
+		return session.isConnected();
 	}
 }

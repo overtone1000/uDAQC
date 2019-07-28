@@ -342,8 +342,6 @@ namespace ESP_Managers{ namespace IO
             //DEBUG_println("Received time sync request.");
             int64_t current_center_time;
             udp.read((uint8_t*)(&current_center_time),sizeof(current_center_time));
-            //DEBUG_println("Current time on server is ");
-            //DEBUG_println((long)current_center_time);
             handleTimeSync(udp.remoteIP(), udp.remotePort(),current_center_time);
           }
           break;

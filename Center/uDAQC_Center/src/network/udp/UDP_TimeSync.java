@@ -34,6 +34,7 @@ public class UDP_TimeSync implements Runnable
 	private static final long sync_timeout_ms = 10000;
 	
 	private ConcurrentLinkedDeque<TimeSynchronizer> syncs_to_perform = new ConcurrentLinkedDeque<TimeSynchronizer>();
+		
 	TimeSynchronizer current_sync = null;
 	private long last_sync_message=0;
 	
@@ -163,7 +164,7 @@ public class UDP_TimeSync implements Runnable
 		else
 		{
 			System.out.println("Insufficient sync data.");
-			if(current_sync.SynchronizationNeeded())
+			if(current_sync.SynchronizeNow())
 			{
 				System.out.println("Synchronization for " + current_sync + " will reattempted.");
 				syncs_to_perform.add(current_sync);
@@ -176,6 +177,8 @@ public class UDP_TimeSync implements Runnable
 		}
 		
 		points.clear();
+		
+		if(current_sync.KeepSynchronized()) {syncs_to_perform.add(current_sync);};
 		current_sync=null;
 	}
 	
@@ -246,8 +249,19 @@ public class UDP_TimeSync implements Runnable
 		{
 			if(current_sync==null)
 			{
-				current_sync=syncs_to_perform.pollFirst();
-				last_sync_message=java.time.Clock.systemDefaultZone().millis();
+				Iterator<TimeSynchronizer> i = syncs_to_perform.iterator();
+				TimeSynchronizer next = null;
+				while(i.hasNext())
+				{
+					next=i.next();
+					if(next.SynchronizeNow())
+					{
+						current_sync = next;
+						i.remove();
+						last_sync_message=java.time.Clock.systemDefaultZone().millis();
+						break;
+					}
+				}
 			}
 			
 			if(current_sync!=null)

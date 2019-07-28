@@ -42,7 +42,7 @@ public class Secondary_Device extends Device
 	}
 
 	@Override
-	public boolean SynchronizationNeeded()
+	public boolean KeepSynchronized()
 	{
 		return false;
 	}
