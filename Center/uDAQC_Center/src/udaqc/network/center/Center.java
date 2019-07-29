@@ -44,7 +44,7 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 	public CenterHandler handler = null;
 
 	private Logger log;
-	private Loghandler_File loghandler; // only record warning level output
+	//private Loghandler_File loghandler; // only record warning level output
 
 	private TreeMap<Long,DirectDevice> devices = new TreeMap<Long,DirectDevice>();
 	
@@ -70,9 +70,9 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 		handler.ClientListUpdate();
 
 		log = Logger.getLogger(Threadname);
-		loghandler = new Loghandler_File(Level.WARNING);
+		//loghandler = new Loghandler_File(Level.WARNING);
 
-		loghandler.addlog(log);
+		//loghandler.addlog(log);
 		log.setLevel(Level.INFO); // Show info level logging on system.out
 
 		this.start();

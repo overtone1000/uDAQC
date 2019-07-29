@@ -8,6 +8,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.logging.SimpleFormatter;
 
+import org.joda.time.DateTime;
+
 public class Loghandler_File {
 	private String logname;
 	private FileHandler fh;
@@ -24,12 +26,11 @@ public class Loghandler_File {
 		
 		SimpleFormatter form = new SimpleFormatter();
 		
-		int lognum=1000;
+		DateTime dt = DateTime.now();
 		boolean logalreadyexists=true;
 		while(logalreadyexists){
-			logname=dir + "/" + lognum + ".txt";
+			logname=dir + "/" + dt.toString() + ".log";
 			logalreadyexists=Files.exists(Paths.get(logname));
-			lognum+=1;
 		}
 		
 		try {
