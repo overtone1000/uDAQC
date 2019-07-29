@@ -1,7 +1,11 @@
 package network.http;
 
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.Writer;
 import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -11,6 +15,7 @@ import java.security.KeyStore;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.concurrent.Semaphore;
 
 import javax.net.ssl.KeyManager;
@@ -37,6 +42,7 @@ import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
 import org.eclipse.jetty.security.HashLoginService;
 import org.eclipse.jetty.security.LoginService;
+import org.eclipse.jetty.security.PropertyUserStore;
 import org.eclipse.jetty.security.authentication.BasicAuthenticator;
 import org.eclipse.jetty.server.Connector;
 import org.eclipse.jetty.server.Handler;
@@ -46,6 +52,7 @@ import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
 import org.eclipse.jetty.server.SslConnectionFactory;
+import org.eclipse.jetty.server.UserIdentity;
 import org.eclipse.jetty.server.handler.ContextHandler;
 import org.eclipse.jetty.server.handler.ContextHandlerCollection;
 import org.eclipse.jetty.server.handler.DefaultHandler;
@@ -55,9 +62,10 @@ import org.eclipse.jetty.server.handler.SecuredRedirectHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.security.Constraint;
+import org.eclipse.jetty.util.security.Password;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
-
+import org.eclipse.jetty.util.security.Credential;
 
 public class HTTPS_Server
 {
@@ -73,9 +81,61 @@ public class HTTPS_Server
 	private Servlet_uD ws_servlet;
 	private SecurityBundle bundle = new SecurityBundle("security");
 	
+	Path config_file = Paths.get("./security/realm.properties");
+	PropertyUserStore store = new PropertyUserStore();
+	
+	private static final String[] roles = new String[] { "admin" };
+	
+	public boolean changeCredentials(String login, String password)
+	{
+		String md5 = Credential.MD5.digest(password);
+		Credential cred = Credential.getCredential(md5);
+		
+		String rolestring="";
+		for(int n=0;n<roles.length-1;n++)
+		{
+			rolestring+=roles[n]+",";
+		}
+		rolestring+=roles[roles.length-1];
+		
+		config_file.toFile().delete();
+		try
+		{
+			java.io.FileWriter fos = new java.io.FileWriter(config_file.toFile());
+			fos.write(login + ":" + md5 + "," + rolestring);
+			fos.close();
+		} catch (IOException e)
+		{
+			e.printStackTrace();
+			return false;
+		}
+		
+		Map<String,UserIdentity> users = store.getKnownUserIdentities();
+		for(String s:users.keySet())
+		{
+			store.removeUser(s);
+		}
+		store.addUser(login, cred, roles);
+		
+		return true;		
+	}
+	
 	public HTTPS_Server(Center parent, int insecure_port, int secure_port)
 	{
 		this.parent = parent;
+		
+		store.setConfigPath(config_file);
+		
+		try
+		{
+			store.setHotReload(true);
+			store.start();
+		} catch (Exception e1)
+		{
+			System.out.println("Store couldn't start.");
+			e1.printStackTrace();
+			return;
+		}
 		
         server = new Server();
         //Server server2 = new Server(8080);
@@ -99,6 +159,11 @@ public class HTTPS_Server
         hl.addHandler(new DefaultHandler());
         context.setHandler(hl);
         
+        ContextHandler cred_context = new ContextHandler();
+        HTTP_PostHandler handler = new HTTP_PostHandler(this);
+        cred_context.setHandler((Handler)handler);
+        cred_context.setContextPath("/credential_change");
+        
         ServletContextHandler ws_context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         ws_context.setContextPath("/socket"); //This context handles anything in the socket directory. Note, a call to "url/socket" won't work. It needs to be "url/socket/"
 		ws_servlet = new Servlet_uD(this);
@@ -107,7 +172,7 @@ public class HTTPS_Server
 		ws_context.addServlet(ws_holder, "/*"); //This servlet will handle anything.
 		
         //Now for security
-		Path config_file = Paths.get("./security/realm.properties");
+		
 		if(!config_file.toFile().exists())
 		{
 			try
@@ -126,9 +191,15 @@ public class HTTPS_Server
 				e.printStackTrace();
 			}
 		}
-        LoginService loginService = new HashLoginService("MyRealm",
-                config_file.toString());
+		
+		HashLoginService loginService = new HashLoginService("uDAQC");
+        loginService.setUserStore(store);
         server.addBean(loginService);
+                
+        //Example of how to digest a password
+        //String md5 = org.eclipse.jetty.util.security.Credential.MD5.digest("password");
+        //System.out.println("Digested password is:" + md5);
+        //Output for this is "MD5:5f4dcc3b5aa765d61d8327deb882cf99"
         
         ConstraintSecurityHandler security = new ConstraintSecurityHandler();
         server.setHandler(security);
@@ -136,7 +207,7 @@ public class HTTPS_Server
         Constraint constraint = new Constraint();
         constraint.setName("auth");
         constraint.setAuthenticate(true);
-        constraint.setRoles(new String[] { "admin_role", "guest_role" });
+        constraint.setRoles(roles);
         
         ConstraintMapping mapping = new ConstraintMapping();
         mapping.setPathSpec("/*");
@@ -149,6 +220,7 @@ public class HTTPS_Server
 		//ContextHandlerCollection server_handlers = new ContextHandlerCollection();
         HandlerList server_handlers=new HandlerList();	
         server_handlers.addHandler(ws_context);
+        server_handlers.addHandler(cred_context);
         server_handlers.addHandler(context); //should go last? Yes. It's the default "/*" context, so let other contexts try first.
         
         security.setHandler(server_handlers); //chain security on top of contexts
