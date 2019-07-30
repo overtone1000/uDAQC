@@ -1,9 +1,6 @@
 package network.udp;
 
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
-
-import udaqc.network.Constants;
 
 public abstract class TimeSynchronizer
 {

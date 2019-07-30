@@ -109,14 +109,14 @@ public abstract class TCP_Client extends TCP_Base
 	@Override
 	public void exceptionCaught(IoSession session, Throwable cause) {
 		System.out.println("Exception caught from " + session.getRemoteAddress());
-		session.close(true);
+		session.closeNow();
 	}
 	
 	@Override
     public void sessionIdle( IoSession session, IdleStatus status ){// throws Exception
         if(session.getIdleCount(IdleStatus.READER_IDLE)>3){
         	System.out.println("Idled out session " + session.getRemoteAddress() + ". Resetting client.");
-        	session.close(true);
+        	session.closeNow();
         }
         
     }	

@@ -1,7 +1,5 @@
 package udaqc.io;
 
-import java.net.InetSocketAddress;
-
 public class IO_Constants {
 		
 	public static class Command_IDs

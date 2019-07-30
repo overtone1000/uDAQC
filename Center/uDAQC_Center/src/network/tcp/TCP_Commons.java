@@ -1,30 +1,11 @@
 package network.tcp;
 
-import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
 import java.io.IOException;
-import java.io.PrintStream;
-import java.io.PrintWriter;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.KeyPair;
-import java.security.KeyPairGenerator;
-import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
-import java.util.Locale;
-import java.util.PrimitiveIterator.OfInt;
-import java.util.Random;
-import java.util.stream.IntStream;
-
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
@@ -276,7 +257,7 @@ public class TCP_Commons
 	{
 		try{
 			if(session!=null){
-				session.close(false);
+				session.closeOnFlush();
 				if(session.isClosing()){
 					session.getCloseFuture().awaitUninterruptibly();
 					System.out.println("Session closed.");

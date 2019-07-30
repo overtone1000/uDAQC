@@ -17,8 +17,6 @@ import java.util.concurrent.Semaphore;
 import java.util.logging.Logger;
 
 import org.apache.commons.lang3.exception.ExceptionUtils;
-import org.apache.mina.core.session.IoSession;
-import org.eclipse.jetty.websocket.api.Session;
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
@@ -188,7 +186,7 @@ public class IO_System_Logged extends IO_System
 	}
 	
 	private Logger log;
-	private static String suffix = ".dat";
+
 	private Path storage_path;
 	public final static String filesep=System.getProperty("file.separator");
 	public final static String descname ="descripton";

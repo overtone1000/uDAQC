@@ -19,6 +19,7 @@ public class Testing
 	public static void TLS()
 	{
 		InetSocketAddress host = new InetSocketAddress("127.0.0.1",udaqc.network.passthrough.Secondary_Constants.Ports.passthrough_server);
+		@SuppressWarnings("unused")
 		Secondary_Center cl = new Secondary_Center("Testing client",Paths.get("passthrough_history"),host,null);
 	}
 	public static void Password()

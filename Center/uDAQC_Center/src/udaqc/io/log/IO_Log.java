@@ -308,9 +308,7 @@ public class IO_Log
 		count+=current_epoch.size();
 		if(count>max_entries)
 		{
-			//System.out.println("Count = " + count + ", Max = " + max_entries);
-			int removed = RemoveOldest(count-max_entries);
-			//System.out.println("Removed " + removed);
+			RemoveOldest(count-max_entries);
 		}
 	}
 	

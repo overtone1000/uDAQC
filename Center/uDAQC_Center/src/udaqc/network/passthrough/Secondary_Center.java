@@ -60,7 +60,7 @@ public class Secondary_Center extends TCP_Client implements HistoryUpdateHandler
 	{
 		if(c.Header().command_id==Command_IDs.group_description)
 		{
-			IO_System_Logged new_system = IO_System_Logged.processSystemDescription(path, c.getmessage(), this);
+			IO_System_Logged.processSystemDescription(path, c.getmessage(), this);
 			if (parent != null)
 			{
 				parent.ClientListUpdate();
