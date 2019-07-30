@@ -94,6 +94,8 @@ public class HTTP_PostHandler implements Handler
 	@Override
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
 	{
+		baseRequest.setHandled(true);
+		
 		String new_login = request.getParameter(login);
 		//System.out.println("New login:" + new_login);
 		String pw1 = request.getParameter(password1);
@@ -101,31 +103,37 @@ public class HTTP_PostHandler implements Handler
 		String pw2 = request.getParameter(password2);
 		//System.out.println("Pw2:" + pw2);
 		
+		String message = "";
+		
 		if(new_login == null || pw1 == null || pw2 == null)
 		{
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Expected paramaters not included. This suggests a server side software error.");
-			return;
+			message = "Expected paramaters not included. This suggests a server side software error.";
+		}
+		else if(new_login.equals("") || pw1.equals("") || pw2.equals(""))
+		{
+			message = "A blank field was received. Credentials are unchanged.";
+		}
+		else if(!pw1.equals(pw2))
+		{
+			message = "Passwords don't match. Credentials are unchanged.";
+		}
+		else if(!parent.changeCredentials(new_login, pw1))
+		{
+			message = "Couldn't write credential file.";
+		}
+		else
+		{
+			message = "Credentials successfully changed.";
 		}
 		
-		if(new_login.equals("") || pw1.equals("") || pw2.equals(""))
-		{
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "A blank field was received. Credentials are unchanged.");
-			return;
-		}
+		String htmlRespone = "<html>";
+		htmlRespone += message;
+		htmlRespone += "</html>";
 		
-		if(!pw1.equals(pw2))
-		{
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Passwords don't match. Credentials are unchanged.");
-			return;
-		}
-		
-		if(!parent.changeCredentials(new_login, pw1))
-		{
-			response.sendError(HttpServletResponse.SC_BAD_REQUEST, "Couldn't write credential file.");
-			return;
-		}
-				
-		response.sendRedirect("/");
+		response.setContentType("text/html");
+		response.setStatus(HttpServletResponse.SC_OK);
+		response.setCharacterEncoding("UTF-8");
+		response.getOutputStream().print(htmlRespone);
 	}
 
 	@Override
