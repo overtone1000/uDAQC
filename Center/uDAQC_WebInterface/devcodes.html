@@ -13,9 +13,15 @@
 
   <body>
 
-    <!-- Main Container -->
-    <form action="credential_change/server_credentials" method="post">
-      <div class="container-fluid">
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-8 text-left text-break">
+            Existing credentials: <br>
+            $CREDENTIALS$
+        </div>
+
+        <div class="col-md-4">
+          <form action="credential_change/" method="post">
     				<div class="d-flex flex-row justify-content-center align-items-center">
               <div class="col align-self-center text-right">
                 <div class=”card card-block”>
@@ -36,23 +42,16 @@
                 <input name="password1" type="password"></input>
     					</div>
       			</div>
-            <div class="d-flex flex-row justify-content-center align-items-center">
-              <div class="col align-self-center text-right">
-                <div class=”card card-block”>
-                  Repeat Password
-                </div>
-              </div>
-              <div class="col">
-                <input name="password2" type="password"></input>
-    					</div>
-      			</div>
+
             <div class="d-flex flex-row justify-content-around">
               <div class="col-md-auto">
                 <button type="submit" class="btn btn-primary">Submit</button>
     					</div>
       			</div>
-    	</div>
-    </form>
+          </form>
+        </div>
+      </div>
+  	</div>
 
     <script src=
       "libs/jquery-slim/jquery-3.4.1.slim.min.js"

@@ -90,12 +90,9 @@ public class HTTP_PostHandler implements Handler
 		// TODO Auto-generated method stub
 		
 	}
-
-	@Override
-	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
+	
+	private void handleServerCredentialChange(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
 	{
-		baseRequest.setHandled(true);
-		
 		String new_login = request.getParameter(login);
 		//System.out.println("New login:" + new_login);
 		String pw1 = request.getParameter(password1);
@@ -134,6 +131,19 @@ public class HTTP_PostHandler implements Handler
 		response.setStatus(HttpServletResponse.SC_OK);
 		response.setCharacterEncoding("UTF-8");
 		response.getOutputStream().print(htmlRespone);
+	}
+
+	@Override
+	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
+	{
+		baseRequest.setHandled(true);
+		
+		System.out.print("Target is " ); System.out.println(target);
+		
+		if(target.equals("/server_credentials"))
+		{
+			handleServerCredentialChange(target,baseRequest,request,response);
+		}
 	}
 
 	@Override
