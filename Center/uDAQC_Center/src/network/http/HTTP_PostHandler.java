@@ -19,8 +19,10 @@ public class HTTP_PostHandler implements Handler
 	private static final String login = "login";
 	private static final String password1 = "password1";
 	private static final String password2 = "password2";
+	private static final String realm = "realm";
 	
 	private static final String new_server_creds = "/new_server_credentials";
+	private static final String new_device_creds = "/new_device_credentials";
 	private static final String device_creds_html = "/device_credentials.html";
 	private static final String device_cred_list = "/credentials/device_credential_list.txt";
 	
@@ -141,6 +143,50 @@ public class HTTP_PostHandler implements Handler
 		response.setCharacterEncoding("UTF-8");
 		response.getOutputStream().print(htmlRespone);
 	}
+	
+	private void handleDeviceCredentialChange(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
+	{		
+		String new_login = request.getParameter(login);
+		System.out.println("New login:" + new_login);
+		String pw1 = request.getParameter(password1);
+		System.out.println("Pw1:" + pw1);
+		String pw2 = request.getParameter(password2);
+		System.out.println("Pw2:" + pw2);
+		String rlm = request.getParameter(realm);
+		System.out.println("Realm:" + pw2);
+		
+		String message = "";
+		
+		if(new_login == null || pw1 == null || pw2 == null || rlm == null)
+		{
+			message = "Expected paramaters not included. This suggests a server side software error.";
+		}
+		else if(new_login.equals("") || pw1.equals("") || pw2.equals("") || rlm.equals(""))
+		{
+			message = "A blank field was received. Credentials are unchanged.";
+		}
+		else if(!pw1.equals(pw2))
+		{
+			message = "Passwords don't match. Credentials are unchanged.";
+		}
+		else if(false)
+		{
+			message = "Couldn't write credential file.";
+		}
+		else
+		{
+			message = "Credentials successfully changed.";
+		}
+		
+		String htmlRespone = "<html>";
+		htmlRespone += message;
+		htmlRespone += "</html>";
+		
+		response.setContentType("text/html");
+		response.setStatus(HttpServletResponse.SC_OK);
+		response.setCharacterEncoding("UTF-8");
+		response.getOutputStream().print(htmlRespone);
+	}
 
 	@Override
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
@@ -152,6 +198,11 @@ public class HTTP_PostHandler implements Handler
 			baseRequest.setHandled(true);
 			handleServerCredentialChange(request,response);
 		}
+		else if(target.contentEquals(new_device_creds))
+		{
+			baseRequest.setHandled(true);
+			handleDeviceCredentialChange(request,response);
+		}
 		else if(target.contentEquals(device_creds_html))
 		{
 			//allow the request to remain unhandled so the resource handler sends the html file, but update the list of credentials first
@@ -162,11 +213,11 @@ public class HTTP_PostHandler implements Handler
 				Files.delete(Paths.get(filename));
 			}
 			FileWriter w = new FileWriter(filename,false);
-			w.write("Testing 123!");
+			w.write("Testing 123!\n");
+			w.write("Testing 223!\n");
 			w.close();
 			
-			baseRequest.setHandled(false);
-			
+			baseRequest.setHandled(false);	
 		}
 		else
 		{
