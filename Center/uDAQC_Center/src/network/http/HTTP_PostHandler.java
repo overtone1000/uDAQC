@@ -1,6 +1,11 @@
 package network.http;
 
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -14,6 +19,10 @@ public class HTTP_PostHandler implements Handler
 	private static final String login = "login";
 	private static final String password1 = "password1";
 	private static final String password2 = "password2";
+	
+	private static final String new_server_creds = "/new_server_credentials";
+	private static final String device_creds_html = "/device_credentials.html";
+	private static final String device_cred_list = "/credentials/device_credential_list.txt";
 	
 	HTTPS_Server parent;
 	public HTTP_PostHandler(HTTPS_Server parent)
@@ -91,8 +100,8 @@ public class HTTP_PostHandler implements Handler
 		
 	}
 	
-	private void handleServerCredentialChange(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
-	{
+	private void handleServerCredentialChange(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
+	{		
 		String new_login = request.getParameter(login);
 		//System.out.println("New login:" + new_login);
 		String pw1 = request.getParameter(password1);
@@ -135,14 +144,34 @@ public class HTTP_PostHandler implements Handler
 
 	@Override
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
-	{
-		baseRequest.setHandled(true);
-		
+	{		
 		System.out.print("Target is " ); System.out.println(target);
 		
-		if(target.equals("/server_credentials"))
+		if(target.equals(new_server_creds))
 		{
-			handleServerCredentialChange(target,baseRequest,request,response);
+			baseRequest.setHandled(true);
+			handleServerCredentialChange(request,response);
+		}
+		else if(target.contentEquals(device_creds_html))
+		{
+			//allow the request to remain unhandled so the resource handler sends the html file, but update the list of credentials first
+			String filename = HTTPS_Server.home_dir + device_cred_list;
+			Path path = Paths.get(filename);
+			if(path.toFile().exists())
+			{
+				Files.delete(Paths.get(filename));
+			}
+			FileWriter w = new FileWriter(filename,false);
+			w.write("Testing 123!");
+			w.close();
+			
+			baseRequest.setHandled(false);
+			
+		}
+		else
+		{
+			System.out.println("Request for target " + target + " unhandled by dedicated credential handler. Next handler will be called.");
+			baseRequest.setHandled(false);
 		}
 	}
 
