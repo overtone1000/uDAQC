@@ -190,13 +190,13 @@ public class IO_Log
 			
 			if(flag.Get(ByteFlag.EntryFlags.NewEpoch))
 			{
-				System.out.println("New epoch at " + this_index);
+				//System.out.println("New epoch at " + this_index);
 				AddEpoch(new_epoch);
 				new_epoch = new Epoch(values);
 			}
 			if(flag.Get(ByteFlag.EntryFlags.SplitEpoch))
 			{
-				System.out.println("Epoch split at " + this_index);
+				//System.out.println("Epoch split at " + this_index);
 				split_epoch=new_epoch;
 			}
 			

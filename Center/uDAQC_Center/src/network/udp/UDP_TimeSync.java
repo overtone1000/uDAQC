@@ -240,7 +240,7 @@ public class UDP_TimeSync implements Runnable
 		{
 			if(current_sync==null)
 			{
-				System.out.println("There are " + syncs_to_perform.size() + " synchronizations being managed by " + this);
+				//System.out.println("There are " + syncs_to_perform.size() + " synchronizations being managed by " + this);
 				Iterator<TimeSynchronizer> i = syncs_to_perform.iterator();
 				TimeSynchronizer next = null;
 				while(i.hasNext())
