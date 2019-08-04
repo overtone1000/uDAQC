@@ -123,9 +123,9 @@ public class HTTP_PostHandler implements Handler
 		
 	}
 	
-	private boolean changeDeviceCredentials(String new_login, String pw, String realm)
+	private boolean changeDeviceCredentials(String new_login, String realm, String pw)
 	{
-		String conglomerate = new_login + ":" + pw + ":" + realm;
+		String conglomerate = new_login + ":" + realm + ":" + pw;
 		
 		Charset encoding = java.nio.charset.StandardCharsets.UTF_8;
 		
@@ -164,7 +164,7 @@ public class HTTP_PostHandler implements Handler
 		System.out.println("Digest is " + md5_hex_string);
 						
 		LinkedList<String> creds = readDeviceCredentials();
-		creds.add(new_login + ":" + md5_hex_string + ":" + realm);
+		creds.add(new_login + ":" + realm + ":" + md5_hex_string);
 		return deviceCredsToFile(creds);	
 	}
 	
@@ -235,7 +235,7 @@ public class HTTP_PostHandler implements Handler
 		{
 			message = "Passwords don't match. Credentials are unchanged.";
 		}
-		else if(!this.changeDeviceCredentials(new_login, pw1, rlm))
+		else if(!this.changeDeviceCredentials(new_login, rlm, pw1))
 		{
 			message = "Couldn't write credential file.";
 		}
