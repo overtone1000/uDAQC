@@ -42,6 +42,7 @@ public class HTTP_PostHandler implements Handler
 	
 	private static final String new_server_creds = "/new_server_credentials";
 	private static final String new_device_creds = "/new_device_credentials";
+	private static final String remove_device_creds = "/remove_device_credentials";
 	private static final String device_creds_html = "/device_credentials.html";
 	private static final String device_cred_list = "/credentials/device_credential_list.txt";
 	private static final String master_device_cred_list = "security/device_credential_list.txt";
@@ -161,36 +162,10 @@ public class HTTP_PostHandler implements Handler
 		System.out.print("Conglomerate is: ");
 		System.out.println(encoding.decode(ByteBuffer.wrap(conglomerate_bytes)));
 		System.out.println("Digest is " + md5_hex_string);
-				
-		File f = new File(master_device_cred_list);
-		if(!f.exists()) {try
-		{
-			System.out.println("Creating directories for file " + f.getAbsolutePath().toString());
-			Files.createDirectories(f.toPath().getParent());
-			System.out.println("Creating file " + f.getAbsolutePath().toString());
-			if(!f.createNewFile())
-			{
-				System.out.println("Couldn't create file.");
-				return false;
-			}
-		} catch (IOException e)
-		{
-			e.printStackTrace();
-			return false;
-		}}
-		
-		try
-		{
-			FileWriter fos = new FileWriter(f,true);
-			fos.append(new_login + ":" + md5_hex_string + ":" + realm + '\n');
-			fos.close();
-		} catch (IOException e)
-		{
-			e.printStackTrace();
-			return false;
-		}
-		
-		return true;
+						
+		LinkedList<String> creds = readDeviceCredentials();
+		creds.add(new_login + ":" + md5_hex_string + ":" + realm);
+		return deviceCredsToFile(creds);	
 	}
 	
 	private void handleServerCredentialChange(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
@@ -235,7 +210,7 @@ public class HTTP_PostHandler implements Handler
 		response.getOutputStream().print(htmlRespone);
 	}
 	
-	private void handleDeviceCredentialChange(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
+	private boolean handleDeviceCredentialChange(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
 	{		
 		String new_login = request.getParameter(login);
 		System.out.println("New login:" + new_login);
@@ -266,7 +241,7 @@ public class HTTP_PostHandler implements Handler
 		}
 		else
 		{
-			message = "Credentials successfully changed.";
+			return true;
 		}
 		
 		String htmlRespone = "<html>";
@@ -277,6 +252,8 @@ public class HTTP_PostHandler implements Handler
 		response.setStatus(HttpServletResponse.SC_OK);
 		response.setCharacterEncoding("UTF-8");
 		response.getOutputStream().print(htmlRespone);
+		
+		return false;
 	}
 	
 	private LinkedList<String> readDeviceCredentials()
@@ -342,24 +319,101 @@ public class HTTP_PostHandler implements Handler
 		
 		return retval;
 	}
+	private boolean removeDeviceCredentials(int index)
+	{
+		LinkedList<String> creds = readDeviceCredentials();
+		creds.remove(index);
+		return deviceCredsToFile(creds);		
+	}
+	private boolean deviceCredsToFile(LinkedList<String> creds)
+	{
+		File f = new File(master_device_cred_list);
 
+		if(!f.exists()) {try
+		{
+			System.out.println("Creating directories for file " + f.getAbsolutePath().toString());
+			Files.createDirectories(f.toPath().getParent());
+			System.out.println("Creating file " + f.getAbsolutePath().toString());
+			if(!f.createNewFile())
+			{
+				System.out.println("Couldn't create file.");
+				return false;
+			}
+		} catch (IOException e)
+		{
+			e.printStackTrace();
+			return false;
+		}}
+		
+		try
+		{
+			FileWriter fos = new FileWriter(f,false);
+			for(String s:creds)
+			{
+				fos.write(s + '\n');
+			}
+			fos.close();
+		} catch (IOException e)
+		{
+			e.printStackTrace();
+			
+			return false;
+		}
+		
+		return true;
+	}
+	
 	@Override
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
 	{		
 		System.out.print("Target is " ); System.out.println(target);
 		
-		if(target.equals(new_server_creds))
+		//boolean remove_cred = target.substring(0, target.lastIndexOf('/')-1).equals(remove_device_creds);
+		
+		if(target.length()>=remove_device_creds.length())
 		{
-			baseRequest.setHandled(true);
+			if(target.substring(0,remove_device_creds.length()).equals(remove_device_creds))
+			{
+				System.out.println("Handling credential removal.");
+				Integer index = Integer.parseInt(target.substring(remove_device_creds.length()+1,target.length()));
+				if(removeDeviceCredentials(index))
+				{
+					baseRequest.setHandled(true);
+					response.sendRedirect(HTTPS_Server.credential_context+device_creds_html);
+				}
+				else
+				{
+					response.setContentType("text/html");
+					response.setStatus(HttpServletResponse.SC_OK);
+					response.setCharacterEncoding("UTF-8");
+					response.getOutputStream().print("Couldn't delete credentials.");
+				}
+				return;
+			}
+		}
+		
+		switch(target)
+		{
+		case new_server_creds:
+		{
+			System.out.println("Handling new server credentials.");
 			handleServerCredentialChange(request,response);
-		}
-		else if(target.contentEquals(new_device_creds))
-		{
 			baseRequest.setHandled(true);
-			handleDeviceCredentialChange(request,response);
+			break;
 		}
-		else if(target.contentEquals(device_creds_html))
+		case new_device_creds:
 		{
+			System.out.println("Handling new device credentials.");
+			if(handleDeviceCredentialChange(request,response))
+			{
+				response.sendRedirect(HTTPS_Server.credential_context+device_creds_html);
+			}
+			baseRequest.setHandled(true);
+			break;
+		}
+		case device_creds_html:
+		{
+			System.out.println("Handling basic device credential list form.");
 			//get the existing credentials for the list
 			LinkedList<String> current_creds = readDeviceCredentials();
 			
@@ -378,11 +432,14 @@ public class HTTP_PostHandler implements Handler
 			w.close();
 			
 			baseRequest.setHandled(false);	
+			break;
 		}
-		else
+		default:
 		{
 			System.out.println("Request for target " + target + " unhandled by dedicated credential handler. Next handler will be called.");
 			baseRequest.setHandled(false);
+			break;
+		}
 		}
 	}
 

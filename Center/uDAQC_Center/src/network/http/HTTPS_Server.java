@@ -53,6 +53,8 @@ public class HTTPS_Server
 	
 	public static final String home_dir = "../uDAQC_WebInterface";
 	private static final String home_page = "index.html";
+	
+	public static final String credential_context = "/credentials";
 		
 	private Semaphore session_mutex=new Semaphore(1);
 
@@ -142,7 +144,7 @@ public class HTTPS_Server
         ContextHandler cred_context = new ContextHandler();
         HTTP_PostHandler handler = new HTTP_PostHandler(this);
         cred_context.setHandler((Handler)handler);
-        cred_context.setContextPath("/credentials");
+        cred_context.setContextPath(credential_context);
         
         ServletContextHandler ws_context = new ServletContextHandler(ServletContextHandler.SESSIONS);
         ws_context.setContextPath("/socket"); //This context handles anything in the socket directory. Note, a call to "url/socket" won't work. It needs to be "url/socket/"

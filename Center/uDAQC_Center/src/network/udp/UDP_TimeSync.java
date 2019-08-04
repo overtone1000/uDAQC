@@ -24,7 +24,7 @@ public class UDP_TimeSync implements Runnable
 	protected boolean continuerunning = false;
 	
 	private static final int points_to_full = 20;
-	private static final long sync_timeout_ms = 10000;
+	private static final long sync_timeout_ms = 10000; //10 second timeout
 	
 	private ConcurrentLinkedDeque<TimeSynchronizer> syncs_to_perform = new ConcurrentLinkedDeque<TimeSynchronizer>();
 		
