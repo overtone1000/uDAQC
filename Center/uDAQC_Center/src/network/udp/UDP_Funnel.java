@@ -30,16 +30,30 @@ public class UDP_Funnel implements Runnable
 	{
 		this.destination_port = destination_port;
 		broadcast_sw.start();
-		try
+		
+		while(socket==null)
 		{
-			socket = new DatagramSocket(Addresses.udp_broadcast.getPort());
-			socket.setSoTimeout(1000);
-			start();
-		} catch (SocketException e)
-		{
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			try
+			{
+				socket = new DatagramSocket(Addresses.udp_broadcast.getPort());
+				socket.setSoTimeout(1000);
+			} catch (SocketException e)
+			{
+				socket=null;
+				int time = 5000;
+    			System.out.println("UDP funnel couldn't start. Exception: " + e.getMessage() + ". Restarting in " + time + " ms.");
+    			try
+				{
+					Thread.sleep(time);
+				} catch (InterruptedException e1)
+				{
+					e1.printStackTrace();
+				}
+			}
 		}
+		
+		
+		start();
 	}
 	
 	public void send(Command c, InetSocketAddress add)

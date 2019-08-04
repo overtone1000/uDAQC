@@ -115,8 +115,8 @@ public class TCP_Server extends TCP_Base
 					this.serverinitialized();
 				} catch (IOException e)
 				{
-					TCP_Status = "IOException when building server";
-					e.printStackTrace();
+					TCP_Status = "IOException when starting server";
+					System.out.println(TCP_Status + " " + threadName + ":" + e.getMessage() + ". Will reattempt after interval.");
 				}
 			} else
 			{

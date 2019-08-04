@@ -68,13 +68,6 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 		this.start();
 		
 		webserver = new HTTPS_Server(this, Addresses.webserver_insecure_port, Addresses.webserver_secure_port);
-		try
-		{
-			webserver.start();
-		} catch (Exception e)
-		{
-			e.printStackTrace();
-		}
 	}
 
 	@Override

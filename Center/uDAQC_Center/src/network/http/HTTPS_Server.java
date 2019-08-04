@@ -207,6 +207,24 @@ public class HTTPS_Server
         
         server.setHandler(security); //security is primary handler
         
+        while(!server.isStarted())
+        {
+        	try
+    		{
+    			server.start();
+    		} catch (Exception e)
+    		{
+    			int time = 5000;
+    			System.out.println("Web server couldn't start. Exception: " + e.getMessage() + ". Restarting in " + time + " ms.");
+    			try
+				{
+					Thread.sleep(time);
+				} catch (InterruptedException e1)
+				{
+					e1.printStackTrace();
+				}
+    		}
+        }
 	}
 	
 	private void ConfigTLS(int insecure_port, int secure_port)
@@ -244,12 +262,7 @@ public class HTTPS_Server
         // has something to pass requests off to.
 
         // Set the connectors
-        server.setConnectors(new Connector[] { https, http });
-	}
-	
-	public void start() throws Exception
-	{
-		server.start();
+        server.setConnectors(new Connector[] { https, http });       
 	}
 
 	public void stop()
