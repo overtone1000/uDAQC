@@ -151,13 +151,6 @@ public class HTTP_PostHandler implements Handler
 		}
 		
 		byte[] md5 = digester.digest(conglomerate_bytes);
-						
-		System.out.println("Output bytes:");
-		for(byte b:md5)
-		{
-			System.out.println(b);
-		}
-		System.out.println();
 		
 		String md5_hex_string="";
 		ByteBuffer bb = ByteBuffer.wrap(md5);

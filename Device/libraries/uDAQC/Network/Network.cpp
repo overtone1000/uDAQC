@@ -51,6 +51,8 @@ namespace ESP_Managers
 		const String manage_network =  "managenetwork";
 		const String change_creds =  "changecreds";
 
+		const String realm = "admin";
+
 		void Initialize(Network::SecurityBundle bundle)
 		{
 			ESP.eraseConfig(); //This may fix some problems with AP connectivity
@@ -250,7 +252,7 @@ namespace ESP_Managers
 			else
 			{
 				DEBUG_println("Requesting authentication.");
-				webserver.requestAuthentication(DIGEST_AUTH);
+				webserver.requestAuthentication(DIGEST_AUTH, realm.c_str());
 				DEBUG_println("Sending redirect.");
 				redirect();
 				return false;
@@ -473,9 +475,18 @@ namespace ESP_Managers
 				String page;
 			  page = HTML_Builder::html_header;
 
+				ESP_Managers::FileSystem::Credentials creds = ESP_Managers::FileSystem::read_credentials();
+				MD5Builder md5;
+			  md5.begin();
+			  md5.add(creds.login + ":" + realm + ":" + creds.password);  // md5 of the user:realm:password
+			  md5.calculate();
+			  String h1 = md5.toString();
+
 			  page+=
 				R"(
 				<h2>Login Credentials</h2><br>
+
+				Current credentials: )" + creds.login + ":" + realm + ":" + h1 + R"(
 
 				<form action=")" + change_creds + R"(" method="post">
 				Login:<br>
