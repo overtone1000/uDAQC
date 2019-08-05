@@ -14,6 +14,8 @@ import java.nio.charset.CharsetDecoder;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
 import java.util.Map;
 
@@ -130,27 +132,32 @@ public class HTTP_PostHandler implements Handler
 		Charset encoding = java.nio.charset.StandardCharsets.UTF_8;
 		
 		byte[] conglomerate_bytes = encoding.encode(conglomerate).array();
-						
-		BcDigestCalculatorProvider dcp = new org.bouncycastle.operator.bc.BcDigestCalculatorProvider();
-		DigestCalculator dc;
+		
+		System.out.println("Input bytes:");
+		for(byte b:conglomerate_bytes)
+		{
+			System.out.println(b);
+		}
+		System.out.println();
+		
+		MessageDigest digester=null;
 		try
 		{
-			dc = dcp.get(new AlgorithmIdentifier(org.bouncycastle.cms.CMSAlgorithm.MD5));
-		} catch (OperatorCreationException e1)
+			digester=java.security.MessageDigest.getInstance("MD5");
+		} catch (NoSuchAlgorithmException e)
 		{
-			e1.printStackTrace();
+			e.printStackTrace();
 			return false;
 		}
 		
-		try
+		byte[] md5 = digester.digest(conglomerate_bytes);
+						
+		System.out.println("Output bytes:");
+		for(byte b:md5)
 		{
-			dc.getOutputStream().write(conglomerate_bytes);
-		} catch (IOException e1)
-		{
-			e1.printStackTrace();
-			return false;
+			System.out.println(b);
 		}
-		byte[] md5 = dc.getDigest();
+		System.out.println();
 		
 		String md5_hex_string="";
 		ByteBuffer bb = ByteBuffer.wrap(md5);
