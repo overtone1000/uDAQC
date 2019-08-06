@@ -476,18 +476,22 @@ namespace ESP_Managers
 			  page = HTML_Builder::html_header;
 
 				ESP_Managers::FileSystem::Credentials creds = ESP_Managers::FileSystem::read_credentials();
+				String input_string = creds.login + ":" + realm + ":" + creds.password;
 				MD5Builder md5;
 			  md5.begin();
-			  md5.add(creds.login + ":" + realm + ":" + creds.password);  // md5 of the user:realm:password
+			  md5.add(input_string);  // md5 of the user:realm:password
 			  md5.calculate();
 			  String h1 = md5.toString();
+
+				String input_bytes = "";
+				for(unsigned int n=0;n<input_string.length();n++)
+				{
+					input_bytes+=(String)(byte)(input_string.c_str()[n]) + '\n';
+				}
 
 			  page+=
 				R"(
 				<h2>Login Credentials</h2><br>
-
-				Current credentials: )" + creds.login + ":" + realm + ":" + h1 + R"(
-
 				<form action=")" + change_creds + R"(" method="post">
 				Login:<br>
 				<input type="text" name="login"><br>
@@ -499,6 +503,9 @@ namespace ESP_Managers
 				</form><br>
 				)"
 				;
+
+				page+=	"Current credentials:" + creds.login + ":" + realm + ":" + h1;
+				page+= "Input bytes:" + input_bytes;
 
 			  page += HTML_Builder::html_footer;
 

@@ -129,13 +129,21 @@ public class HTTP_PostHandler implements Handler
 	{
 		String conglomerate = new_login + ":" + realm + ":" + pw;
 		
+		System.out.println(conglomerate);
+		
 		Charset encoding = java.nio.charset.StandardCharsets.UTF_8;
 		
-		byte[] conglomerate_bytes = encoding.encode(conglomerate).array();
+		byte[] conglomerate_bytes = new byte[conglomerate.length()];
+		encoding.encode(conglomerate).get(conglomerate_bytes);
 		
 		System.out.println("Input bytes:");
 		for(byte b:conglomerate_bytes)
 		{
+			short c = (short)b;
+			//if(c<0)
+			//{
+			//	c+= 256;
+			//}
 			System.out.println(b);
 		}
 		System.out.println();
