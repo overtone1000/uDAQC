@@ -106,4 +106,14 @@ namespace CommandCodec
   {
     return command;
   }
+
+  bool TCP_Command_Client::Authenticated()
+  {
+    return authenticated;
+  }
+
+  void TCP_Command_Client::Authenticate()
+  {
+    authenticated=true;
+  }
 };

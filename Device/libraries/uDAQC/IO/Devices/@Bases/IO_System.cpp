@@ -86,19 +86,19 @@ namespace ESP_Managers{ namespace IO
     CommandCodec::TCP_Command_Client new_client; //apparently this method of creation is okay although this is within the scope of this function...
     new_client.connect(host,center_port);
 
-    CommandCodec::TCP_Command_Header header;
-
-    header.message_length = DescriptionSize();
-    header.command_id = NetworkCommands::group_description;
-
-    unsigned int header_size = new_client.send_command_header(header);
-    DEBUG_println("Actual header size sent " + (String)header_size);
-    unsigned int description_length_sent=SendDescription(&(new_client));
-    DEBUG_println("Sending description of size " + (String)header.message_length);
-    DEBUG_println("Actual description  size " + (String)description_length_sent);
-
     //new_client.println("Description sent.");
     tcp_clients.push_back(new_client);
+
+    //Request authentication
+    ESP_Managers::FileSystem::Credentials creds = ESP_Managers::FileSystem::read_credentials();
+    String login_realm = creds.login+":"+Network::realm;
+    DEBUG_println("login_realm for auth request is " + login_realm);
+    CommandCodec::TCP_Command_Header auth_request_header;
+    auth_request_header.message_length = login_realm.length();
+    auth_request_header.command_id = ESP_Managers::IO::NetworkCommands::auth_request;
+    new_client.send_command_header(auth_request_header);
+    SendString(&new_client, &login_realm);
+    new_client.flush();
   }
 
   void IO_System::LoopTCPClient()
@@ -138,20 +138,39 @@ namespace ESP_Managers{ namespace IO
           DEBUG_print("Received command " + (String)new_command.command_id);
           DEBUG_println(" (" + (String)new_command.message_length + " b)");
 
-          //Now need to do something with the command
-          //Pretty much just need to handle changes to IO_SaveableValue
-          switch(new_command.command_id)
+          if(client->Authenticated())
           {
-            case ESP_Managers::IO::NetworkCommands::handshake:
-            DEBUG_println("Handshake.");
-            break;
-            case ESP_Managers::IO::NetworkCommands::modifiablevalue_modification:
-            DEBUG_println("Received modification command.");
-            IO_Saveable::HandleModificationCommand(new_command);
-            break;
-            default:
-            DEBUG_println("Unhandled command " + (String)new_command.command_id);
-            break;
+            //Now need to do something with the command
+            //Pretty much just need to handle changes to IO_SaveableValue
+            switch(new_command.command_id)
+            {
+              case ESP_Managers::IO::NetworkCommands::handshake:
+              DEBUG_println("Handshake.");
+              break;
+              case ESP_Managers::IO::NetworkCommands::modifiablevalue_modification:
+              DEBUG_println("Received modification command.");
+              IO_Saveable::HandleModificationCommand(new_command);
+              break;
+              default:
+              DEBUG_println("Unhandled command " + (String)new_command.command_id);
+              break;
+            }
+          }
+          else
+          {
+            if(new_command.command_id==ESP_Managers::IO::NetworkCommands::auth_provision)
+            {
+              DEBUG_println("Authentication provision command received.");
+
+              CommandCodec::TCP_Command_Header header;
+              header.message_length = DescriptionSize();
+              header.command_id = NetworkCommands::group_description;
+              unsigned int header_size = client->send_command_header(header);
+              DEBUG_println("Actual header size sent " + (String)header_size);
+              unsigned int description_length_sent=SendDescription(client);
+              DEBUG_println("Sending description of size " + (String)header.message_length);
+              DEBUG_println("Actual description  size " + (String)description_length_sent);
+            }
           }
         }
       }
@@ -310,10 +329,12 @@ namespace ESP_Managers{ namespace IO
     if(tcp_clients.empty() && udp_timer.repeatnow())
     {
       announceUDP();
+      yield();
     }
 
     //Eventually, the device stops responding to multicast. This looks like a bug in the ESP8266 library. Here is a workaround.
 		int packetSize = udp.parsePacket();
+    yield();
 
     //Process a packet if received in full.
 		if (packetSize>=CommandCodec::TCP_Command_Header::bytelength())
@@ -335,6 +356,7 @@ namespace ESP_Managers{ namespace IO
             int32_t center_port;
             udp.read((uint8_t*)(&center_port),sizeof(center_port));
             add_center(udp.remoteIP(), center_port);
+            yield();
     			}
           break;
           case ESP_Managers::IO::NetworkCommands::timesync_request:
@@ -343,6 +365,7 @@ namespace ESP_Managers{ namespace IO
             int64_t current_center_time;
             udp.read((uint8_t*)(&current_center_time),sizeof(current_center_time));
             handleTimeSync(udp.remoteIP(), udp.remotePort(),current_center_time);
+            yield();
           }
           break;
           default:

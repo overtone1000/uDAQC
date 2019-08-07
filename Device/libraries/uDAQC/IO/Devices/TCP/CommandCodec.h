@@ -29,9 +29,12 @@ namespace CommandCodec
     int connect(IPAddress host, int center_port);
     TCP_Command get_command();
     unsigned int send_command_header(TCP_Command_Header com);
+    bool Authenticated();
+    void Authenticate();
   private:
     TCP_Command command;
     bool new_command_read=true;
+    bool authenticated=false;
   };
 };
 

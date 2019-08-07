@@ -10,8 +10,8 @@ public class IO_Constants {
 		public static final short modifiablevalue_description=4;		
 		public static final short data=5;
 		public static final short handshake=6;
-		//public static final short request_identity=7;
-		//public static final short declare_identity=8;
+		public static final short auth_request=7;
+		public static final short auth_provision=8;
 		public static final short modifiablevalue_modification=9;
 		public static final short request_subscription=10;
 		public static final short history=11;

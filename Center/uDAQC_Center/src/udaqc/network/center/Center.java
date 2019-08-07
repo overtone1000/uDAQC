@@ -2,6 +2,7 @@ package udaqc.network.center;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -89,6 +90,22 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 
 		switch (c.Header().command_id)
 		{
+			case Command_IDs.auth_request:
+			{
+				while(data.hasRemaining())
+				{
+					System.out.println(data.get());
+				}
+				data.flip();
+				String login_realm = StandardCharsets.UTF_8.decode(data).toString();
+				System.out.println("Command length is " + c.Header().message_length);
+				System.out.println("Auth request received for creds " + login_realm);
+				System.out.println(login_realm);
+				System.out.println(data.capacity());
+				Command auth_prov_com = new Command(Command_IDs.auth_provision);
+				
+				break;
+			}
 			case Command_IDs.group_description:
 			{
 				//The only time a group description command ID is received in this setting is when an entire IO_System is being sent.

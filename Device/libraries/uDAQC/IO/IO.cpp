@@ -36,8 +36,8 @@ namespace IO
     const int16_t modifiablevalue_description=4;
     const int16_t data=5;
     const int16_t handshake=6;
-    //const int16_t request_identity=7;
-    //const int16_t declare_identity=8;
+    const int16_t auth_request=7;
+    const int16_t auth_provision=8;
     const int16_t modifiablevalue_modification=9;
     const int16_t request_subscription=10;
     const int16_t history=11;

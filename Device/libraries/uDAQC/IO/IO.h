@@ -25,8 +25,8 @@ namespace IO
     extern const int16_t modifiablevalue_description;
     extern const int16_t data;
     extern const int16_t handshake;
-    //extern const int16_t request_identity;
-    //extern const int16_t declare_identity;
+    extern const int16_t auth_request;
+    extern const int16_t auth_provision;;
     extern const int16_t modifiablevalue_modification;
     extern const int16_t request_subscription;
     extern const int16_t history;

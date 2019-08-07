@@ -26,7 +26,8 @@ namespace ESP_Managers
 	namespace Network
 	{
 		extern ESP8266WiFiMulti wifiMulti;
-		
+		extern const String realm;
+
 		#ifdef TLS
 		extern ESP8266WebServerSecure webserver;
 		#else

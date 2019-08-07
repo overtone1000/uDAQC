@@ -30,7 +30,7 @@ public class IO_Node
 		data.get(name_bytes);
 		ByteBuffer name_bb = ByteBuffer.wrap(name_bytes);
 		
-		name = StandardCharsets.US_ASCII.decode(name_bb).toString();
+		name = StandardCharsets.UTF_8.decode(name_bb).toString();
 		
 		//System.out.println(name + ", size = " + data_bytecount);
 	}
