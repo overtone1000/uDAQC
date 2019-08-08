@@ -47,7 +47,7 @@ public class HTTP_PostHandler implements Handler
 	private static final String remove_device_creds = "/remove_device_credentials";
 	private static final String device_creds_html = "/device_credentials.html";
 	private static final String device_cred_list = "/credentials/device_credential_list.txt";
-	private static final String master_device_cred_list = "security/device_credential_list.txt";
+	
 	
 	HTTPS_Server parent;
 	public HTTP_PostHandler(HTTPS_Server parent)
@@ -125,56 +125,6 @@ public class HTTP_PostHandler implements Handler
 		
 	}
 	
-	private boolean changeDeviceCredentials(String new_login, String realm, String pw)
-	{
-		String conglomerate = new_login + ":" + realm + ":" + pw;
-		
-		System.out.println(conglomerate);
-		
-		Charset encoding = java.nio.charset.StandardCharsets.UTF_8;
-		
-		byte[] conglomerate_bytes = new byte[conglomerate.length()];
-		encoding.encode(conglomerate).get(conglomerate_bytes);
-		
-		System.out.println("Input bytes:");
-		for(byte b:conglomerate_bytes)
-		{
-			short c = (short)b;
-			//if(c<0)
-			//{
-			//	c+= 256;
-			//}
-			System.out.println(b);
-		}
-		System.out.println();
-		
-		MessageDigest digester=null;
-		try
-		{
-			digester=java.security.MessageDigest.getInstance("MD5");
-		} catch (NoSuchAlgorithmException e)
-		{
-			e.printStackTrace();
-			return false;
-		}
-		
-		byte[] md5 = digester.digest(conglomerate_bytes);
-		
-		String md5_hex_string="";
-		ByteBuffer bb = ByteBuffer.wrap(md5);
-		while(bb.hasRemaining())
-		{
-			md5_hex_string+=Integer.toHexString(bb.getInt());
-		}
-		
-		System.out.print("Conglomerate is: ");
-		System.out.println(encoding.decode(ByteBuffer.wrap(conglomerate_bytes)));
-		System.out.println("Digest is " + md5_hex_string);
-						
-		LinkedList<String> creds = readDeviceCredentials();
-		creds.add(new_login + ":" + realm + ":" + md5_hex_string);
-		return deviceCredsToFile(creds);	
-	}
 	
 	private void handleServerCredentialChange(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
 	{		
@@ -243,7 +193,7 @@ public class HTTP_PostHandler implements Handler
 		{
 			message = "Passwords don't match. Credentials are unchanged.";
 		}
-		else if(!this.changeDeviceCredentials(new_login, rlm, pw1))
+		else if(!parent.Parent().changeDeviceCredentials(new_login, rlm, pw1))
 		{
 			message = "Couldn't write credential file.";
 		}
@@ -263,114 +213,7 @@ public class HTTP_PostHandler implements Handler
 		
 		return false;
 	}
-	
-	private LinkedList<String> readDeviceCredentials()
-	{
-		LinkedList<String> retval = new LinkedList<String>();
-		
-		File f = new File(master_device_cred_list);
-		if(f.exists())
-		{
-			int size;
-			try
-			{
-				size = (int) Files.size(f.toPath());
-			} catch (IOException e)
-			{
-				e.printStackTrace();
-				return retval;
-			}
-						
-			FileReader fr=null;
-			try
-			{
-				fr = new FileReader(f);
-				CharBuffer buf = CharBuffer.allocate((int) Files.size(f.toPath()));
-				fr.read(buf);
-				buf.flip();
-				String this_cred = "";
-				
-				char next;
-				while(buf.remaining()>0)
-				{
-					next=buf.get();
-				
-					if(next=='\n')
-					{
-						retval.add(this_cred);
-						this_cred = new String();
-					}
-					else
-					{
-						this_cred+=(char)next;
-					}
-				}
-				
-				fr.close();
-			} catch (IOException e)
-			{
-				e.printStackTrace();
-				return retval;
-			}
-			
-			System.out.println("Current creds are:");
-			for(String s:retval)
-			{
-				System.out.println(s);
-			}
-			System.out.println("File size = " + size);
-		}
-		else
-		{
-			System.out.println("No credential file found.");
-		}
-		
-		return retval;
-	}
-	private boolean removeDeviceCredentials(int index)
-	{
-		LinkedList<String> creds = readDeviceCredentials();
-		creds.remove(index);
-		return deviceCredsToFile(creds);		
-	}
-	private boolean deviceCredsToFile(LinkedList<String> creds)
-	{
-		File f = new File(master_device_cred_list);
 
-		if(!f.exists()) {try
-		{
-			System.out.println("Creating directories for file " + f.getAbsolutePath().toString());
-			Files.createDirectories(f.toPath().getParent());
-			System.out.println("Creating file " + f.getAbsolutePath().toString());
-			if(!f.createNewFile())
-			{
-				System.out.println("Couldn't create file.");
-				return false;
-			}
-		} catch (IOException e)
-		{
-			e.printStackTrace();
-			return false;
-		}}
-		
-		try
-		{
-			FileWriter fos = new FileWriter(f,false);
-			for(String s:creds)
-			{
-				fos.write(s + '\n');
-			}
-			fos.close();
-		} catch (IOException e)
-		{
-			e.printStackTrace();
-			
-			return false;
-		}
-		
-		return true;
-	}
-	
 	@Override
 	public void handle(String target, Request baseRequest, HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException
 	{		
@@ -384,7 +227,7 @@ public class HTTP_PostHandler implements Handler
 			{
 				System.out.println("Handling credential removal.");
 				Integer index = Integer.parseInt(target.substring(remove_device_creds.length()+1,target.length()));
-				if(removeDeviceCredentials(index))
+				if(parent.Parent().removeDeviceCredentials(index))
 				{
 					baseRequest.setHandled(true);
 					response.sendRedirect(HTTPS_Server.credential_context+device_creds_html);
@@ -423,7 +266,7 @@ public class HTTP_PostHandler implements Handler
 		{
 			System.out.println("Handling basic device credential list form.");
 			//get the existing credentials for the list
-			LinkedList<String> current_creds = readDeviceCredentials();
+			LinkedList<String> current_creds = parent.Parent().readDeviceCredentials();
 			
 			//allow the request to remain unhandled so the resource handler sends the html file, but update the list of credentials first
 			String filename = HTTPS_Server.home_dir + device_cred_list;

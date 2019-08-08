@@ -229,6 +229,11 @@ public class HTTPS_Server
         }
 	}
 	
+	public Center Parent()
+	{
+		return parent;
+	}
+	
 	private void ConfigTLS(int insecure_port, int secure_port)
 	{		
 		HttpConfiguration http_config = new HttpConfiguration();

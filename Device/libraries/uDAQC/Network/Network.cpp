@@ -475,20 +475,6 @@ namespace ESP_Managers
 				String page;
 			  page = HTML_Builder::html_header;
 
-				ESP_Managers::FileSystem::Credentials creds = ESP_Managers::FileSystem::read_credentials();
-				String input_string = creds.login + ":" + realm + ":" + creds.password;
-				MD5Builder md5;
-			  md5.begin();
-			  md5.add(input_string);  // md5 of the user:realm:password
-			  md5.calculate();
-			  String h1 = md5.toString();
-
-				String input_bytes = "";
-				for(unsigned int n=0;n<input_string.length();n++)
-				{
-					input_bytes+=(String)(byte)(input_string.c_str()[n]) + '\n';
-				}
-
 			  page+=
 				R"(
 				<h2>Login Credentials</h2><br>
@@ -503,12 +489,6 @@ namespace ESP_Managers
 				</form><br>
 				)"
 				;
-
-				page+=	"Current credentials:" + creds.login + ":" + realm + ":" + h1;
-				page+= "Input bytes:" + input_bytes;
-
-			  page += HTML_Builder::html_footer;
-
 				webserver.send(200, "text/html", page);
 			}
 
@@ -687,6 +667,16 @@ namespace ESP_Managers
 					//If there's been a webserve in the last 3 minutes, don't sleep.
 					DEBUG_println("Staying awake for the connected webserver client.");
 				}
+			}
+			String getMD5Hash()
+			{
+				ESP_Managers::FileSystem::Credentials creds = ESP_Managers::FileSystem::read_credentials();
+				String input_string = creds.login + ":" + realm + ":" + creds.password;
+				MD5Builder md5;
+			  md5.begin();
+			  md5.add(input_string);  // md5 of the user:realm:password
+			  md5.calculate();
+				return md5.toString();
 			}
   };
 };

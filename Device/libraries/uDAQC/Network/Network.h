@@ -75,6 +75,8 @@ namespace ESP_Managers
 		//void webserver_addresponse(const char* uri, ESP8266WebServer::THandlerFunction handler);
 
 		void modem_sleep(int duration_millis);
+
+		String getMD5Hash();
   };
 };
 

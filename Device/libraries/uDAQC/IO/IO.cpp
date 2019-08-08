@@ -56,10 +56,10 @@ namespace IO
     const int16_t boolean=4;
   };
 
-  unsigned int SendString(WiFiClient* client, String* str)
+  unsigned int SendString(WiFiClient* client, const String* str)
   {
     unsigned int retval=0;
-    uint16_t str_length = str->length();
+    int16_t str_length = str->length();
     retval+=client->write((uint8_t*)&(str_length),sizeof(str_length));
     retval+=client->write((uint8_t*)(str->c_str()),str_length);
     //Serial.println("Sent string of length " + (String)(str_length) + ":"+*str);

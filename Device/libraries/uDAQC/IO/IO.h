@@ -46,7 +46,7 @@ namespace IO
     extern const int16_t boolean;
   };
 
-  unsigned int SendString(WiFiClient* client, String* str);
+  unsigned int SendString(WiFiClient* client, const String* str);
 }};
 
 #include "Devices/TCP/CommandCodec.h"

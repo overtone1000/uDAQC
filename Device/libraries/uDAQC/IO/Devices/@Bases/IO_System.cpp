@@ -91,13 +91,12 @@ namespace ESP_Managers{ namespace IO
 
     //Request authentication
     ESP_Managers::FileSystem::Credentials creds = ESP_Managers::FileSystem::read_credentials();
-    String login_realm = creds.login+":"+Network::realm;
-    DEBUG_println("login_realm for auth request is " + login_realm);
     CommandCodec::TCP_Command_Header auth_request_header;
-    auth_request_header.message_length = login_realm.length();
+    auth_request_header.message_length = creds.login.length() + Network::realm.length() + sizeof(int16_t)*2;
     auth_request_header.command_id = ESP_Managers::IO::NetworkCommands::auth_request;
     new_client.send_command_header(auth_request_header);
-    SendString(&new_client, &login_realm);
+    SendString(&new_client, &(creds.login));
+    SendString(&new_client, &(Network::realm));
     new_client.flush();
   }
 
@@ -162,14 +161,31 @@ namespace ESP_Managers{ namespace IO
             {
               DEBUG_println("Authentication provision command received.");
 
-              CommandCodec::TCP_Command_Header header;
-              header.message_length = DescriptionSize();
-              header.command_id = NetworkCommands::group_description;
-              unsigned int header_size = client->send_command_header(header);
-              DEBUG_println("Actual header size sent " + (String)header_size);
-              unsigned int description_length_sent=SendDescription(client);
-              DEBUG_println("Sending description of size " + (String)header.message_length);
-              DEBUG_println("Actual description  size " + (String)description_length_sent);
+              char* auth = new char[new_command.message_length];
+              memcpy(auth,new_command.message,new_command.message_length);
+              String auth_str = String(auth);
+              DEBUG_println("Authentication received is: " + auth_str);
+
+              String correct_hash = Network::getMD5Hash();
+              if(correct_hash.equals(auth_str))
+              {
+                client->Authenticate();
+                CommandCodec::TCP_Command_Header header;
+                header.message_length = DescriptionSize();
+                header.command_id = NetworkCommands::group_description;
+                unsigned int header_size = client->send_command_header(header);
+                DEBUG_println("Actual header size sent " + (String)header_size);
+                unsigned int description_length_sent=SendDescription(client);
+                DEBUG_println("Sending description of size " + (String)header.message_length);
+                DEBUG_println("Actual description  size " + (String)description_length_sent);
+              }
+              else
+              {
+                DEBUG_println("Incorrect auth.");
+                client->stop();
+              }
+
+              delete[] auth;
             }
           }
         }
@@ -194,7 +210,7 @@ namespace ESP_Managers{ namespace IO
     for(auto it=tcp_clients.begin();it!=tcp_clients.end();it++)
     {
       CommandCodec::TCP_Command_Client* client = &*it;
-      if(client->connected())
+      if(client->connected() && client->Authenticated())
       {
         client->flush(); //Don't start sending new data until old data send is finished.
 
