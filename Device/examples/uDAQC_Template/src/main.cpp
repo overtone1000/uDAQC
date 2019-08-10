@@ -33,16 +33,16 @@ void setup()
   DEBUG_println("Main loop complete.");
 }
 
-Repeater update_data(1000); //Update data and send every second
+Repeater update_data(5000); //Update data and send every 5 seconds
 void loop()
 {
 
   #ifndef TEMP_TESTING
-  float temp = 20.0 + 10.0*sin(millis()/1000.0/20.0*PI);
-  test_input_temp.Set(temp);
-  ESP_Managers::IO::System()->SetTimeToNow(); //Set the time stamp for when data was acquired; this can be important because the loops for WiFi can be time consuming
   if(update_data.repeatnow())
   {
+    float temp = 20.0 + 10.0*sin(millis()/1000.0/20.0*PI);
+    test_input_temp.Set(temp);
+    ESP_Managers::IO::System()->SetTimeToNow(); //Set the time stamp for when data was acquired; this can be important because the loops for WiFi can be time consuming
     ESP_Managers::IO::System()->SendDataReportTCP();
   }
   #endif

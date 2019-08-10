@@ -10,10 +10,10 @@ class Repeater{
   bool repeatnow();
   void reset();
   unsigned long remaining();
-  unsigned long timedelay;
 
   private:
   unsigned long timeofnextexec;
+  unsigned long timedelay;
 };
 
 #endif
