@@ -1,5 +1,6 @@
 package network.http;
 
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -80,7 +81,11 @@ public class HTTPS_Server
 		}
 		rolestring+=roles[roles.length-1];
 		
-		config_file.toFile().delete();
+		if(config_file.toFile().exists())
+		{
+			config_file.toFile().delete();
+		}
+		
 		try
 		{
 			java.io.FileWriter fos = new java.io.FileWriter(config_file.toFile());
@@ -105,6 +110,29 @@ public class HTTPS_Server
 	public HTTPS_Server(Center parent, int insecure_port, int secure_port)
 	{
 		this.parent = parent;
+		
+		if(!config_file.toFile().exists())
+		{
+			try
+			{
+				Files.createDirectories(config_file.getParent());
+				config_file.toFile().createNewFile();
+				
+				FileWriter fw = new FileWriter(config_file.toFile(),false);
+				
+				fw.write("admin:admin");
+				for(String s:roles)
+				{
+					fw.write("," + s);
+				}
+				
+				fw.close();
+			} catch (IOException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		
 		store.setConfigPath(config_file);
 		
