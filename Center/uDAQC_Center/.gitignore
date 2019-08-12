@@ -1,7 +1,3 @@
-/bin/
-/Errlog/
-/passthrough_history/
-/history/
-/security/
 /target/
-/deploy/
+/bin/
+/deploy/deploy/

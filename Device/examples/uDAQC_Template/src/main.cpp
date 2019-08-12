@@ -40,7 +40,7 @@ void loop()
   #ifndef TEMP_TESTING
   if(update_data.repeatnow())
   {
-    float temp = 20.0 + 10.0*sin(millis()/1000.0/20.0*PI);
+    float temp = 20.0 + 10.0*sin(millis()/10000.0/20.0*PI);
     test_input_temp.Set(temp);
     ESP_Managers::IO::System()->SetTimeToNow(); //Set the time stamp for when data was acquired; this can be important because the loops for WiFi can be time consuming
     ESP_Managers::IO::System()->SendDataReportTCP();

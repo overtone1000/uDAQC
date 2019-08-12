@@ -52,9 +52,15 @@ public class HTTPS_Server
 {
 	private ArrayList<Session> sessions = new ArrayList<Session>();
 	
-	public static final String home_dir = "../uDAQC_WebInterface";
-	private static final String home_page = "index.html";
+	public String home_dir;
+	public String HomeDirectory()
+	{
+		return home_dir;
+	}
 	
+	private Path config_file;
+	
+	private static final String home_page = "index.html";
 	public static final String credential_context = "/credentials";
 		
 	private Semaphore session_mutex=new Semaphore(1);
@@ -62,9 +68,8 @@ public class HTTPS_Server
 	private Center parent;
 	private Server server;
 	private Servlet_uD ws_servlet;
-	private SecurityBundle bundle = new SecurityBundle("security");
+	private SecurityBundle bundle;
 	
-	Path config_file = Paths.get("./security/realm.properties");
 	PropertyUserStore store = new PropertyUserStore();
 	
 	private static final String[] roles = new String[] { "admin" };
@@ -107,9 +112,15 @@ public class HTTPS_Server
 		return true;		
 	}
 	
-	public HTTPS_Server(Center parent, int insecure_port, int secure_port)
+	private String root;
+	public HTTPS_Server(Center parent, String root, int insecure_port, int secure_port)
 	{
 		this.parent = parent;
+		this.root = root;
+		
+		this.home_dir = this.root + "/../../uDAQC_WebInterface";
+		this.config_file = Paths.get(this.root + "/security/realm.properties");
+		this.bundle = new SecurityBundle(this.root + "/security");
 		
 		if(!config_file.toFile().exists())
 		{

@@ -1,0 +1,4 @@
+journalctl -u uDAQC_Center.service | tail -100
+systemctl daemon-reload
+systemctl start uDAQC_Center.service
+systemctl stop uDAQC_Center.service

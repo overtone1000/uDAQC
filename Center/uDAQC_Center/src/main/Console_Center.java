@@ -6,6 +6,7 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Properties;
@@ -38,9 +39,24 @@ public class Console_Center
 		}
 	}
 	
-	private static final String props_file = "properties";
-	private static final String history_key = "history";
 	public static void main(String[] args) {
+		
+				
+		String root = "";
+		try
+		{
+			Path root_path = Paths.get(Console_Center.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
+			root = root_path.getParent().toString(); 
+		} catch (URISyntaxException e2)
+		{
+			// TODO Auto-generated catch block
+			e2.printStackTrace();
+		}
+		
+		String props_file = root + "/properties";
+		String history_key = "history";
+		
+		
 		Properties props = new Properties();
 		FileInputStream is=null;
 		try
@@ -69,7 +85,7 @@ public class Console_Center
 		FileOutputStream os=null; 
 		if(!props.containsKey(history_key))
 		{
-			props.put(history_key, "history");
+			props.put(history_key, root + "/history");
 			try
 			{
 				os = new FileOutputStream(props_file);
@@ -97,7 +113,7 @@ public class Console_Center
 		DummyHandler h = new DummyHandler();
 		
 		@SuppressWarnings("unused")
-		Center id_serv = new Center("IO_Center", path, h);
+		Center id_serv = new Center("IO_Center", root, path, h);
 		
 		//String Threadname = "GNDM_Server";
 		//InetSocketAddress[] hosts=new InetSocketAddress[1];

@@ -269,7 +269,7 @@ public class HTTP_PostHandler implements Handler
 			LinkedList<String> current_creds = parent.Parent().readDeviceCredentials();
 			
 			//allow the request to remain unhandled so the resource handler sends the html file, but update the list of credentials first
-			String filename = HTTPS_Server.home_dir + device_cred_list;
+			String filename = parent.HomeDirectory() + device_cred_list;
 			Path path = Paths.get(filename);
 			if(path.toFile().exists())
 			{

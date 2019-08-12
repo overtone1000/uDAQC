@@ -52,17 +52,19 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 	private HTTPS_Server webserver;
 
 	private Path path;
+	private String root;
 	
 	private UDP_Funnel udp;
 	private UDP_TimeSync udp_ts = new UDP_TimeSync();
 
-	public Center(String Threadname, Path path, CenterHandler handler)
+	public Center(String Threadname, String root, Path path, CenterHandler handler)
 	{
 		super(Threadname, true, false);
 		
 		this.handler = handler;
 		this.path = path;
-				
+		this.root = root;
+		
 		passthrough_server = new Secondary_Server(Threadname, this);
 
 		// super(Threadname, IO_Constants.Constants.tcp_id_port);
@@ -78,7 +80,7 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 
 		this.start();
 		
-		webserver = new HTTPS_Server(this, Addresses.webserver_insecure_port, Addresses.webserver_secure_port);
+		webserver = new HTTPS_Server(this, root, Addresses.webserver_insecure_port, Addresses.webserver_secure_port);
 	}
 
 	@Override
