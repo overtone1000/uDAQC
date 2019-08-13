@@ -5,7 +5,7 @@
 	<property name="dir.deploy" value="${dir.buildfile}/temp"/>
     <property name="dir.jarfile" value="${dir.deploy}/uDAQC_Center/jar"/>
 	<property name="dir.web_interface" value="../../uDAQC_WebInterface"/>
-	
+
     <target name="create_run_jar">
         <jar destfile="${dir.jarfile}/uDAQC_Center.jar">
             <manifest>
@@ -42,19 +42,19 @@
         <copy file="/home/tyler/.m2/repository/ant/ant-junit/1.6.5/ant-junit-1.6.5.jar" todir="${dir.jarfile}/uDAQC_Center_lib"/>
         <copy file="/home/tyler/.m2/repository/org/apache/felix/org.apache.felix.main/5.6.1/org.apache.felix.main-5.6.1.jar" todir="${dir.jarfile}/uDAQC_Center_lib"/>
         <copy file="/home/tyler/.m2/repository/org/apache/felix/org.apache.felix.framework/5.6.1/org.apache.felix.framework-5.6.1.jar" todir="${dir.jarfile}/uDAQC_Center_lib"/>
-    	
-    	
+
+
     	<copy todir="${dir.deploy}/uDAQC_WebInterface">
     		<fileset dir="${dir.web_interface}" casesensitive="yes">
     		</fileset>
     	</copy>
-    	
-    	<copy file="${dir.buildfile}/install.bash" todir="${dir.deploy}"/>
+
+    	<copy file="${dir.buildfile}/configure.bash" todir="${dir.deploy}"/>
     	<copy file="${dir.buildfile}/uDAQC_Center.service" todir="${dir.deploy}"/>
-    	
+
     	<zip basedir="${dir.deploy}" destfile="deploy.zip">
 		</zip>
-		
+
     	<delete dir="${dir.deploy}"/>
     </target>
 </project>
