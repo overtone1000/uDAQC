@@ -67,8 +67,15 @@ sed -i 's@'"$current_user_line"'@'"$new_user_line"'@g' uDAQC_Center.service
 echo "Adding absolute file path."
 sed -i 's@'"$current_exec_line"'@'"$new_exec_line"'@g' uDAQC_Center.service
 
-sudo cp uDAQC_Center.service /etc/systemd/system/uDAQC_Center.service
+echo "Stopping uDAQC_Center service."
 sudo systemctl stop uDAQC_Center
+
+echo "Copying service file to systemd directory."
+sudo cp uDAQC_Center.service /etc/systemd/system/uDAQC_Center.service
+
+echo "Reloading systemctl daemon."
 sudo systemctl daemon-reload
+
+echo "Starting and enabling uDAQC_Center service."
 sudo systemctl start uDAQC_Center
 sudo systemctl enable uDAQC_Center
