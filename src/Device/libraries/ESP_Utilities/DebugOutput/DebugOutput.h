@@ -1,9 +1,8 @@
-#ifndef TRM_Debug_h
-#define TRM_Debug_h
+#ifndef DebugOutput_h
+#define DebugOutput_h
 
-#define DEBUG_TRM
-
-#ifdef DEBUG_TRM
+#ifdef DEBUG_OUTPUT
+ #warning uDAQC Library Debugging is enabled
  #define DEBUG_println(x)  Serial.println(x)
  #define DEBUG_printf(...) Serial.printf(__VA_ARGS__)
  #define DEBUG_print(x)  Serial.print(x)

@@ -63,10 +63,6 @@ namespace ESP_Managers
 			//Web server
 			Network::since_last_webserve.start();
 
-			#ifndef TEMP_TESTING
-			//IO::IO_System::web_server=ESP_Managers::Network::get_webserver();
-			#endif
-
 			//Time configurations
 			int time_zone = -8; //Pacific standard
 			int tz_sec = time_zone*3600;
@@ -112,16 +108,12 @@ namespace ESP_Managers
 				 disconnected=WiFi.softAPdisconnect(true);
 				 DEBUG_println("Disabling access point. Function returned " + (String)disconnected);
 
-				 #ifndef TEMP_TESTING
 				 IO::System()->InitializeTCPClient();
 				 IO::System()->InitializeUDP();
-				 #endif
 				}
 
-				#ifndef TEMP_TESTING
 				//Perform IO_System loop
 				IO::System()->LoopTCPClient();
-				#endif
 		  }
 		  else
 		  {
@@ -145,10 +137,8 @@ namespace ESP_Managers
 			yield();
 		  Network::webserver.handleClient(); //handle client communications
 			yield();
-			#ifndef TEMP_TESTING
 			IO::System()->LoopUDP();
 			yield();
-			#endif
 
 			//Testing time
 			//timeval tv;
@@ -166,11 +156,9 @@ namespace ESP_Managers
 			timeval tv;
 			gettimeofday(&tv,nullptr);
 
-			#ifndef TEMP_TESTING
 			IO::ESP_Internals::TimeUpdated(tv);
 			DEBUG_print("Time has been set: ");
 			DEBUG_println(IO::ESP_Internals::CurrentTimeAsString());
-			#endif
 
 			timestamp_updated=true;
 		}
@@ -305,9 +293,7 @@ namespace ESP_Managers
 			webserver.on(creds_path,showcredentialpage);
 			webserver.on("/" + change_creds,handlecredentialchange);
 
-			#ifndef TEMP_TESTING
 			webserver.on(IO::IOpanel_path,wifiserver_handle_showIOpanel);
-			#endif
 
 		  //Add OTA portion of webserver
 			ESP_Managers::FileSystem::Credentials creds = ESP_Managers::FileSystem::read_credentials();
@@ -418,9 +404,7 @@ namespace ESP_Managers
 
 				page += HTML_Builder::breakline;
 
-				#ifndef TEMP_TESTING
 				page += HTML_Builder::create_hyperlink((String)IO::IOpanel_path, "IO Panel");
-				#endif
 
 				page +=
 				R"(
@@ -613,9 +597,7 @@ namespace ESP_Managers
 					return;
 				}
 
-				#ifndef TEMP_TESTING
 				IO::System()->ShowReportPage();
-				#endif
 			}
 
 			void serialprintallargs()

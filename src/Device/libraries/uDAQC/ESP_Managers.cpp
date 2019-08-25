@@ -10,10 +10,8 @@ namespace ESP_Managers {
 		Serial.println("Initializing Managers for system " + device_name);
 		FileSystem::Initialize(); //do this before configuring
 
-		#ifndef TEMP_TESTING
 		IO::System()->Rename(device_name); //Change IO_System name first
 		IO::System()->InitializeSaveables(); //Once IO_System name is correct, then initialize saveables (saveables file system is dependent on IO_System name)
-		#endif
 
 		Network::Initialize(bundle);
 	}

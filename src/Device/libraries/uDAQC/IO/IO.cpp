@@ -1,25 +1,16 @@
 #include "IO.h"
 
-//#define TEMP_TESTING
-
 namespace ESP_Managers
 {
 namespace IO
 {
   const char* IOpanel_path = "/IOPanel";
 
-  #ifndef TEMP_TESTING
   IO_System primary_system;
   IO_System* System()
   {
     return & primary_system;
   }
-  #else
-  IO_System* System()
-  {
-    return nullptr;
-  }
-  #endif
 
   namespace Constants
   {

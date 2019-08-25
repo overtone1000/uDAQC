@@ -8,8 +8,8 @@
 #define DIR R"(/d/)"
 
 /*
-#define DEBUG_TRM
-#ifdef DEBUG_TRM
+#define DEBUG_OUTPUT
+#ifdef DEBUG_OUTPUT
  #define DEBUG_println(x)  DEBUG_println(x)
  #define DEBUG_print(x)  DEBUG_print(x)
 #else

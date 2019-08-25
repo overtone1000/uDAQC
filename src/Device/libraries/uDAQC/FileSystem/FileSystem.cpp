@@ -246,7 +246,7 @@ namespace ESP_Managers
 
 			void file_to_serial()
 			{
-				#ifdef DEBUG_TRM
+				#ifdef DEBUG_OUTPUT
 
 				  File f;
 				  f=SPIFFS.open(file_networks,"r");
@@ -266,7 +266,7 @@ namespace ESP_Managers
 
 			void checkflashconfig()
 			 {
-				#ifdef DEBUG_TRM
+				#ifdef DEBUG_OUTPUT
 
 					uint32_t realSize = ESP.getFlashChipRealSize();
 					uint32_t ideSize = ESP.getFlashChipSize();
