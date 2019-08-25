@@ -41,26 +41,21 @@ else
 	fi
 fi
 
+echo "Modifying service file for this system and file location."
 current_user_line="$(grep "User=" "uDAQC_Center.service")"
 new_user_line="User=$(whoami)"
 
-echo $new_user_line
-
 current_exec_line="$(grep "ExecStart=" "uDAQC_Center.service")"
-echo $current_exec_line
 
 exec_path="$(readlink -f uDAQC_Center/jar/uDAQC_Center.jar)"
-echo $exec_path
 
 escaped_exec_path='"'$exec_path'"'
 #escaped_exec_path="$(systemd-escape --path "$exec_path")"
 #escaped_exec_path=${escaped_exec_path//'\'/'\\'}
 #escaped_exec_path=${escaped_exec_path//' '/'\x20'}
 escaped_exec_path=${escaped_exec_path//'"'/'\\\x22'}
-echo $escaped_exec_path
 
 new_exec_line="ExecStart=/bin/bash -c \\\"java -jar "$escaped_exec_path"\\\""
-echo $new_exec_line
 
 echo "Changing to current user."
 sed -i 's@'"$current_user_line"'@'"$new_user_line"'@g' uDAQC_Center.service
