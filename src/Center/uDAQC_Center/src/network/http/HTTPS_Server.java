@@ -257,6 +257,8 @@ public class HTTPS_Server
     		{
     			int time = 5000;
     			System.out.println("Web server couldn't start. Exception: " + e.getMessage() + ". Restarting in " + time + " ms.");
+    			e.printStackTrace();
+    			
     			try
 				{
 					Thread.sleep(time);

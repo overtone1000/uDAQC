@@ -12,8 +12,8 @@ function init()
 function testWebSocket()
 {
   let ws_header = "wss://";
-  let ws_loc = ":49154/socket/";
-  let websocket_url = ws_header + window.location.hostname + ws_loc;
+  let ws_loc = "/socket/";
+  let websocket_url = ws_header + window.location.host + ws_loc;
   console.log("Websocket address " + String(websocket_url));
 
   websocket = new WebSocket(websocket_url);

@@ -13,7 +13,7 @@
 #      };
 #
 #      ....
-#      WiFiServerSecure server(443);
+#      WiFiServerSecure server(49154);
 #      server.setServerKeyAndCert_P(rsakey, sizeof(rsakey), x509, sizeof(x509));
 #      ....
 

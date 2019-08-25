@@ -18,14 +18,14 @@ wget https://github.com/overtone1000/uDAQC/raw/v0.1.0/src/Center/uDAQC_Center/de
 
 If you'd like the deployment zip from the master branch, just put the branch name in place of the release version name in the URL:
 ```
-wget https://github.com/overtone1000/uDAQC/raw/master/src/Center/uDAQC_Center/deploy/deploy.zip`
+wget https://github.com/overtone1000/uDAQC/raw/master/src/Center/uDAQC_Center/deploy/deploy.zip
 ```
 
-Unzip the contents of the deployment zip, remove the zip, and run the installation bash script.
+Unzip the contents of the deployment zip, remove the zip, and run the configuration script.
 ```
 unzip deploy.zip
 rm deploy.zip
-bash install.bash
+bash configure.bash
 ```
 
 The bash script performs the following operations:
@@ -42,3 +42,11 @@ To start or stop the service:
 systemctl start uDAQC_Center.service
 systemctl stop uDAQC_Center.service
 ```
+
+To log into the web UI for the first time, open a browser and access the following URL, replacing your devices IP:
+```
+https://DEVICEIP:49154/
+```
+
+The Center creates a key pair for TLS on its first execution. Your browser will warn that a self-signed certificate is being presented. Accept that certificate to continue.
+The web UI credentials initialize with the login "admin" and the password "admin" and should be changed immediately.
