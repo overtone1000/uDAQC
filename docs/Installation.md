@@ -43,10 +43,12 @@ systemctl start uDAQC_Center.service
 systemctl stop uDAQC_Center.service
 ```
 
-To log into the web UI for the first time, open a browser and access the following URL, replacing your devices IP:
+To log into the web UI for the first time on your LAN, open a browser and access the following URL, replacing your devices IP:
 ```
 https://DEVICEIP:49154/
 ```
 
 The Center creates a key pair for TLS on its first execution. Your browser will warn that a self-signed certificate is being presented. Accept that certificate to continue.
 The web UI credentials initialize with the login "admin" and the password "admin" and should be changed immediately.
+
+To log into the web UI from the web, you'll need to configure your router to forward WAN traffic to your center.
