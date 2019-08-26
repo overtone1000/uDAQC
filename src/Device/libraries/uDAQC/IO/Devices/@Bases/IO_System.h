@@ -23,43 +23,52 @@ namespace ESP_Managers{ namespace IO
   */
   {
   public:
-    IO_System();
+    IO_System(String name);
     ~IO_System();
 
-    std::list<CommandCodec::TCP_Command_Client> tcp_clients;
+    static std::list<CommandCodec::TCP_Command_Client> tcp_clients;
 
     static int add_saveable(IO_Saveable* new_member);
 
-    void InitializeSaveables();//This is to be run after all members and SPIFFS have been added. It creates the binary array where IO data is stored. It also reads any saveable devices from memory to inintialize their values.
+    static void InitializeSaveables();//This is to be run after all members and SPIFFS have been added. It creates the binary array where IO data is stored. It also reads any saveable devices from memory to inintialize their values.
 
-    void InitializeTCPClient(); //This must be called once a network connection is established to start the tcp_server
-    void LoopTCPClient(); //This must be called in a loop to handle tcp connection
+    static void InitializeTCPClient(); //This must be called once a network connection is established to start the tcp_server
+    static void LoopTCPClient(); //This must be called in a loop to handle tcp connection
+
     void SendDataReportTCP();
 
     void ShowReportPage();//This will display an HTML report about the data.
     void DirectToReportPage();
 
-    void InitializeUDP();
-  	void LoopUDP();
+    static void InitializeUDP();
+  	static void LoopUDP();
     static IO_Saveable* saveable_member(int index){return saveable_members[index];}
 
     void SetTimeToNow();
 
+    static IO_System* Current();
+    static void SetCurrent(IO_System* new_current);
+    static std::vector<IO_System*> Systems();
+
   private:
-    WiFiUDP udp;
+    static WiFiUDP udp;
+    static Repeater udp_timer;
+
     //uint8_t* data=nullptr;
+    static std::vector<IO_System*> systems;
+    static IO_System* current_system;
+    
     static std::vector<IO_Saveable*> saveable_members;
 
-    void add_center(IPAddress host, int center_port);
+    static void add_center(IPAddress host, int center_port);
 
     IO_Timestamp ts; //This is used to send the timestamp with the data. It's the first member of the group.
     //void Resize();
 
-    Repeater udp_timer;
     //Repeater debug_timer;
 
-    void announceUDP();
-    void handleTimeSync(IPAddress center_address, uint32_t center_port, int64_t current_center_time);
+    static void announceUDP();
+    static void handleTimeSync(IPAddress center_address, uint32_t center_port, int64_t current_center_time);
   };
 }};
 

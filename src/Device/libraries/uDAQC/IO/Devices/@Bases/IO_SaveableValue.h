@@ -14,7 +14,7 @@ namespace ESP_Managers{ namespace IO
   public:
     IO_Saveable()
     {
-      this->saveable_index=ESP_Managers::IO::IO_System::add_saveable(this); //assigned on instantiation, guaranteed to be unique
+      this->saveable_index=ESP_Managers::IO::IO_System::Current()->add_saveable(this); //assigned on instantiation, guaranteed to be unique
     }
     ~IO_Saveable()
     {}
@@ -199,8 +199,7 @@ namespace ESP_Managers{ namespace IO
     }
     float new_value = ESP_Managers::Network::webserver.arg(input_name()).toFloat();
     Set(new_value);
-    //ESP_Managers::IO::System()->ShowReportPage();
-    ESP_Managers::IO::System()->DirectToReportPage();
+    ESP_Managers::IO::IO_System::Current()->DirectToReportPage();
   }
 
   template<>
@@ -212,8 +211,7 @@ namespace ESP_Managers{ namespace IO
     }
     float new_value = ESP_Managers::Network::webserver.arg(input_name()).toInt();
     Set(new_value);
-    //ESP_Managers::IO::System()->ShowReportPage();
-    ESP_Managers::IO::System()->DirectToReportPage();
+    ESP_Managers::IO::IO_System::Current()->DirectToReportPage();
   }
 
   template<typename T>
@@ -226,7 +224,7 @@ namespace ESP_Managers{ namespace IO
     T new_value = (T)ESP_Managers::Network::webserver.arg(input_name());
 	  Set(new_value);
 
-    ESP_Managers::IO::System()->DirectToReportPage();
+    ESP_Managers::IO::IO_System::Current()->DirectToReportPage();
 	}
 
   template<typename T>

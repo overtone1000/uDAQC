@@ -5,13 +5,11 @@
 #include "FileSystem/FileSystem.cpp"
 
 namespace ESP_Managers {
-	void Initialize(String device_name, Network::SecurityBundle bundle)
+	void Initialize(Network::SecurityBundle bundle)
 	{
-		Serial.println("Initializing Managers for system " + device_name);
 		FileSystem::Initialize(); //do this before configuring
 
-		IO::System()->Rename(device_name); //Change IO_System name first
-		IO::System()->InitializeSaveables(); //Once IO_System name is correct, then initialize saveables (saveables file system is dependent on IO_System name)
+		IO::IO_System::InitializeSaveables(); //Once IO_System name is correct, then initialize saveables (saveables file system is dependent on IO_System name)
 
 		Network::Initialize(bundle);
 	}

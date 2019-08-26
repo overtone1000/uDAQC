@@ -6,12 +6,6 @@ namespace IO
 {
   const char* IOpanel_path = "/IOPanel";
 
-  IO_System primary_system;
-  IO_System* System()
-  {
-    return & primary_system;
-  }
-
   namespace Constants
   {
     //const uint32_t tcp_main_port = 49152;

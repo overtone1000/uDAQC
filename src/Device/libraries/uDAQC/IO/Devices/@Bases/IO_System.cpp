@@ -5,12 +5,17 @@ namespace ESP_Managers{ namespace IO
   //WiFiServer IO_System::tcp_server(ESP_Managers::IO::Constants::tcp_main_port);
   std::vector<IO_Saveable*> IO_System::saveable_members;
 
-  IO_System::IO_System():
-  IO_Group("Unnamed",nullptr),
-  ts("Timestamp",this),
-  udp_timer(2*60*1000)
-  //debug_timer(1000)
+  WiFiUDP IO_System::udp;
+  Repeater IO_System::udp_timer(2*60*1000);
+  std::vector<IO_System*> IO_System::systems;
+  IO_System* IO_System::current_system;
+  std::list<CommandCodec::TCP_Command_Client> IO_System::tcp_clients;
+
+  IO_System::IO_System(String name):
+  IO_Group(name,nullptr),
+  ts("Timestamp",this)
   {
+    systems.push_back(this);
   }
 
   IO_System::~IO_System()
@@ -170,14 +175,23 @@ namespace ESP_Managers{ namespace IO
               if(correct_hash.equals(auth_str))
               {
                 client->Authenticate();
-                CommandCodec::TCP_Command_Header header;
-                header.message_length = DescriptionSize();
-                header.command_id = NetworkCommands::group_description;
-                unsigned int header_size = client->send_command_header(header);
-                DEBUG_println("Actual header size sent " + (String)header_size);
-                unsigned int description_length_sent=SendDescription(client);
-                DEBUG_println("Sending description of size " + (String)header.message_length);
-                DEBUG_println("Actual description  size " + (String)description_length_sent);
+
+                int16_t size = (int16_t)systems.size();
+                for(int16_t n=0;n<size;n++)
+                {
+                  CommandCodec::TCP_Command_Header header;
+                  header.message_length = systems[n]->DescriptionSize() + sizeof(n)*2;
+                  header.command_id = NetworkCommands::group_description;
+
+                  unsigned int header_size = client->send_command_header(header);
+                  DEBUG_println("Actual header size sent " + (String)header_size);
+
+                  client->write((uint8_t*)&size,sizeof(n)); //Send the index of this System
+                  client->write((uint8_t*)&n,sizeof(size)); //Send the number of Systems
+                  unsigned int description_length_sent=systems[n]->SendDescription(client);
+                  DEBUG_println("Sending description of size " + (String)header.message_length);
+                  DEBUG_println("Actual description  size " + (String)description_length_sent);
+                }
               }
               else
               {
@@ -203,6 +217,21 @@ namespace ESP_Managers{ namespace IO
   void IO_System::SetTimeToNow()
   {
       ts.SetTimeToNow();
+  }
+
+  IO_System* IO_System::Current()
+  {
+    return IO_System::current_system;
+  }
+
+  void IO_System::SetCurrent(IO_System* new_current)
+  {
+    current_system=new_current;
+  }
+
+  std::vector<IO_System*> IO_System::Systems()
+  {
+    return systems;
   }
 
   void IO_System::SendDataReportTCP()
@@ -265,7 +294,7 @@ namespace ESP_Managers{ namespace IO
 
     page +="     " + (String)(((float)(ESP.getFreeHeap()))) + " bytes used by the heap" + HTML_Builder::breakline;
 
-    page += String(members.size()) + R"( devices.)" + HTML_Builder::breakline;
+    page += String(members.size()) + R"( reporters.)" + HTML_Builder::breakline;
     if(ESP_Managers::IO::IO_Node::errcnt>0)
     {
       page += String(ESP_Managers::IO::IO_Node::errcnt) + R"( unsuccessful device addition attempts.)" + HTML_Builder::breakline;

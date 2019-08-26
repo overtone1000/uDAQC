@@ -66,7 +66,7 @@ namespace ESP_Managers
 		String network_to_html(int index, String SSID);
 		void wifiserver_handle_newnetwork();
 		void wifiserver_handle_managenetwork();
-		void wifiserver_handle_showIOpanel();
+		void wifiserver_handle_showIOpanel(IO::IO_System* system);
 		void serialprintallargs();
 
  		ESP8266WebServer* get_webserver(); //Don't do this. Doesn't work. Ruins serial output.

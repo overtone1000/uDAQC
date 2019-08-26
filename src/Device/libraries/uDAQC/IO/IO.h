@@ -58,8 +58,6 @@ namespace ESP_Managers
   namespace IO
 {
   extern const char* IOpanel_path;
-
-  IO_System* System();
 }};
 
 #include "Devices/@Bases/IO_SaveableValue.h"

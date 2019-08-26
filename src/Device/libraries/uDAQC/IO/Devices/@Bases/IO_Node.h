@@ -35,7 +35,6 @@ namespace ESP_Managers{ namespace IO
   public:
     IO_Node(String name, IO_Group* collection);
     virtual ~IO_Node(){}
-    void Rename(String name);
 
     //For the web interface
     virtual String Report(){return "Undefined";}

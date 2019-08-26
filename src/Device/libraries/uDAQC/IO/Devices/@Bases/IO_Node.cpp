@@ -38,11 +38,6 @@ namespace ESP_Managers{ namespace IO
     }
   }
 
-  void IO_Node::Rename(String name)
-  {
-    device_name=name;
-  }
-
   int32_t IO_Node::DescriptionSize()
   {
     PseudoWiFiClient pclient;

@@ -1,9 +1,10 @@
 #include <ESP_Managers.h>
 #include <cmath>
 
-ESP_Managers::IO::IO_SaveableValue<float> test_float("Test float1", "barfoos", ESP_Managers::IO::System());
-ESP_Managers::IO::IO_Value<float> test_input_temp("Test input0","degC",ESP_Managers::IO::System());
-ESP_Managers::IO::PID test_PID("Test PID1", "degC", "%", ESP_Managers::IO::System());
+ESP_Managers::IO::IO_System main_system("uDAQC Template Sketch");
+ESP_Managers::IO::IO_SaveableValue<float> test_float("Test float1", "barfoos", &main_system);
+ESP_Managers::IO::IO_Value<float> test_input_temp("Test input0","degC", &main_system);
+ESP_Managers::IO::PID test_PID("Test PID1", "degC", "%", &main_system);
 
 const int LED_PIN = 5; // Thing's onboard, green LED
 
@@ -24,7 +25,7 @@ void setup()
   pinMode(LED_PIN, OUTPUT);
 
   DEBUG_println("Initializing wifi manager.");
-  ESP_Managers::Initialize("TRM ESP8266 Template", bundle);
+  ESP_Managers::Initialize(bundle);
 
   DEBUG_println("Main loop complete.");
 }
@@ -37,8 +38,8 @@ void loop()
   {
     float temp = 20.0 + 10.0*sin(millis()/10000.0/20.0*PI);
     test_input_temp.Set(temp);
-    ESP_Managers::IO::System()->SetTimeToNow(); //Set the time stamp for when data was acquired; this can be important because the loops for WiFi can be time consuming
-    ESP_Managers::IO::System()->SendDataReportTCP();
+    main_system.SetTimeToNow(); //Set the time stamp for when data was acquired; this can be important because the loops for WiFi can be time consuming
+    main_system.SendDataReportTCP();
   }
 
   ESP_Managers::Network::Loop();

@@ -108,12 +108,12 @@ namespace ESP_Managers
 				 disconnected=WiFi.softAPdisconnect(true);
 				 DEBUG_println("Disabling access point. Function returned " + (String)disconnected);
 
-				 IO::System()->InitializeTCPClient();
-				 IO::System()->InitializeUDP();
+				 IO::IO_System::InitializeTCPClient();
+				 IO::IO_System::InitializeUDP();
 				}
 
 				//Perform IO_System loop
-				IO::System()->LoopTCPClient();
+				IO::IO_System::LoopTCPClient();
 		  }
 		  else
 		  {
@@ -137,7 +137,7 @@ namespace ESP_Managers
 			yield();
 		  Network::webserver.handleClient(); //handle client communications
 			yield();
-			IO::System()->LoopUDP();
+			IO::IO_System::LoopUDP();
 			yield();
 
 			//Testing time
@@ -293,7 +293,11 @@ namespace ESP_Managers
 			webserver.on(creds_path,showcredentialpage);
 			webserver.on("/" + change_creds,handlecredentialchange);
 
-			webserver.on(IO::IOpanel_path,wifiserver_handle_showIOpanel);
+			std::vector<IO::IO_System*> systems = IO::IO_System::Systems();
+			for(auto it=systems.begin();it!=systems.end();it++)
+			{
+					webserver.on(IO::IOpanel_path,std::bind(&wifiserver_handle_showIOpanel,*it));
+			}
 
 		  //Add OTA portion of webserver
 			ESP_Managers::FileSystem::Credentials creds = ESP_Managers::FileSystem::read_credentials();
@@ -590,14 +594,14 @@ namespace ESP_Managers
 			  redirect();
 			}
 
-			void wifiserver_handle_showIOpanel()
+			void wifiserver_handle_showIOpanel(IO::IO_System* system)
 			{
 				if(!session_authenticated())
 				{
 					return;
 				}
-
-				IO::System()->ShowReportPage();
+				IO::IO_System::SetCurrent(system);
+				system->ShowReportPage();
 			}
 
 			void serialprintallargs()
