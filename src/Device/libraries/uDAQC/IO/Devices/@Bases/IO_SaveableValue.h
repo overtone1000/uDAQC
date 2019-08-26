@@ -7,17 +7,6 @@
 
 #define DIR R"(/d/)"
 
-/*
-#define DEBUG_OUTPUT
-#ifdef DEBUG_OUTPUT
- #define DEBUG_println(x)  DEBUG_println(x)
- #define DEBUG_print(x)  DEBUG_print(x)
-#else
- #define DEBUG_println(x)
- #define DEBUG_print(x)
-#endif
-*/
-
 namespace ESP_Managers{ namespace IO
 {
   class IO_Saveable

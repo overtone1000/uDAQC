@@ -1,7 +1,7 @@
 #ifndef DebugOutput_h
 #define DebugOutput_h
 
-#ifdef DEBUG_OUTPUT
+#ifdef DEBUG_UDAQC
  #warning uDAQC Library Debugging is enabled
  #define DEBUG_println(x)  Serial.println(x)
  #define DEBUG_printf(...) Serial.printf(__VA_ARGS__)

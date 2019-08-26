@@ -1,5 +1,3 @@
-#define DEBUG_OUTPUT
-
 #include <ESP_Managers.h>
 #include <cmath>
 
@@ -15,7 +13,7 @@ void setup()
 {
   Serial.begin(74880); //This is the default C++ what happens if you delete a member of an arrayhttps://docs.google.com/dCocument/d/1DzxBngHUOFZhpleMMP3qco2PPNh6JigrA3S00HgfX0Q/editefault boot output, so errors can be seen
 
-  #ifdef DEBUG_OUTPUT
+  #ifdef DEBUG_UDAQC
     delay(5000); //Allow serial monitor time to connect...
   #endif
 
