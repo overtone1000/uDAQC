@@ -68,7 +68,7 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 		passthrough_server = new Secondary_Server(Threadname, this);
 
 		// super(Threadname, IO_Constants.Constants.tcp_id_port);
-		IO_System_Logged.LoadSavedSystems(path,this);
+		DirectDevice.LoadSavedDevices(path,this);
 		
 		handler.ClientListUpdate();
 
@@ -135,10 +135,10 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 			}
 			case Command_IDs.group_description:
 			{
-				//The only time a group description command ID is received in this setting is when an entire IO_System is being sent.
-				//Initialize as an IO_System, not an IO_Group. IO_Groups within IO_Groups are all initialized within the function call to construct an IO_System
+				//The only time a group description command ID is received in this setting is when an entire IO_Device description is being sent en bloc.
+				//Initialize as a whole IO_Device, not an IO_Group or IO_System. IO_Groups within IO_Groups are all initialized within the function call to construct an IO_System
 				
-				DirectDevice new_device = new DirectDevice(path, data, this, (NioSession)session);
+				DirectDevice new_device = DirectDevice.getDirectDevice(path, data, this, (NioSession)session);
 				devices.put(session.getId(), new_device);
 				udp_ts.addSynchronizer(new_device);
 				if (handler != null)
@@ -146,7 +146,7 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 					handler.ClientListUpdate();
 				}
 				
-				log.info("Group description message for " + new_device.System().Name() + " received.");
+				log.info("Group description message for " + new_device.Name() + " received.");
 			}
 			break;
 		  case Command_IDs.emptynode_description:
@@ -173,15 +173,9 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 			}
 			else
 			{
-				IO_System_Logged system = device.System();
-				if(system != null)
-				{				
-					handler.ReceivingDataUpdate();
-					system.ReceiveData(data);
-					handler.ReceivedDataUpdate();
-					
-					log.info("Received data from " + system.Name());
-				}
+				handler.ReceivingDataUpdate();
+				device.ReceiveData(data);
+				handler.ReceivedDataUpdate();
 			}
 		  }
 		  break;
@@ -208,7 +202,7 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 		DirectDevice dev = devices.get(session.getId());
 		if(dev!=null)
 		{
-			dev.System().ClientDisconnected();
+			dev.ClientDisconnected();
 		}
 		devices.remove(session.getId());
 	}
@@ -241,18 +235,18 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 		log.severe(ExceptionUtils.getStackTrace(cause));
 	}
 	
-	public void Passthrough_to_Webserver(IO_System_Logged system, Command c)
+	public void Passthrough_to_Webserver(DirectDevice device, Command c)
 	{
-		PT_Command ptc = new PT_Command(system.getSystemID(),c);
+		PT_Command ptc = new PT_Command(device.DeviceIndex(),c);
 		if(webserver!=null)
 		{
 			webserver.Broadcast(ptc);
 		}
 	}
 	
-	public void Passthrough_to_Secondaries(IO_System_Logged system, Command c)
+	public void Passthrough_to_Secondaries(DirectDevice device, Command c)
 	{
-		PT_Command ptc = new PT_Command(system.getSystemID(),c);
+		PT_Command ptc = new PT_Command(device.DeviceIndex(),c);
 		if(passthrough_server!=null)
 		{
 			passthrough_server.broadcast(ptc);
@@ -264,29 +258,29 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 		DirectDevice dd = devices.get(session.getId());
 		if(dd!=null)
 		{
-			IO_System_Logged system = dd.System();
-			Passthrough_to_Secondaries(system,c);
+			Passthrough_to_Secondaries(dd,c);
 		}
 	}
 	
 	public void Passthrough_from_Secondary(PT_Command ptc)
 	{
 		Command c = ptc.containedCommand();
-		IO_System_Logged.getSystem(ptc.source_id).Device().Send_Command(c);
+		DirectDevice.getDirectDevice(ptc.device_index).Send_Command(c);
 	}
 
 	@Override
-	public void HistoryUpdated(IO_System_Logged system, Regime r, Long first_timestamp, ByteBuffer bb)
+	public void HistoryUpdated(DirectDevice device, short system_index, Regime r, Long first_timestamp, ByteBuffer bb)
 	{
 		
 		ByteBuffer message = ByteBuffer.allocate(Integer.BYTES + Long.BYTES + bb.capacity());
 		message.order(ByteOrder.LITTLE_ENDIAN);
+		message.putShort(system_index);
 		message.putInt(r.ordinal());
 		message.putLong(first_timestamp);
 		message.put(bb.array());
 		
 		Command c=new Command(IO_Constants.Command_IDs.history_addendum,message.array());
-		Passthrough_to_Webserver(system,c);
+		Passthrough_to_Webserver(device,c);
 	}
 	
 	private static final String master_device_cred_list = "security/device_credential_list.txt";

@@ -15,6 +15,7 @@ namespace ESP_Managers{ namespace IO
   IO_Group(name,nullptr),
   ts("Timestamp",this)
   {
+    this->system_index = systems.size();
     systems.push_back(this);
   }
 
@@ -176,22 +177,22 @@ namespace ESP_Managers{ namespace IO
               {
                 client->Authenticate();
 
-                int16_t size = (int16_t)systems.size();
-                for(int16_t n=0;n<size;n++)
+                CommandCodec::TCP_Command_Header header;
+                header.command_id = NetworkCommands::group_description;
+                header.message_length = 0;
+                for(unsigned int n=0;n<systems.size();n++)
                 {
-                  CommandCodec::TCP_Command_Header header;
-                  header.message_length = systems[n]->DescriptionSize() + sizeof(n)*2;
-                  header.command_id = NetworkCommands::group_description;
+                  header.message_length += systems[n]->DescriptionSize();
+                }
 
-                  unsigned int header_size = client->send_command_header(header);
-                  DEBUG_println("Actual header size sent " + (String)header_size);
+                unsigned int header_size = client->send_command_header(header);
+                DEBUG_println("Actual header size sent " + (String)header_size);
 
-                  client->write((uint8_t*)&size,sizeof(n)); //Send the index of this System
-                  client->write((uint8_t*)&n,sizeof(size)); //Send the number of Systems
+                for(unsigned int n=0;n<systems.size();n++)
+                {
                   unsigned int description_length_sent=systems[n]->SendDescription(client);
                   DEBUG_println("Sending description of size " + (String)header.message_length);
-                  DEBUG_println("Actual description  size " + (String)description_length_sent);
-                }
+                  DEBUG_println("Actual description  size " + (String)description_length_sent);}
               }
               else
               {
@@ -232,6 +233,15 @@ namespace ESP_Managers{ namespace IO
   std::vector<IO_System*> IO_System::Systems()
   {
     return systems;
+  }
+
+  unsigned int IO_System::SendDescription(WiFiClient* client)
+  {
+
+    unsigned int retval=0;
+    retval+=client->write((uint8_t*)&system_index,sizeof(system_index));
+    retval+=IO_Group::SendDescription(client);
+    return retval;
   }
 
   void IO_System::SendDataReportTCP()

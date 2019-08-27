@@ -10,6 +10,7 @@ import network.tcp.client.TCP_Client;
 import udaqc.io.IO_Constants.Command_IDs;
 import udaqc.io.log.IO_System_Logged;
 import udaqc.io.log.IO_System_Logged.Regime;
+import udaqc.network.center.DirectDevice;
 import udaqc.network.center.command.Command;
 import udaqc.network.interfaces.CenterHandler;
 import udaqc.network.interfaces.HistoryUpdateHandler;
@@ -42,7 +43,7 @@ public class Secondary_Center extends TCP_Client implements HistoryUpdateHandler
 			System.out.print("Passthrough command: ");
 			System.out.print("ID " + ptc.Header().command_id);
 			System.out.print(", length " + ptc.Header().message_length);
-			System.out.print(", source " + ptc.source_id);
+			System.out.print(", source " + ptc.device_index);
 			System.out.println(", messsage = " + ptc.getmessage().array());
 			
 			handlePassthroughCommand(ptc);
@@ -60,7 +61,7 @@ public class Secondary_Center extends TCP_Client implements HistoryUpdateHandler
 	{
 		if(c.Header().command_id==Command_IDs.group_description)
 		{
-			IO_System_Logged.processSystemDescription(path, c.getmessage(), this);
+			DirectDevice.getDirectDevice(path, c.getmessage(), this);
 			if (parent != null)
 			{
 				parent.ClientListUpdate();
@@ -68,27 +69,25 @@ public class Secondary_Center extends TCP_Client implements HistoryUpdateHandler
 			return;
 		}
 		
-		IO_System_Logged system = IO_System_Logged.getSystem(c.source_id);
-		if(system==null)
+		DirectDevice device = DirectDevice.getDirectDevice(c.device_index);
+		if(device==null)
 		{
 			return;
 		}
-		
-		system.setDevice(new Secondary_Device(this,system));
 		
 		switch(c.Header().command_id)
 		{
 		case Command_IDs.data:
 		{
 			parent.ReceivingDataUpdate();
-			system.ReceiveData(c.getmessage());
+			device.ReceiveData(c.getmessage());
 			parent.ReceivedDataUpdate();
 			break;
 		}
 		case Command_IDs.history:
 		{
 			parent.ReceivingDataUpdate();
-			system.ReceiveHistory(c.getmessage());
+			device.ReceiveHistory(c.getmessage());
 			parent.ReceivedDataUpdate();
 			break;
 		}
@@ -127,7 +126,7 @@ public class Secondary_Center extends TCP_Client implements HistoryUpdateHandler
 	}
 
 	@Override
-	public void HistoryUpdated(IO_System_Logged system, Regime r, Long first_timestamp, ByteBuffer bb)
+	public void HistoryUpdated(DirectDevice device, short system_index, Regime r, Long first_timestamp, ByteBuffer bb)
 	{
 		//Does nothing...
 	}

@@ -20,12 +20,12 @@ public class PT_Command extends Command
 	
 	public static final int extra_length = Short.BYTES*2; //just one short for source_id and another for the contained command id
 			
-	public short source_id=-1; //If <0, error!
+	public short device_index=-1; //If <0, error!
 	
-	public PT_Command(short source, Command contained_command)
+	public PT_Command(short device_index, Command contained_command)
 	{
 		super(contained_command.Header(),contained_command.getmessage().array());
-		source_id=source;
+		this.device_index=device_index;
 	}
 	
 	public Command containedCommand()
@@ -42,7 +42,7 @@ public class PT_Command extends Command
 		//The command id for this header is passthrough, so ignore it.
 		
 		ByteBuffer c = passthrough_command.getmessage();
-		source_id = c.getShort(); //first in the message is the source id
+		device_index = c.getShort(); //first in the message is the source id
 		header.command_id = c.getShort(); //next is the command id
 				
 		//Message length is whatever remains in the buffer
@@ -62,7 +62,7 @@ public class PT_Command extends Command
 		c.putInt(header.message_length+extra_length); //modified length
 		c.putShort(IO_Constants.Command_IDs.passthrough);
 		
-		c.putShort(source_id);
+		c.putShort(device_index);
 		c.putShort(header.command_id);
 		
 		c.put(message);

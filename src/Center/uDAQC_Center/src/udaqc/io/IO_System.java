@@ -10,20 +10,15 @@ import org.apache.mina.core.buffer.IoBuffer;
 import org.joda.time.DateTime;
 
 import udaqc.network.Device;
+import udaqc.network.center.DirectDevice;
 import udaqc.network.center.command.Command;
 
 public class IO_System extends IO_Group
-{	
-	protected byte[] description;
-	protected Device device = null;
+{		
+	protected DirectDevice device = null;
 	
-	public IO_System(ByteBuffer data) {
+	public IO_System(ByteBuffer data, DirectDevice device) {
 		super(data);
-		description=data.array().clone();
-	}
-	
-	public void setDevice(Device device)
-	{
 		this.device=device;
 	}
 	
@@ -49,7 +44,7 @@ public class IO_System extends IO_Group
 	}
 		
 	//Use this function to create an IO_System from file (gets its description)
-	public static IO_System fromFile(Path p)
+	public static IO_System fromFile(Path p, DirectDevice device)
 	{
 		IO_System retval=null;
 		
@@ -67,7 +62,7 @@ public class IO_System extends IO_Group
 			FileInputStream filein = new FileInputStream(p.toString());
 			filein.read(bb.array());
 			filein.close();
-			retval = new IO_System(bb);
+			retval = new IO_System(bb, device);
 		} catch (Exception e)
 		{
 			e.printStackTrace();

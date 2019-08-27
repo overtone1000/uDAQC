@@ -50,14 +50,18 @@ namespace ESP_Managers{ namespace IO
     static void SetCurrent(IO_System* new_current);
     static std::vector<IO_System*> Systems();
 
+    virtual unsigned int SendDescription(WiFiClient* client); //Send the description of the data. This should contain everything the recipient needs to correctly interpret the data
+
   private:
     static WiFiUDP udp;
     static Repeater udp_timer;
 
+    int system_index;
+
     //uint8_t* data=nullptr;
     static std::vector<IO_System*> systems;
     static IO_System* current_system;
-    
+
     static std::vector<IO_Saveable*> saveable_members;
 
     static void add_center(IPAddress host, int center_port);

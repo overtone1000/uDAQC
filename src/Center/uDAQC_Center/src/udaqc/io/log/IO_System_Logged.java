@@ -13,6 +13,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.TreeMap;
+import java.util.Vector;
 import java.util.concurrent.Semaphore;
 import java.util.logging.Logger;
 
@@ -24,6 +25,8 @@ import logging.Point;
 import udaqc.io.IO_System;
 import udaqc.io.IO_Value;
 import udaqc.io.IO_Constants.Command_IDs;
+import udaqc.io.log.IO_System_Logged.Regime;
+import udaqc.network.center.DirectDevice;
 import udaqc.network.center.command.Command;
 import udaqc.network.interfaces.HistoryUpdateHandler;
 import udaqc.network.passthrough.command.PT_Command;
@@ -31,166 +34,11 @@ import udaqc.network.passthrough.endpoints.Endpoint;
 
 
 public class IO_System_Logged extends IO_System
-{
-	private static TreeMap<Short, IO_System_Logged> systems=new TreeMap<Short, IO_System_Logged>();
-	private static Semaphore system_mutex=new Semaphore(1);
-	
+{	
 	//default is 10 Mb for now, no way to change it programmatically without bigger modifications
 	//probably would be better to make it part of the actualy IO_System description so it can be different for different devices
-	private int file_size=1024*1024*10;
-	
-	public static IO_System_Logged getSystem(short id)
-	{
-		return systems.get(id);
-	}
-	
-	private short id=-1;
-	public short getSystemID()
-	{
-		return id;
-	}
-		
-	public static void PassthroughInitialization(Endpoint ep)
-	{
-		for(Short id:systems.keySet())
-		{
-			IO_System_Logged system = systems.get(id);
-			
-			System.out.println("Sending descriptions to passthrough.");
-			Command c = new Command(Command_IDs.group_description,system.description);
-			PT_Command ptc = new PT_Command(id,c);
-			ep.SendCommand(ptc);
-			
-			for(Regime r:Regime.values())
-			{
-				System.out.println("Sending regime " + r.toString() + " to passthrough.");
-				File file = system.regPath(r).toFile();
-				FileInputStream f;
-				try
-				{
-					f = new FileInputStream(file);
-				} catch (FileNotFoundException e)
-				{
-					e.printStackTrace();
-					break;
-				}
-				
-				ByteBuffer message = ByteBuffer.allocate((int) (Integer.BYTES + Long.BYTES + file.length()));
-				message.order(ByteOrder.LITTLE_ENDIAN);
-				message.putInt(r.ordinal());
-				
-				message.putLong(system.logs.get(r).Size());
-				//message.putLong(500L);
-				//message.putLong(-500L);
-				//message.putLong(254305453037L);
-				//message.putLong(-254305453037L);
-				//message.putLong(9007199254740992L); //unsafe for javascript
-				//System.err.println("Message length is still in a non-functional testing mode.");
-								
-				try
-				{
-					f.read(message.array(),message.position(),message.remaining());
-					f.close();
-				} catch (IOException e)
-				{
-					e.printStackTrace();
-					break;
-				}
-				
-				//System.out.println("Message is: ");
-				//for(int n=0;n<message.array().length;n++)
-				//{
-				//	System.out.println(Integer.toBinaryString((char)(message.array()[n])));
-				//}
-				
-				Command hc = new Command(Command_IDs.history,message.array());
-				PT_Command pthc = new PT_Command(id,hc);
-				ep.SendCommand(pthc);
-			}
-		}
-	}
-	
-	public static LinkedList<IO_System_Logged> Systems()
-	{
-		return new LinkedList<IO_System_Logged>(systems.values());
-	}
-	public static void LoadSavedSystems(Path path, HistoryUpdateHandler his_update_handler)
-	{
-		try
-		{
-			Files.createDirectories(path);
-			//need to load history from files
-		} catch (IOException e1)
-		{
-			System.out.println(ExceptionUtils.getStackTrace(e1));
-		}
-
-		try
-		{			
-			for(File system:path.toFile().listFiles())
-			{
-				if(system.isDirectory())
-				{
-					File descfile = new File(system+filesep+descname);
-					if(descfile.exists())
-					{
-						ByteBuffer data = ByteBuffer.wrap(Files.readAllBytes(descfile.toPath()));
-						data.position(0);
-						data.order(ByteOrder.LITTLE_ENDIAN);
-						processSystemDescription(path,data,his_update_handler); //use the getSystem function for thread safety because it uses the mutex and makes sure this isn't a duplicate
-					}
-				}
-			}
-		} catch (Exception e)
-		{
-			System.out.println(ExceptionUtils.getStackTrace(e));
-		}
-	}
-	
-	public static IO_System_Logged processSystemDescription(Path path, ByteBuffer data, HistoryUpdateHandler his_update_handler)
-	{
-		try
-		{
-			system_mutex.acquire();
-		} catch (InterruptedException e)
-		{
-			e.printStackTrace();
-			return null;
-		}
-		IO_System_Logged new_system = new IO_System_Logged(path,data,his_update_handler);
-		if(new_system.system_IsKnown())
-		{
-			for(IO_System_Logged sys:systems.values())
-			{
-				if(new_system.isEqual(sys))
-				{
-					system_mutex.release();
-					return sys;
-				}
-			}
-		}
-
-		new_system.description_toFile();
-		new_system.InitLogs();
-		
-		new_system.id=0;
-		while(systems.keySet().contains(new_system.id))
-		{
-			new_system.id++;
-		}
-		systems.put(new_system.id,new_system);
-		
-		system_mutex.release();
-		
-		return new_system;
-	}
-	
-	private Logger log;
-
-	private Path storage_path;
-	public final static String filesep=System.getProperty("file.separator");
-	public final static String descname ="descripton";
-
+	private int file_size=1024*1024*10;	
+	private short system_index=-1;
 	public enum Regime
 	{
 		Live, Minute, Hour, Day;
@@ -229,26 +77,27 @@ public class IO_System_Logged extends IO_System
 	}
 	
 	private HistoryUpdateHandler his_update_handler;
-	private IO_System_Logged(Path path, ByteBuffer data, HistoryUpdateHandler his_update_handler)
+	private Path storage_path;
+	public IO_System_Logged(Path path, ByteBuffer data, HistoryUpdateHandler his_update_handler, DirectDevice device, short system_index)
 	{
-		super(data);
-				
-		this.storage_path = Paths.get(path.toString() + filesep + this.FullName());
+		super(data, device);
+		this.system_index=system_index;
+		this.storage_path = Paths.get(path.toString() + DirectDevice.filesep + this.FullName());
 		this.his_update_handler = his_update_handler;
 		// need to check whether basis is already stored in storage path and that it's
 		// the same. If it isn't, wipe out the history.
 	}
 	public void HistoryUpdate(Regime r, Long first_timestamp, ByteBuffer bb)
 	{
-		his_update_handler.HistoryUpdated(this, r, first_timestamp, bb);
+		his_update_handler.HistoryUpdated(device, this.system_index, r, first_timestamp, bb);
 	}
 	
 	private Path regPath(Regime reg)
 	{
-		return Paths.get(storage_path.toString() + filesep + reg.toString());
+		return Paths.get(storage_path.toString() + DirectDevice.filesep + reg.toString());
 	}
 	
-	private void InitLogs()
+	public void InitLogs()
 	{
 		for(Regime r:Regime.values())
 		{
@@ -324,55 +173,63 @@ public class IO_System_Logged extends IO_System
 		System.out.println("Finished processing history.");
 	}
 
-	public boolean isEqual(Object o)
-	{
-		return o instanceof IO_System_Logged && //this works
-				java.util.Arrays.equals(description,((IO_System_Logged) o).description) && //this works
-				storage_path.equals(((IO_System_Logged) o).storage_path); //this works
-	}
 	
-	protected boolean system_IsKnown() //returns true if had to be written. If d
-	{
-		try
-		{
-			Files.createDirectories(storage_path);
-			if(Files.exists(description()))
-			{
-				byte[] fileContent = Files.readAllBytes(description());
-				
-				return java.util.Arrays.equals(description,fileContent);
-			}
-			
-		} catch (IOException e1)
-		{
-			log.severe(ExceptionUtils.getStackTrace(e1));
-		}
-		return false;
-	}
-	
-	protected void description_toFile()
-	{
-		try
-		{
-			Files.createDirectories(storage_path);
-			Files.write(description(), description);
-		}
-		catch (IOException e1)
-		{
-			log.severe(ExceptionUtils.getStackTrace(e1));
-		}
-	}
-	
-	protected Path description()
-	{
-		return Paths.get(storage_path + filesep + descname);
-	}
 	
 	public void ClientDisconnected()
 	{
 		for(IO_Log log:logs.values())
 		{
 			log.CloseCurrentEpoch();
+		}
+	}
+	
+	public void PassthroughInitialization(Endpoint ep)
+	{
+		for(Regime r:Regime.values())
+		{
+			System.out.println("Sending regime " + r.toString() + " to passthrough.");
+			File file = regPath(r).toFile();
+			FileInputStream f;
+			try
+			{
+				f = new FileInputStream(file);
+			} catch (FileNotFoundException e)
+			{
+				e.printStackTrace();
+				break;
+			}
+			
+			ByteBuffer message = ByteBuffer.allocate((int) (Integer.BYTES + Long.BYTES + file.length()));
+			message.order(ByteOrder.LITTLE_ENDIAN);
+			message.putInt(r.ordinal());
+			
+			message.putLong(logs.get(r).Size());
+			//message.putLong(500L);
+			//message.putLong(-500L);
+			//message.putLong(254305453037L);
+			//message.putLong(-254305453037L);
+			//message.putLong(9007199254740992L); //unsafe for javascript
+			//System.err.println("Message length is still in a non-functional testing mode.");
+							
+			try
+			{
+				f.read(message.array(),message.position(),message.remaining());
+				f.close();
+			} catch (IOException e)
+			{
+				e.printStackTrace();
+				break;
+			}
+			
+			//System.out.println("Message is: ");
+			//for(int n=0;n<message.array().length;n++)
+			//{
+			//	System.out.println(Integer.toBinaryString((char)(message.array()[n])));
+			//}
+			
+			Command hc = new Command(Command_IDs.history,message.array());
+			PT_Command pthc = new PT_Command(device.DeviceIndex(),hc);
+			ep.SendCommand(pthc);
 		}
 	}
 	}

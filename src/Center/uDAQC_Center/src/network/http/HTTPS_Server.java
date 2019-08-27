@@ -17,6 +17,7 @@ import network.SecurityBundle;
 import udaqc.io.IO_Constants;
 import udaqc.io.log.IO_System_Logged;
 import udaqc.network.center.Center;
+import udaqc.network.center.DirectDevice;
 import udaqc.network.center.command.Command;
 import udaqc.network.passthrough.command.PT_Command;
 import udaqc.network.passthrough.endpoints.WS_Endpoint;
@@ -327,7 +328,7 @@ public class HTTPS_Server
 		
 	public void SessionOpened(Session new_session)
 	{
-		IO_System_Logged.PassthroughInitialization(new WS_Endpoint(new_session));
+		DirectDevice.PassthroughInitialization(new WS_Endpoint(new_session));
 		try
 		{
 			session_mutex.acquire();

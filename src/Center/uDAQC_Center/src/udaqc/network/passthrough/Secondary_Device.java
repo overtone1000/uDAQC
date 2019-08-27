@@ -20,7 +20,7 @@ public class Secondary_Device extends Device
 	@Override
 	public void Send_Command(Command update_command)
 	{
-		PT_Command ptc = new PT_Command(system.getSystemID(),update_command);
+		PT_Command ptc = new PT_Command(this.device_index,update_command);
 		center.Send_Command(ptc);
 	}
 

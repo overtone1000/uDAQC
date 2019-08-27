@@ -13,11 +13,11 @@ uDAQC is based on the conceptual organization of IO Objects into hierarchical sy
 
 -IO_ModifiableValue: This is an IO Object that extends/inherits IO_Value. It adds functionality allowing the IO_Value to be modified remotely and saved on the device.
 -IO_Group: This is an IO Object that extends/inherits IO_Node and extends the class with a list of child IO_Nodes.
--IO_System: This is an IO Object that extends/inherits IO_Group and extends the class with functions that encapsulate network communication.
+-IO_System: This is an IO Object that extends/inherits IO_Group and extends the class with functions that encapsulate network communication. Each IO_Device can contain multiple IO_Systems.
 
 # Communication
 TCP communication occurs between uDAQC Devices and uDAQC Centers. When a device or center begins, it broadcasts a UDP message requesting TCP communication on a given port. The recipient responds by initiating the TCP communication.
-Afterwards, there are three primary communications that occur in uDAQC:
+Afterwards, there are three primary communications that occur in uDAQC. There general nature is described in the list below with further details in the subsequent sections of this document.
 1. On initialization, the device sends a Description for each IO_System, which contains information about the structure and contents of the IO_System.
 2. Afterwards, the device sends Data for each IO_System, which contains a timestamp and the values of the IO_Values contained in its system.
 3. Centers can send messages to Devices directing them to change an IO_ModifiableValue and the value to which it should be changed.
@@ -33,7 +33,7 @@ Commands between a Center and a Device have the following format:
 There are special commands between Centers (usually between the Primary Center and the WebSocket) that are called PassthroughCommands. These allow Centers and Secondary interfaces to communicate about specific IO_Devices. They have the following format:
 1. int_32 containing the length of the message (which is larger than a normal command because of two additional int_16s, which are numbers 3 and 4 below)
 2. int_16 containing the command ID for a PassthroughCommand
-3. int_16 containing the source_id
+3. int_16 containing the IO_Device index (unique for each IO_Device on the Center)
 4. int_16 containing the command ID for the nested command
 5. byte[] containing the message, which does NOT have length equal to the that provided in 1.
 
@@ -67,7 +67,11 @@ Each IO Object has a function that will send its description. The contents of th
 This class description is equal to its parent class IO_Group
 
 # Data Message Structure
-When a data message for an IO_System is sent from a Device to a Center, the message contains an entry for each IO_Node in that system in the order that each IO_Node is found in the description for that IO_System. The size of that entry is equal to the data byte count found in the description for that IO_Node. In practice, the byte count will only be non-zero for IO_Value objects and any classes that inherit from IO_Value, although custom IO_Node objects not derived from IO_Value objects could conceivably be created that might be included in the data message for an IO_System.
+When a data message for an IO_System is sent from a Device to a Center, the message first contains:
+1. The int_16 index of that IO_System
+2. An entry for each IO_Node in that system in the order that each IO_Node is found in the description for that IO_System.  
+
+The size of each entry is equal to the data byte count found in the description for that IO_Node. In practice, the byte count will only be non-zero for IO_Value objects and any classes that inherit from IO_Value, although custom IO_Node objects not derived from IO_Value objects could conceivably be created that might be included in the data message for an IO_System.
 
 # Time
 When a Center connects to a Device, it will perform a time synchronization over UDP before accepting data messages. Any data messages received before this synchronization will be discarded. The result is that the time of the Device boot (the time at which the micros64() function would have been zero) is stored by the Center.
@@ -80,9 +84,10 @@ There is currently a timing discrepancy. The raw tiemstamp is in microseconds si
 
 # History Structure
 This message contains the logged data for a single regime. Its structure is as follows:
-1. int_32 indicating the temporal regime (0 for live, 1 for minute, 2 for hour, 3 for day). This might be improved by instead sending the number of microseconds or milliseconds over which this time series has been averaged or otherwise consolidated.
-2. int_64 indicating the maximum size of the following byte array (NOT necessarily the number provided in this message). Although javascript does not handle 64-bit integers well, this is likely large enough for practical purposes.
-3. byte[] containing the log file
+1. int_16 indicating the IO_System index for this IO_Device
+2. int_32 indicating the temporal regime (0 for live, 1 for minute, 2 for hour, 3 for day). This might be improved by instead sending the number of microseconds or milliseconds over which this time series has been averaged or otherwise consolidated.
+3. int_64 indicating the maximum size of the following byte array (NOT necessarily the number provided in this message). Although javascript does not handle 64-bit integers well, this is likely large enough for practical purposes.
+4. byte[] containing the log file
 
 The log file itself is composed of a series of entries with the following structure:
 1. byte containing flag bits with the following flags:
