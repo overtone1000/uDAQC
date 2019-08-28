@@ -2,6 +2,10 @@
 #define ESP_IO_h
 
 #include <Arduino.h>
+#ifdef ROUND_WORKAROUND
+#undef round
+#endif
+
 #include <vector>
 #include <ESP_Utilities.h>
 #include <ESP8266WebServer.h>

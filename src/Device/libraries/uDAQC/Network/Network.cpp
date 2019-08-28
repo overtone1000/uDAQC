@@ -303,6 +303,7 @@ namespace ESP_Managers
 			ESP_Managers::FileSystem::Credentials creds = ESP_Managers::FileSystem::read_credentials();
 		  httpUpdater.setup(&webserver, update_path, creds.login, creds.password);
 		  webserver.begin();
+			DEBUG_println("Webserver started.");
 		}
 
 		void redirect()

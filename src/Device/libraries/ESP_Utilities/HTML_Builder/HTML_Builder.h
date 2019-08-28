@@ -2,6 +2,9 @@
 #define HTML_Builder_h
 
 #include <Arduino.h>
+#ifdef ROUND_WORKAROUND
+#undef round
+#endif
 
 namespace HTML_Builder
 {

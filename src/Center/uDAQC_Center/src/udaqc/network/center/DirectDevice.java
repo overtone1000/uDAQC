@@ -76,7 +76,7 @@ public class DirectDevice extends Device
 		{
 			retval.description_toFile();
 			retval.device_index=(short) devices.size();
-			devices.set(retval.device_index,retval);
+			devices.add(retval);
 			
 			while(data.hasRemaining())
 			{

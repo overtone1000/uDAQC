@@ -3,9 +3,12 @@
 
 #define TLS
 
-#include <cmath>
-
 #include <Arduino.h>
+#ifdef ROUND_WORKAROUND
+#undef round
+#endif
+
+#include <cmath>
 
 #include <ESP_Utilities.h>
 

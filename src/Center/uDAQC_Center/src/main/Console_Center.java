@@ -42,18 +42,18 @@ public class Console_Center
 	public static void main(String[] args) {
 		
 				
-		String root = "";
+		String program_root = "";
 		try
 		{
 			Path root_path = Paths.get(Console_Center.class.getProtectionDomain().getCodeSource().getLocation().toURI().getPath());
-			root = root_path.getParent().toString(); 
+			program_root = root_path.getParent().toString(); 
 		} catch (URISyntaxException e2)
 		{
 			// TODO Auto-generated catch block
 			e2.printStackTrace();
 		}
 		
-		String props_file = root + "/properties";
+		String props_file = program_root + "/properties";
 		String history_key = "history";
 		
 		
@@ -85,7 +85,7 @@ public class Console_Center
 		FileOutputStream os=null; 
 		if(!props.containsKey(history_key))
 		{
-			props.put(history_key, root + "/history");
+			props.put(history_key, program_root + "/history");
 			try
 			{
 				os = new FileOutputStream(props_file);
@@ -108,12 +108,12 @@ public class Console_Center
 		}
 				
 		String path_str = props.getProperty(history_key);
-		Path path = Paths.get(path_str);
+		Path history_path = Paths.get(path_str);
 		
 		DummyHandler h = new DummyHandler();
 		
 		@SuppressWarnings("unused")
-		Center id_serv = new Center("IO_Center", root, path, h);
+		Center id_serv = new Center("IO_Center", program_root, history_path, h);
 		
 		//String Threadname = "GNDM_Server";
 		//InetSocketAddress[] hosts=new InetSocketAddress[1];

@@ -51,24 +51,26 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 	
 	private HTTPS_Server webserver;
 
-	private Path path;
-	private String root;
+	private Path history_path;
+	private String program_root;
+	private String master_device_cred_list;
 	
 	private UDP_Funnel udp;
 	private UDP_TimeSync udp_ts = new UDP_TimeSync();
 
-	public Center(String Threadname, String root, Path path, CenterHandler handler)
+	public Center(String Threadname, String program_root, Path history_path, CenterHandler handler)
 	{
 		super(Threadname, true, false);
 		
 		this.handler = handler;
-		this.path = path;
-		this.root = root;
+		this.history_path = history_path;
+		this.program_root = program_root;
+		this.master_device_cred_list = program_root + "/security/device_credential_list.txt";
 		
 		passthrough_server = new Secondary_Server(Threadname, this);
 
 		// super(Threadname, IO_Constants.Constants.tcp_id_port);
-		DirectDevice.LoadSavedDevices(path,this);
+		DirectDevice.LoadSavedDevices(history_path,this);
 		
 		handler.ClientListUpdate();
 
@@ -80,7 +82,7 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 
 		this.start();
 		
-		webserver = new HTTPS_Server(this, root, Addresses.webserver_insecure_port, Addresses.webserver_secure_port);
+		webserver = new HTTPS_Server(this, program_root, Addresses.webserver_insecure_port, Addresses.webserver_secure_port);
 	}
 
 	@Override
@@ -138,7 +140,7 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 				//The only time a group description command ID is received in this setting is when an entire IO_Device description is being sent en bloc.
 				//Initialize as a whole IO_Device, not an IO_Group or IO_System. IO_Groups within IO_Groups are all initialized within the function call to construct an IO_System
 				
-				DirectDevice new_device = DirectDevice.getDirectDevice(path, data, this, (NioSession)session);
+				DirectDevice new_device = DirectDevice.getDirectDevice(history_path, data, this, (NioSession)session);
 				devices.put(session.getId(), new_device);
 				udp_ts.addSynchronizer(new_device);
 				if (handler != null)
@@ -283,7 +285,6 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 		Passthrough_to_Webserver(device,c);
 	}
 	
-	private static final String master_device_cred_list = "security/device_credential_list.txt";
 	public boolean changeDeviceCredentials(String new_login, String realm, String pw)
 	{
 		String conglomerate = new_login + ":" + realm + ":" + pw;
