@@ -90,14 +90,15 @@ function handleHistory(ptcom)
 
 function handleHistoryAddendum(ptcom)
 {
+  let system_index = ptcom.message.getInt16();
   let regime = ptcom.message.getInt32();
   let first_timestamp = ptcom.message.getInt64();
 
-  //console.debug("History addendum received for regime " + regime);
-  //console.debug("Oldest = " + first_timestamp);
+  console.debug("History addendum received for system " + system_index + " regime " + regime);
+  console.debug("Oldest = " + first_timestamp);
 
   let device = IO.devices.get(ptcom.source_ID);
-  let entry_size = 1 + 8 + device.system.ioValueCount * 4;
+  let entry_size = 1 + 8 + device.systems[system_index].ioValueCount * 4;
 
   let epochs = device.system.getEpochs(regime);
 

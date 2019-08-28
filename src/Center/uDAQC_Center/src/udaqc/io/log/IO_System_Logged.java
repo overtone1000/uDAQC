@@ -38,7 +38,7 @@ public class IO_System_Logged extends IO_System
 	//default is 10 Mb for now, no way to change it programmatically without bigger modifications
 	//probably would be better to make it part of the actualy IO_System description so it can be different for different devices
 	private int file_size=1024*1024*10;	
-	private short system_index=-1;
+	
 	public enum Regime
 	{
 		Live, Minute, Hour, Day;
@@ -78,10 +78,10 @@ public class IO_System_Logged extends IO_System
 	
 	private HistoryUpdateHandler his_update_handler;
 	private Path storage_path;
-	public IO_System_Logged(Path path, ByteBuffer data, HistoryUpdateHandler his_update_handler, DirectDevice device, short system_index)
+	public IO_System_Logged(Path path, ByteBuffer data, HistoryUpdateHandler his_update_handler, DirectDevice device)
 	{
 		super(data, device);
-		this.system_index=system_index;
+		device.AddSystem(this);
 		this.storage_path = Paths.get(path.toString() + DirectDevice.filesep + this.FullName());
 		this.his_update_handler = his_update_handler;
 		// need to check whether basis is already stored in storage path and that it's
@@ -199,10 +199,10 @@ public class IO_System_Logged extends IO_System
 				break;
 			}
 			
-			ByteBuffer message = ByteBuffer.allocate((int) (Integer.BYTES + Long.BYTES + file.length()));
+			ByteBuffer message = ByteBuffer.allocate((int) (Short.BYTES + Integer.BYTES + Long.BYTES + file.length()));
 			message.order(ByteOrder.LITTLE_ENDIAN);
+			message.putShort(system_index);
 			message.putInt(r.ordinal());
-			
 			message.putLong(logs.get(r).Size());
 			//message.putLong(500L);
 			//message.putLong(-500L);

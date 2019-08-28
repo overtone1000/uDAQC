@@ -68,7 +68,7 @@ public class DirectDevice extends Device
 			for(DirectDevice d:devices) {
 				if(d.isEqual(retval))
 				{
-					retval= d;
+					return d;
 				}
 			}
 		}
@@ -77,17 +77,12 @@ public class DirectDevice extends Device
 			retval.description_toFile();
 			retval.device_index=(short) devices.size();
 			devices.add(retval);
-			
-			while(data.hasRemaining())
-			{
-				IO_System_Logged next_system = new IO_System_Logged(path, data, handler, retval, (short)retval.systems.size());
-				retval.systems.add(next_system);
-				
-				if(!known)
-				{
-					next_system.InitLogs();
-				}
-			}
+		}
+		
+		while(data.hasRemaining())
+		{
+			IO_System_Logged next_system = new IO_System_Logged(retval.storage_path, data, handler, retval);				
+			next_system.InitLogs();
 		}
 		
 		device_list_mutex.release();

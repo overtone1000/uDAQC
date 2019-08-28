@@ -16,9 +16,16 @@ import udaqc.network.center.command.Command;
 public class IO_System extends IO_Group
 {		
 	protected DirectDevice device = null;
+	protected short system_index=-1;
+	
+	public Short Index()
+	{
+		return system_index;
+	}
 	
 	public IO_System(ByteBuffer data, DirectDevice device) {
 		super(data);
+		system_index=data.getShort();
 		this.device=device;
 	}
 	

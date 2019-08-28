@@ -6,7 +6,7 @@ import java.nio.charset.StandardCharsets;
 public class IO_Node 
 {
 	protected short command_description;
-	protected String name;
+	protected String name = "Unnamed Node";
 	protected IO_Group parent;
 	protected int data_bytecount;
 	

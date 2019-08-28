@@ -274,7 +274,7 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 	public void HistoryUpdated(DirectDevice device, short system_index, Regime r, Long first_timestamp, ByteBuffer bb)
 	{
 		
-		ByteBuffer message = ByteBuffer.allocate(Integer.BYTES + Long.BYTES + bb.capacity());
+		ByteBuffer message = ByteBuffer.allocate(Short.BYTES + Integer.BYTES + Long.BYTES + bb.capacity());
 		message.order(ByteOrder.LITTLE_ENDIAN);
 		message.putShort(system_index);
 		message.putInt(r.ordinal());

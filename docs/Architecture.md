@@ -64,7 +64,8 @@ Each IO Object has a function that will send its description. The contents of th
 1. The description for an IO_Value comes first (see above)
 2. int_16 containing the index for this ModifiableValue (this must be sent back to the device when changing the modifiable value)
 ## IO_System
-This class description is equal to its parent class IO_Group
+1. The description for an IO_Group comes first (see above)
+2. int_16 containing the index for this system. This will be included in subsequent data messages to identify which system on the device the data is for.
 
 # Data Message Structure
 When a data message for an IO_System is sent from a Device to a Center, the message first contains:

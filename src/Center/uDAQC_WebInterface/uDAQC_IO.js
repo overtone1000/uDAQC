@@ -624,6 +624,7 @@ class IO_System extends IO_Group
 {
   constructor(bytebuffer, indices){
     super(bytebuffer, indices);
+    this.system_index = bytebuffer.getInt16();
     //this.ioValueCount = this.countIOValues()-1; //subtract one for the Timestamp
     this.ioValueCount = this.countIOValues(); //timestamp is still coming across as a float32. This should be fixed.
     //console.log("System has " + this.ioValueCount + " values.");
@@ -793,7 +794,12 @@ class IO_Device
         return retval;
       }
     };
-    this.system = new IO_System(bytebuffer,indices);
+
+    while(bytebuffer.remaining>0)
+    {
+        let next = new IO_System(bytebuffer,indices);
+        this.systems[next.system_index]=next;
+    }
     IO.devices.set(this.index,this);
   }
 }

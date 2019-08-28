@@ -40,6 +40,7 @@ void loop()
     test_input_temp.Set(temp);
     main_system.SetTimeToNow(); //Set the time stamp for when data was acquired; this can be important because the loops for WiFi can be time consuming
     main_system.SendDataReportTCP();
+    DEBUG_println("Sending update at " + (String)millis());
   }
 
   ESP_Managers::Network::Loop();

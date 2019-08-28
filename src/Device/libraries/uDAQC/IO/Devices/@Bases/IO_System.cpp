@@ -239,8 +239,8 @@ namespace ESP_Managers{ namespace IO
   {
 
     unsigned int retval=0;
-    retval+=client->write((uint8_t*)&system_index,sizeof(system_index));
     retval+=IO_Group::SendDescription(client);
+    retval+=client->write((uint8_t*)&system_index,sizeof(system_index));
     return retval;
   }
 
@@ -255,11 +255,12 @@ namespace ESP_Managers{ namespace IO
 
         //Send the header
         CommandCodec::TCP_Command_Header header;
-        header.message_length = DataSize();
+        header.message_length = DataSize()+sizeof(system_index);
         header.command_id = NetworkCommands::data;
         client->send_command_header(header);
 
         //Send the data
+        client->write((uint8_t*)&system_index,sizeof(system_index));
         SendData(client);
 
         //For debugging for now.

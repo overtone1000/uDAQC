@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Iterator;
+import java.util.TreeMap;
 import java.util.Vector;
 import java.util.logging.Logger;
 
@@ -24,9 +25,18 @@ public abstract class Device extends TimeSynchronizer
 	
 	protected byte[] description;
 	
-	protected Vector<IO_System_Logged> systems = new Vector<IO_System_Logged>();
-	public Iterator<IO_System_Logged> Systems() {return systems.iterator();}
-	public IO_System_Logged System(int n) {return systems.get(n);}
+	protected TreeMap<Short, IO_System_Logged> systems = new TreeMap<Short, IO_System_Logged>();
+	public Iterator<IO_System_Logged> Systems() {return systems.values().iterator();}
+	public void AddSystem(IO_System_Logged new_system) 
+	{
+		systems.put(new_system.Index(),new_system);
+		System.out.println("New system " + new_system.Index() + " added. Systems indices known:");
+		for(Short s:systems.keySet())
+		{
+			System.out.println(s);
+		}
+	}
+	public IO_System_Logged System(Short n) {return systems.get(n);}
 	
 	public final static String filesep=System.getProperty("file.separator");
 	public final static String descname ="descripton";
@@ -89,12 +99,21 @@ public abstract class Device extends TimeSynchronizer
 
 	public void ReceiveData(ByteBuffer data)
 	{
-		short system_index = data.getShort();
+		Short system_index = data.getShort();
 		IO_System_Logged system = System(system_index);
 		if(system != null)
 		{				
 			system.ReceiveData(data);
-			log.info("Received data from " + system.Name());
+			System.out.println("Processed data from " + Name() + ":" + system.Name());
+		}
+		else
+		{
+			System.out.println("System " + system_index + " on device " + Name() + " not found, discarding data.");
+			System.out.println("System indices are: ");
+			for(Short s:systems.keySet())
+			{
+				System.out.println(s);
+			}
 		}
 	}
 	
@@ -111,7 +130,7 @@ public abstract class Device extends TimeSynchronizer
 
 	public void ClientDisconnected()
 	{
-		for(IO_System_Logged sys:systems)
+		for(IO_System_Logged sys:systems.values())
 		{
 			sys.ClientDisconnected();
 		}

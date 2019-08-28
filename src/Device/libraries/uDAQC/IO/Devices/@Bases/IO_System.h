@@ -56,7 +56,7 @@ namespace ESP_Managers{ namespace IO
     static WiFiUDP udp;
     static Repeater udp_timer;
 
-    int system_index;
+    int16_t system_index;
 
     //uint8_t* data=nullptr;
     static std::vector<IO_System*> systems;
