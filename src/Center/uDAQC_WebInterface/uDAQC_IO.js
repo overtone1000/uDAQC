@@ -564,18 +564,6 @@ class IO_Group extends IO_Node
     return new_data;
   }
 
-  createDashboard()
-  {
-    let retval = super.createDashboard(); //get the default IO_Node Dashboard, which is just a div
-
-    for(let child of this.members)
-    {
-      retval.appendChild(child.createDashboard());
-    }
-
-    return retval;
-  }
-
   countIOValues()
   {
     //count total IO_Values in the system
@@ -634,9 +622,9 @@ class IO_System extends IO_Group
     this.chart_stream = true;
   }
 
-  toNode()
+  toNode(parent)
   {
-    let new_data = super.toNode();
+    let new_data = super.toNode(parent);
 
     //Remove timestamp
     new_data.splice(1,1);
@@ -780,10 +768,9 @@ class IO_System extends IO_Group
   }
 }
 
-class IO_Device
+class IO_Device extends IO_Group
 {
   constructor(bytebuffer, device_index){
-    this.index = device_index;
     let indices =
     {
       device:device_index,
@@ -794,6 +781,9 @@ class IO_Device
         return retval;
       }
     };
+    super(bytebuffer, indices);
+    this.index = device_index;
+    this.name = "Unnamed2";
 
     while(bytebuffer.remaining>0)
     {
@@ -801,6 +791,22 @@ class IO_Device
         this.systems[next.system_index]=next;
     }
     IO.devices.set(this.index,this);
+
+    console.log("Got new device");
+    console.log(this);
+    console.log(IO.devices);
+  }
+
+  createDashboard()
+  {
+    let retval = super.createDashboard(); //get the default IO_Node Dashboard, which is just a div
+
+    for(let child of this.members)
+    {
+      retval.appendChild(child.createDashboard());
+    }
+
+    return retval;
   }
 }
 

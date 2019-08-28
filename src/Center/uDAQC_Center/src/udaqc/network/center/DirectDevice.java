@@ -76,8 +76,9 @@ public class DirectDevice extends Device
 		{
 			retval.description_toFile();
 			retval.device_index=(short) devices.size();
-			devices.add(retval);
 		}
+		
+		devices.add(retval);
 		
 		while(data.hasRemaining())
 		{
@@ -139,9 +140,10 @@ public class DirectDevice extends Device
 	
 	public static void PassthroughInitialization(Endpoint ep)
 	{
+		System.out.println("Sending descriptions to passthrough.");
 		for(DirectDevice d:devices)
 		{
-			System.out.println("Sending descriptions to passthrough.");
+			System.out.println("Sending " + d.Name());
 			Command c = new Command(Command_IDs.group_description,d.description);
 			PT_Command ptc = new PT_Command(d.DeviceIndex(),c);
 			ep.SendCommand(ptc);

@@ -96,7 +96,7 @@ function handleHistoryAddendum(ptcom)
 
   console.debug("History addendum received for system " + system_index + " regime " + regime);
   console.debug("Oldest = " + first_timestamp);
-
+  console.debug(IO.devices);
   let device = IO.devices.get(ptcom.source_ID);
   let entry_size = 1 + 8 + device.systems[system_index].ioValueCount * 4;
 
@@ -160,10 +160,10 @@ function update_devices()
     let device = IO.devices.get(key);
 
     //Add this to the jsTree list
-    new_data = new_data.concat(device.system.toNode());
+    new_data = new_data.concat(device.toNode());
 
     //And create the dashboards
-    dashboard.appendChild(device.system.createDashboard());
+    dashboard.appendChild(device.createDashboard());
   }
   //console.log("Changing nodes with " + new_data.length + " members.");
   //console.log(new_data);
