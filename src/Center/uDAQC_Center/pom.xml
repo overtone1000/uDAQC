@@ -57,11 +57,7 @@
   		<artifactId>bcpkix-jdk15on</artifactId>
   		<version>1.61</version>
   	</dependency>
-  	<dependency>
-  		<groupId>org.bouncycastle</groupId>
-  		<artifactId>bcprov-jdk15</artifactId>
-  		<version>1.46</version>
-  	</dependency>
+
   	<dependency>
   		<groupId>org.slf4j</groupId>
   		<artifactId>slf4j-api</artifactId>
@@ -71,6 +67,11 @@
   		<groupId>org.slf4j</groupId>
   		<artifactId>integration</artifactId>
   		<version>1.7.26</version>
+  	</dependency>
+  	<dependency>
+  		<groupId>org.bouncycastle</groupId>
+  		<artifactId>bcprov-jdk15on</artifactId>
+  		<version>1.61</version>
   	</dependency>
   </dependencies>
 </project>
