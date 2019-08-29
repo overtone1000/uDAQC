@@ -532,6 +532,10 @@ class IO_Group extends IO_Node
             this.members[i]=new IO_Group(bytebuffer, indices);
             //console.log("Processeed member " + this.members[i].name + " as group.");
           break;
+          case IO_Constants.system_description:
+            this.members[i]=new IO_System(bytebuffer, indices, i);
+            //console.log("Processeed member " + this.members[i].name + " as empty node.");
+          break;
           case IO_Constants.emptynode_description:
             this.members[i]=new IO_Node(bytebuffer, indices);
             //console.log("Processeed member " + this.members[i].name + " as empty node.");
@@ -557,12 +561,25 @@ class IO_Group extends IO_Node
     let group_node_arr = super.toNode(parent);
     new_data = new_data.concat(group_node_arr[0]);
 
+    console.debug(this.members);
     for(let child of this.members)
     {
       new_data = new_data.concat(child.toNode(group_node_arr[0]));
     }
 
     return new_data;
+  }
+
+  createDashboard()
+  {
+    let retval = super.createDashboard(); //get the default IO_Node Dashboard, which is just a div
+
+    for(let child of this.members)
+    {
+      retval.appendChild(child.createDashboard());
+    }
+
+    return retval;
   }
 
   countIOValues()
@@ -611,9 +628,9 @@ class IO_Group extends IO_Node
 
 class IO_System extends IO_Group
 {
-  constructor(bytebuffer, indices){
+  constructor(bytebuffer, indices, index){
     super(bytebuffer, indices);
-    this.system_index = bytebuffer.getInt16();
+    this.system_index = index;
     //this.ioValueCount = this.countIOValues()-1; //subtract one for the Timestamp
     this.ioValueCount = this.countIOValues(); //timestamp is still coming across as a float32. This should be fixed.
     //console.log("System has " + this.ioValueCount + " values.");
@@ -635,7 +652,7 @@ class IO_System extends IO_Group
 
   createDashboard()
   {
-    let retval = super.createDashboard(); //get the default IO_Node Dashboard, which is just a div
+    let retval = super.createDashboard();
 
     //Remove timestamp
     retval.removeChild(retval.children[1]);
@@ -790,18 +807,6 @@ class IO_Device extends IO_Group
     console.log("Got new device");
     console.log(this);
     console.log(IO.devices);
-  }
-
-  createDashboard()
-  {
-    let retval = super.createDashboard(); //get the default IO_Node Dashboard, which is just a div
-
-    for(let child of this.members)
-    {
-      retval.appendChild(child.createDashboard());
-    }
-
-    return retval;
   }
 }
 

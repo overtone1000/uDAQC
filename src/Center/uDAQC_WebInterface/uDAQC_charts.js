@@ -58,13 +58,20 @@ function changeRegime(regime)
   console.log(IO.devices);
   for(let n=0;n<IO.devices.length;n++)
   {
-    IO.devices[n].system.setChartRegime(regime);
+    let device = IO.devices[n];
+    for(let sys of device.members)
+    {
+      sys.setChartRegime(regime);
+    }
   }
 
   for(let key of IO.devices.keys())
   {
     let device = IO.devices.get(key);
-    device.system.setChartRegime(regime);
+    for(let sys of device.members)
+    {
+      sys.setChartRegime(regime);
+    }
   }
 }
 
@@ -76,7 +83,10 @@ let adjustX = function()
   for(let key of IO.devices.keys())
   {
     let device = IO.devices.get(key);
-    device.system.updateChartXAxis(array[0],array[1]);
+    for(let sys of device.members)
+    {
+      sys.updateChartXAxis(array[0],array[1]);
+    }
   }
 };
 
@@ -86,7 +96,10 @@ let trimX = function(e)
   for(let key of IO.devices.keys())
   {
     let device = IO.devices.get(key);
-    device.system.trimChartXAxis();
+    for(let sys of device.members)
+    {
+      sys.trimChartXAxis();
+    }
   }
   x_adjust.setValue([0,1]);
 };
@@ -97,7 +110,10 @@ let resetX = function(e)
   for(let key of IO.devices.keys())
   {
     let device = IO.devices.get(key);
-    device.system.resetChartXAxis();
+    for(let sys of device.members)
+    {
+      sys.resetChartXAxis();
+    }
   }
   x_adjust.setValue([0,1]);
 };

@@ -70,9 +70,9 @@ function handleHistory(ptcom)
 
   let device = IO.devices.get(ptcom.source_ID);
   console.log(device);
-  let entry_size = 1 + 8 + device.systems[system_index].ioValueCount * 4;
+  let entry_size = 1 + 8 + device.members[system_index].ioValueCount * 4;
 
-  let epochs = device.systems[system_index].getEpochs(regime);
+  let epochs = device.members[system_index].getEpochs(regime);
 
   let test_count=0;
   while(ptcom.message.remaining()>=entry_size)
@@ -86,7 +86,7 @@ function handleHistory(ptcom)
   if(Globals.current_regime===regime)
   {
     //If this histroy contains data for the currently displayed regime, update the chart like so...
-    device.system.setChartRegime(Globals.current_regime);
+    device.members[system_index].setChartRegime(Globals.current_regime);
   }
 }
 
@@ -100,9 +100,9 @@ function handleHistoryAddendum(ptcom)
   console.debug("Oldest = " + first_timestamp);
   console.debug(IO.devices);
   let device = IO.devices.get(ptcom.source_ID);
-  let entry_size = 1 + 8 + device.systems[system_index].ioValueCount * 4;
+  let entry_size = 1 + 8 + device.members[system_index].ioValueCount * 4;
 
-  let epochs = device.system.getEpochs(regime);
+  let epochs = device.members[system_index].getEpochs(regime);
 
   //console.debug("remaining: " + ptcom.message.remaining());
   //console.debug("Size: " + entry_size);
@@ -121,7 +121,8 @@ function handleHistoryAddendum(ptcom)
   {
     //console.log("...");
     //If this histroy contains data for the currently displayed regime, update the chart like so...
-    device.system.setChartRegime(Globals.current_regime);
+    console.log(device.members);
+    device.members[system_index].setChartRegime(Globals.current_regime);
   }
 }
 
