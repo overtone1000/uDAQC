@@ -2,7 +2,6 @@ package udaqc.network.interfaces;
 
 import java.nio.ByteBuffer;
 
-import udaqc.io.log.IO_System_Logged;
 import udaqc.io.log.IO_System_Logged.Regime;
 import udaqc.network.center.DirectDevice;
 
