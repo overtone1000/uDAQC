@@ -91,6 +91,9 @@ namespace ESP_Managers{ namespace IO
     the name string
     String name
     */
+    DEBUG_print("Sending node description, command ");
+    DEBUG_println(*(DescriptionCommand()));
+
     unsigned int retval=0;
     int32_t size = DataSize();
     retval+=client->write((uint8_t*)DescriptionCommand(),sizeof(int16_t));

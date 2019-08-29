@@ -15,7 +15,7 @@ import udaqc.network.center.command.Command;
 
 public class IO_System extends IO_Group
 {		
-	protected DirectDevice device = null;
+	protected IO_Device iodev;
 	protected short system_index=-1;
 	
 	public Short Index()
@@ -23,18 +23,25 @@ public class IO_System extends IO_Group
 		return system_index;
 	}
 	
-	public IO_System(ByteBuffer data, DirectDevice device) {
+	public IO_System(ByteBuffer data, IO_Device iodev, Short index) {
 		super(data);
-		system_index=data.getShort();
-		this.device=device;
+		this.iodev=iodev;
+		this.system_index=index;
 	}
 	
+	public IO_System(IO_Node basis, ByteBuffer data, IO_Device iodev, Short index)
+	{
+		super(basis,data);
+		this.iodev=iodev;
+		this.system_index=index;
+	}
+
 	public DateTime GetTimestamp()
 	{
 		DateTime retval=null;
 		if(members!=null)
 		{
-			long us = (long)(((IO_Value)members.firstElement()).value)+device.timeZeroMicros();
+			long us = (long)(((IO_Value)members.firstElement()).value)+iodev.DirectDev().timeZeroMicros();
 			retval = new DateTime(us/1000);
 		}
 		return retval;
@@ -51,6 +58,7 @@ public class IO_System extends IO_Group
 	}
 		
 	//Use this function to create an IO_System from file (gets its description)
+	/*
 	public static IO_System fromFile(Path p, DirectDevice device)
 	{
 		IO_System retval=null;
@@ -78,10 +86,11 @@ public class IO_System extends IO_Group
 		
 		return retval;
 	}
+	*/
 	
 	public void ModifyValue(short index, byte[] value)
 	{
-		if(device==null) {return;}
+		if(iodev.DirectDev()==null) {return;}
 		
 		IoBuffer message = IoBuffer.allocate(value.length + Short.BYTES);
 		message.order(ByteOrder.LITTLE_ENDIAN);
@@ -89,11 +98,11 @@ public class IO_System extends IO_Group
 		message.put(value);
 		Command c=new Command(IO_Constants.Command_IDs.modifiablevalue_modification,message.array());
 		
-		device.Send_Command(c);
+		iodev.DirectDev().Send_Command(c);
 	}
 	
-	public Device Device()
+	public IO_Device Device()
 	{
-		return device;
+		return iodev;
 	}
 }

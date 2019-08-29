@@ -50,7 +50,7 @@ public class IO_Group extends IO_Node
 		return retval;
 	}
 	
-	private void Construct(ByteBuffer data)
+	protected void Construct(ByteBuffer data)
 	{
 		short member_count = data.getShort();
 		members.clear();
@@ -62,6 +62,9 @@ public class IO_Group extends IO_Node
 			{
 			case IO_Constants.Command_IDs.emptynode_description:
 				// Nothing else, so do nothing.
+				break;
+			case IO_Constants.Command_IDs.system_description:
+				System.err.println("Shoudlnt' see system descriptions in a non-device group.");
 				break;
 			case IO_Constants.Command_IDs.group_description:
 				// Groups then have a short showing number of members.

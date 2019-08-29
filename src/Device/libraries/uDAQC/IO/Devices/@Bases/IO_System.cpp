@@ -5,9 +5,11 @@ namespace ESP_Managers{ namespace IO
   //WiFiServer IO_System::tcp_server(ESP_Managers::IO::Constants::tcp_main_port);
   std::vector<IO_Saveable*> IO_System::saveable_members;
 
+  IO_Group IO_System::device("Unnamed Device 1",nullptr);
+
   WiFiUDP IO_System::udp;
   Repeater IO_System::udp_timer(2*60*1000);
-  std::vector<IO_System*> IO_System::systems;
+  //std::vector<IO_System*> IO_System::systems;
   IO_System* IO_System::current_system;
   std::list<CommandCodec::TCP_Command_Client> IO_System::tcp_clients;
 
@@ -15,8 +17,8 @@ namespace ESP_Managers{ namespace IO
   IO_Group(name,nullptr),
   ts("Timestamp",this)
   {
-    this->system_index = systems.size();
-    systems.push_back(this);
+    this->system_index = device.MemberCount();
+    device.add_node(this);
   }
 
   IO_System::~IO_System()
@@ -176,23 +178,13 @@ namespace ESP_Managers{ namespace IO
               if(correct_hash.equals(auth_str))
               {
                 client->Authenticate();
+                DEBUG_println("Sending device description.");
 
                 CommandCodec::TCP_Command_Header header;
                 header.command_id = NetworkCommands::group_description;
-                header.message_length = 0;
-                for(unsigned int n=0;n<systems.size();n++)
-                {
-                  header.message_length += systems[n]->DescriptionSize();
-                }
-
-                unsigned int header_size = client->send_command_header(header);
-                DEBUG_println("Actual header size sent " + (String)header_size);
-
-                for(unsigned int n=0;n<systems.size();n++)
-                {
-                  unsigned int description_length_sent=systems[n]->SendDescription(client);
-                  DEBUG_println("Sending description of size " + (String)header.message_length);
-                  DEBUG_println("Actual description  size " + (String)description_length_sent);}
+                header.message_length = device.DescriptionSize();
+                client->send_command_header(header);
+                device.SendDescription(client);
               }
               else
               {
@@ -232,17 +224,23 @@ namespace ESP_Managers{ namespace IO
 
   std::vector<IO_System*> IO_System::Systems()
   {
-    return systems;
+    const std::vector<IO_Node*> raw_systems = device.Members();
+    std::vector<IO_System*> cast_systems;
+    for(auto it=raw_systems.begin();it!=raw_systems.end();it++)
+    {
+      cast_systems.push_back((IO_System*)(*it));
+    }
+    return cast_systems;
   }
 
-  unsigned int IO_System::SendDescription(WiFiClient* client)
-  {
-
-    unsigned int retval=0;
-    retval+=IO_Group::SendDescription(client);
-    retval+=client->write((uint8_t*)&system_index,sizeof(system_index));
-    return retval;
-  }
+  //unsigned int IO_System::SendDescription(WiFiClient* client)
+  //{
+  //
+  //  unsigned int retval=0;
+  //  retval+=IO_Group::SendDescription(client);
+  //  //retval+=client->write((uint8_t*)&system_index,sizeof(system_index));
+  //  return retval;
+  //}
 
   void IO_System::SendDataReportTCP()
   {

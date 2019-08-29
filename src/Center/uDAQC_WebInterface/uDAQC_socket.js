@@ -62,15 +62,17 @@ function handlePassthroughCommand(ptcom)
 
 function handleHistory(ptcom)
 {
+  let system_index = ptcom.message.getInt16();
   let regime = ptcom.message.getInt32();
   let max_size = ptcom.message.getInt64();
 
   //console.log("History received for regime " + regime);
 
   let device = IO.devices.get(ptcom.source_ID);
-  let entry_size = 1 + 8 + device.system.ioValueCount * 4;
+  console.log(device);
+  let entry_size = 1 + 8 + device.systems[system_index].ioValueCount * 4;
 
-  let epochs = device.system.getEpochs(regime);
+  let epochs = device.systems[system_index].getEpochs(regime);
 
   let test_count=0;
   while(ptcom.message.remaining()>=entry_size)

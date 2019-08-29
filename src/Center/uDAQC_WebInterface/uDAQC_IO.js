@@ -2,6 +2,7 @@
 
 const IO_Constants =
 {
+    system_description: 17,
     group_description: 1,
 		emptynode_description: 2,
 		value_description: 3,
@@ -783,13 +784,7 @@ class IO_Device extends IO_Group
     };
     super(bytebuffer, indices);
     this.index = device_index;
-    this.name = "Unnamed2";
 
-    while(bytebuffer.remaining>0)
-    {
-        let next = new IO_System(bytebuffer,indices);
-        this.systems[next.system_index]=next;
-    }
     IO.devices.set(this.index,this);
 
     console.log("Got new device");

@@ -25,6 +25,8 @@ import logging.Point;
 import udaqc.io.IO_System;
 import udaqc.io.IO_Value;
 import udaqc.io.IO_Constants.Command_IDs;
+import udaqc.io.IO_Device;
+import udaqc.io.IO_Node;
 import udaqc.io.log.IO_System_Logged.Regime;
 import udaqc.network.center.DirectDevice;
 import udaqc.network.center.command.Command;
@@ -76,25 +78,30 @@ public class IO_System_Logged extends IO_System
 		aggregate_from.put(Regime.Day, Regime.Hour);
 	}
 	
-	private HistoryUpdateHandler his_update_handler;
-	private Path storage_path;
-	public IO_System_Logged(Path path, ByteBuffer data, HistoryUpdateHandler his_update_handler, DirectDevice device)
+	private Path StoragePath()
 	{
-		super(data, device);
-		device.AddSystem(this);
-		this.storage_path = Paths.get(path.toString() + DirectDevice.filesep + this.FullName());
-		this.his_update_handler = his_update_handler;
+		return Paths.get(iodev.DevicePath().toString() + DirectDevice.filesep + this.FullName());
+	}
+	public IO_System_Logged(IO_Node basis, ByteBuffer data, IO_Device iodev, Short index)
+	{
+		super(basis,data,iodev,index);
+		this.iodev=iodev;
+	}
+	public IO_System_Logged(ByteBuffer data, IO_Device iodev, Short index)
+	{
+		super(data, iodev ,index);
+		this.iodev=iodev;
 		// need to check whether basis is already stored in storage path and that it's
 		// the same. If it isn't, wipe out the history.
 	}
 	public void HistoryUpdate(Regime r, Long first_timestamp, ByteBuffer bb)
 	{
-		his_update_handler.HistoryUpdated(device, this.system_index, r, first_timestamp, bb);
+		iodev.HistoryHandler().HistoryUpdated(iodev.DirectDev(), this.system_index, r, first_timestamp, bb);
 	}
 	
 	private Path regPath(Regime reg)
 	{
-		return Paths.get(storage_path.toString() + DirectDevice.filesep + reg.toString());
+		return Paths.get(StoragePath().toString() + DirectDevice.filesep + reg.toString());
 	}
 	
 	public void InitLogs()
@@ -228,7 +235,7 @@ public class IO_System_Logged extends IO_System
 			//}
 			
 			Command hc = new Command(Command_IDs.history,message.array());
-			PT_Command pthc = new PT_Command(device.DeviceIndex(),hc);
+			PT_Command pthc = new PT_Command(iodev.DirectDev().DeviceIndex(),hc);
 			ep.SendCommand(pthc);
 		}
 	}

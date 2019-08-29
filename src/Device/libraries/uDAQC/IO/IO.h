@@ -23,6 +23,7 @@ namespace IO
 
   namespace NetworkCommands //Use sign 16 bit integer. Java doesn't support unsigned shorts.
   {
+    extern const int16_t system_description;
     extern const int16_t group_description;
     extern const int16_t emptynode_description;
     extern const int16_t value_description;

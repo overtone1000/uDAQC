@@ -11,6 +11,16 @@ namespace ESP_Managers{ namespace IO
     members.push_back(new_member);
   }
 
+  int IO_Group::MemberCount()
+  {
+    return members.size();
+  }
+
+  const std::vector<IO_Node*> IO_Group::Members()
+  {
+    return members;
+  }
+
   String IO_Group::Report()
   {
     String page;
@@ -87,6 +97,8 @@ namespace ESP_Managers{ namespace IO
     unsigned int retval=0;
 
     uint16_t membercount = members.size();
+
+    DEBUG_println("Sending group description.");
 
     retval+=IO_Node::SendDescription(client);
     retval+=client->write((uint8_t*)&membercount,sizeof(membercount));

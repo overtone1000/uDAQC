@@ -22,6 +22,9 @@ namespace ESP_Managers{ namespace IO
   An instance is created in the ESP_Managers::IO namespace in ESP_Managers::IO.h and ESP_Managers::IO.cpp.
   */
   {
+  private:
+    static IO_Group device;
+
   public:
     IO_System(String name);
     ~IO_System();
@@ -50,8 +53,8 @@ namespace ESP_Managers{ namespace IO
     static void SetCurrent(IO_System* new_current);
     static std::vector<IO_System*> Systems();
 
-    virtual unsigned int SendDescription(WiFiClient* client); //Send the description of the data. This should contain everything the recipient needs to correctly interpret the data
-
+    //virtual unsigned int SendDescription(WiFiClient* client); //Send the description of the data. This should contain everything the recipient needs to correctly interpret the data
+    virtual const int16_t* DescriptionCommand(){return &(NetworkCommands::system_description);}
   private:
     static WiFiUDP udp;
     static Repeater udp_timer;
@@ -59,7 +62,7 @@ namespace ESP_Managers{ namespace IO
     int16_t system_index;
 
     //uint8_t* data=nullptr;
-    static std::vector<IO_System*> systems;
+    //static std::vector<IO_System*> systems;
     static IO_System* current_system;
 
     static std::vector<IO_Saveable*> saveable_members;

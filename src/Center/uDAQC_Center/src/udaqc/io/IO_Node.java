@@ -32,7 +32,7 @@ public class IO_Node
 		
 		name = StandardCharsets.UTF_8.decode(name_bb).toString();
 		
-		//System.out.println(name + ", size = " + data_bytecount);
+		System.out.println(name + ", size = " + data_bytecount);
 	}
 	
 	public IO_Node(IO_Group parent, ByteBuffer data)

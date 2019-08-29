@@ -135,10 +135,17 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 				
 				break;
 			}
+			case Command_IDs.system_description:
+			{
+				System.err.println("Received direct system description to Center. Unanticipated.");
+				break;
+			}
 			case Command_IDs.group_description:
 			{
 				//The only time a group description command ID is received in this setting is when an entire IO_Device description is being sent en bloc.
 				//Initialize as a whole IO_Device, not an IO_Group or IO_System. IO_Groups within IO_Groups are all initialized within the function call to construct an IO_System
+				
+				System.out.println("Center received a group description. Interpreting as a device.");
 				
 				DirectDevice new_device = DirectDevice.getDirectDevice(history_path, data, this, (NioSession)session);
 				devices.put(session.getId(), new_device);
@@ -149,8 +156,8 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 				}
 				
 				log.info("Group description message for " + new_device.Name() + " received.");
+				break;
 			}
-			break;
 		  case Command_IDs.emptynode_description:
 			log.info("Empty node description message from server: " + c.getString());
 			break;
@@ -182,7 +189,7 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 		  }
 		  break;
 		  default:
-			System.out.println("Received command " + c.Header().command_id);
+			System.err.println("Unhandled command " + c.Header().command_id + " of lenght " + c.Header().message_length);
 			break;
 		}
 	}

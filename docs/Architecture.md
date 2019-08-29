@@ -47,7 +47,10 @@ Data Types - these are int_16 values that identify the type of data contained by
 # Description Structure
 Each IO Object has a function that will send its description. The contents of that description is as follows for each IO Object:
 ## IO_Node
-1. int_16 containing the command description (this specifies which type of IO_Object this is); at this time, this is incorrectly duplicated once in the description when an IO_System is sent, but this error is currently present in the C++, Java, and JS classes.
+1. int_16 containing the command description (this specifies which type of IO_Object this is)
+    Previous note: At this time, this is incorrectly duplicated once in the description when an IO_System is sent, but this error is currently present in the C++, Java, and JS classes.
+    It's not apparent whether this is still true.
+    This was probably because the description is used in the command header and in an IO_Group's enumeration of its members to denote the type of each member.
 2. int_32 containing the byte count for the data represented by this IO_Object (in practice, this only applies to IO_Value and classes that inherit from IO_Value; for all other classes, this will be 0)
 3. int_16 containing the length of the name of this IO_Node
 4. byte[] containing the name String (ASCII)

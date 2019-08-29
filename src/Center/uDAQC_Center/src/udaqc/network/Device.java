@@ -13,6 +13,9 @@ import java.util.logging.Logger;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 
 import network.udp.TimeSynchronizer;
+import udaqc.io.IO_Device;
+import udaqc.io.IO_Group;
+import udaqc.io.IO_Node;
 import udaqc.io.log.IO_System_Logged;
 import udaqc.network.center.DirectDevice;
 import udaqc.network.center.command.Command;
@@ -20,23 +23,25 @@ import udaqc.network.interfaces.HistoryUpdateHandler;
 
 public abstract class Device extends TimeSynchronizer
 {
+	protected IO_Device iodev;
+	
 	protected short device_index=-1;
 	public short DeviceIndex() {return device_index;}
 	
 	protected byte[] description;
 	
-	protected TreeMap<Short, IO_System_Logged> systems = new TreeMap<Short, IO_System_Logged>();
-	public Iterator<IO_System_Logged> Systems() {return systems.values().iterator();}
-	public void AddSystem(IO_System_Logged new_system) 
-	{
-		systems.put(new_system.Index(),new_system);
-		System.out.println("New system " + new_system.Index() + " added. Systems indices known:");
-		for(Short s:systems.keySet())
-		{
-			System.out.println(s);
-		}
-	}
-	public IO_System_Logged System(Short n) {return systems.get(n);}
+	//protected TreeMap<Short, IO_System_Logged> systems = new TreeMap<Short, IO_System_Logged>();
+	//public Iterator<IO_System_Logged> Systems() {return systems.values().iterator();}
+	//public void AddSystem(IO_System_Logged new_system) 
+	//{
+	//	systems.put(new_system.Index(),new_system);
+	//	System.out.println("New system " + new_system.Index() + " added. Systems indices known:");
+	//	for(Short s:systems.keySet())
+	//	{
+	//		System.out.println(s);
+	//	}
+	//}
+	//public IO_System_Logged System(Short n) {return systems.get(n);}
 	
 	public final static String filesep=System.getProperty("file.separator");
 	public final static String descname ="descripton";
@@ -96,11 +101,11 @@ public abstract class Device extends TimeSynchronizer
 		return Paths.get(storage_path + filesep + descname);
 	}
 	
-
+	
 	public void ReceiveData(ByteBuffer data)
 	{
 		Short system_index = data.getShort();
-		IO_System_Logged system = System(system_index);
+		IO_System_Logged system = iodev.System(system_index);
 		if(system != null)
 		{				
 			system.ReceiveData(data);
@@ -109,18 +114,13 @@ public abstract class Device extends TimeSynchronizer
 		else
 		{
 			System.out.println("System " + system_index + " on device " + Name() + " not found, discarding data.");
-			System.out.println("System indices are: ");
-			for(Short s:systems.keySet())
-			{
-				System.out.println(s);
-			}
 		}
 	}
 	
 	public void ReceiveHistory(ByteBuffer data)
 	{
 		short system_index = data.getShort();
-		IO_System_Logged system = System(system_index);
+		IO_System_Logged system = iodev.System(system_index);
 		if(system != null)
 		{				
 			system.ReceiveHistory(data);
@@ -130,7 +130,7 @@ public abstract class Device extends TimeSynchronizer
 
 	public void ClientDisconnected()
 	{
-		for(IO_System_Logged sys:systems.values())
+		for(IO_System_Logged sys:iodev.Systems())
 		{
 			sys.ClientDisconnected();
 		}

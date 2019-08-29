@@ -22,6 +22,7 @@ import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.mina.transport.socket.nio.NioSession;
 
 import udaqc.io.IO_Constants.Command_IDs;
+import udaqc.io.IO_Device;
 import udaqc.io.log.IO_System_Logged;
 import udaqc.io.log.IO_System_Logged.Regime;
 import udaqc.network.Constants;
@@ -80,11 +81,7 @@ public class DirectDevice extends Device
 		
 		devices.add(retval);
 		
-		while(data.hasRemaining())
-		{
-			IO_System_Logged next_system = new IO_System_Logged(retval.storage_path, data, handler, retval);				
-			next_system.InitLogs();
-		}
+		retval.iodev = new IO_Device(retval.storage_path, data, handler, retval);
 		
 		device_list_mutex.release();
 		
@@ -148,11 +145,10 @@ public class DirectDevice extends Device
 			PT_Command ptc = new PT_Command(d.DeviceIndex(),c);
 			ep.SendCommand(ptc);
 			
-			Iterator<IO_System_Logged> i = d.Systems();
-			while(i.hasNext())
+			Vector<IO_System_Logged> i = d.iodev.Systems();
+			for(IO_System_Logged s:i)
 			{
-				IO_System_Logged system = i.next();
-				system.PassthroughInitialization(ep);				
+				s.PassthroughInitialization(ep);				
 			}
 		}
 	}

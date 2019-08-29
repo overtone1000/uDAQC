@@ -78,7 +78,9 @@ public class Command {
 		CommandHeader header=new CommandHeader();
 		header.message_length=bb.getInt();
 		header.command_id=bb.getShort();
-						
+		
+		//System.out.println("Waiting for body, only " + bb.remaining() + " of " + header.message_length + " available for command " + header.command_id);
+		
 		if(bb.remaining()>=header.message_length) //message length is now strictly the length of the message, not the message plus the command header
 		{
             byte[] message=new byte[header.message_length];

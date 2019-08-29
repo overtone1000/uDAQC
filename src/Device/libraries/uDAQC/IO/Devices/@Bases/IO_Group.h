@@ -35,7 +35,8 @@ namespace ESP_Managers{ namespace IO
 
   //IO_Group stuff
     void add_node(IO_Node* new_member);
-
+    int MemberCount();
+    const std::vector<IO_Node*> Members();
   protected:
     std::vector<IO_Node*> members;
     unsigned int current_size=0;
