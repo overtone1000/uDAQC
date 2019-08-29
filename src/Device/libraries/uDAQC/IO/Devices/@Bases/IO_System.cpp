@@ -2,10 +2,19 @@
 
 namespace ESP_Managers{ namespace IO
 {
+  void IO_Device::Rename(String new_name)
+  {
+    device_name=new_name + '(' + (String)ESP.getChipId() + ')';
+  }
+
+  void IO_System::NameDevice(String new_name)
+  {
+    device.Rename(new_name);
+  }
   //WiFiServer IO_System::tcp_server(ESP_Managers::IO::Constants::tcp_main_port);
   std::vector<IO_Saveable*> IO_System::saveable_members;
 
-  IO_Group IO_System::device("Unnamed Device 1",nullptr);
+  IO_Device IO_System::device((String)ESP.getChipId());
 
   WiFiUDP IO_System::udp;
   Repeater IO_System::udp_timer(2*60*1000);

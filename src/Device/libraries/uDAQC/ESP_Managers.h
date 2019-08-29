@@ -19,7 +19,7 @@
 
 namespace ESP_Managers
 {
-	void Initialize(Network::SecurityBundle bundle);
+	void Initialize(String device_name, Network::SecurityBundle bundle);
 };
 
 #endif

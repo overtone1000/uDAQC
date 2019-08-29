@@ -16,6 +16,14 @@ namespace ESP_Managers{ namespace IO
   class Timestamp;
   class IO_Saveable;
 
+  class IO_Device:public IO_Group
+  {
+  public:
+    IO_Device(String name):IO_Group(name,nullptr)
+    {};
+    void Rename(String new_name);
+  };
+
   class IO_System:public IO_Group
   /*
   This class encompasses the IO for an entire device.
@@ -23,12 +31,13 @@ namespace ESP_Managers{ namespace IO
   */
   {
   private:
-    static IO_Group device;
+    static IO_Device device;
 
   public:
     IO_System(String name);
     ~IO_System();
 
+    static void NameDevice(String new_name);
     static std::list<CommandCodec::TCP_Command_Client> tcp_clients;
 
     static int add_saveable(IO_Saveable* new_member);

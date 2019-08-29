@@ -80,7 +80,7 @@ public class IO_System_Logged extends IO_System
 	
 	private Path StoragePath()
 	{
-		return Paths.get(iodev.DevicePath().toString() + DirectDevice.filesep + this.FullName());
+		return Paths.get(iodev.DevicePath().toString() + DirectDevice.filesep + this.Name());
 	}
 	public IO_System_Logged(IO_Node basis, ByteBuffer data, IO_Device iodev, Short index)
 	{

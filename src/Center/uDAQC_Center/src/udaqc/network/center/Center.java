@@ -154,8 +154,6 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 				{
 					handler.ClientListUpdate();
 				}
-				
-				log.info("Group description message for " + new_device.Name() + " received.");
 				break;
 			}
 		  case Command_IDs.emptynode_description:

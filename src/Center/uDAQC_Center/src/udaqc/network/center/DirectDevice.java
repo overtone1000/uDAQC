@@ -80,9 +80,7 @@ public class DirectDevice extends Device
 		}
 		
 		devices.add(retval);
-		
-		retval.iodev = new IO_Device(retval.storage_path, data, handler, retval);
-		
+				
 		device_list_mutex.release();
 		
 		return retval;
@@ -91,7 +89,8 @@ public class DirectDevice extends Device
 	
 	private DirectDevice(Path path, ByteBuffer data, HistoryUpdateHandler handler)
 	{
-		this.storage_path = Paths.get(path.toString() + DirectDevice.filesep + this.Name());
+		this.storage_path = Paths.get(path.toString());
+		this.iodev = new IO_Device(data, handler, this);
 		this.handler=handler;
 		description=data.array().clone();
 	}
@@ -140,7 +139,7 @@ public class DirectDevice extends Device
 		System.out.println("Sending descriptions to passthrough.");
 		for(DirectDevice d:devices)
 		{
-			System.out.println("Sending " + d.Name());
+			System.out.println("Sending " + d.iodev.Name());
 			Command c = new Command(Command_IDs.group_description,d.description);
 			PT_Command ptc = new PT_Command(d.DeviceIndex(),c);
 			ep.SendCommand(ptc);
@@ -159,7 +158,7 @@ public class DirectDevice extends Device
 	{
 		if(session.isConnected())
 		{
-			System.out.println("Sending command " + command.Header().command_id + " to device " + this.Name());
+			System.out.println("Sending command " + command.Header().command_id + " to device " + iodev.Name());
 			session.write(command);
 		}
 		else

@@ -1,10 +1,13 @@
 #include <ESP_Managers.h>
 #include <cmath>
 
-ESP_Managers::IO::IO_System main_system("uDAQC Template Sketch");
-ESP_Managers::IO::IO_SaveableValue<float> test_float("Test float1", "barfoos", &main_system);
-ESP_Managers::IO::IO_Value<float> test_input_temp("Test input0","degC", &main_system);
-ESP_Managers::IO::PID test_PID("Test PID1", "degC", "%", &main_system);
+ESP_Managers::IO::IO_System system1("System 1");
+ESP_Managers::IO::IO_SaveableValue<float> test_float("Test float1", "barfoos", &system1);
+ESP_Managers::IO::IO_Value<float> test_input_temp1("Test input0","degC", &system1);
+ESP_Managers::IO::PID test_PID("Test PID1", "degC", "%", &system1);
+
+ESP_Managers::IO::IO_System system2("System 2");
+ESP_Managers::IO::IO_Value<float> test_input_temp2("Test input1","degC", &system2);
 
 const int LED_PIN = 5; // Thing's onboard, green LED
 
@@ -25,22 +28,32 @@ void setup()
   pinMode(LED_PIN, OUTPUT);
 
   DEBUG_println("Initializing wifi manager.");
-  ESP_Managers::Initialize(bundle);
+  ESP_Managers::Initialize("uDAQC Template Device", bundle);
 
   DEBUG_println("Main loop complete.");
 }
 
-Repeater update_data(5000); //Update data and send every 5 seconds
+Repeater update_data1(5000); //Update data and send every 5 seconds
+Repeater update_data2(10000); //Update data and send every 5 seconds
 void loop()
 {
 
-  if(update_data.repeatnow())
+  if(update_data1.repeatnow())
   {
     float temp = 20.0 + 10.0*sin(millis()/10000.0/20.0*PI);
-    test_input_temp.Set(temp);
-    main_system.SetTimeToNow(); //Set the time stamp for when data was acquired; this can be important because the loops for WiFi can be time consuming
-    main_system.SendDataReportTCP();
-    DEBUG_println("Sending update at " + (String)millis());
+    test_input_temp1.Set(temp);
+    system1.SetTimeToNow(); //Set the time stamp for when data was acquired; this can be important because the loops for WiFi can be time consuming
+    system1.SendDataReportTCP();
+    DEBUG_println("Sending update1 at " + (String)millis());
+  }
+
+  if(update_data2.repeatnow())
+  {
+    float temp = -20.0 + 50.0*sin(millis()/100000.0/20.0*PI);
+    test_input_temp2.Set(temp);
+    system2.SetTimeToNow(); //Set the time stamp for when data was acquired; this can be important because the loops for WiFi can be time consuming
+    system2.SendDataReportTCP();
+    DEBUG_println("Sending update1 at " + (String)millis());
   }
 
   ESP_Managers::Network::Loop();

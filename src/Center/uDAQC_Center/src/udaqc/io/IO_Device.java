@@ -2,26 +2,25 @@ package udaqc.io;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Vector;
 
 import udaqc.io.log.IO_System_Logged;
+import udaqc.network.Device;
 import udaqc.network.center.DirectDevice;
 import udaqc.network.interfaces.HistoryUpdateHandler;
 
 public class IO_Device extends IO_Group
 {
-
-	private Path path;
 	private HistoryUpdateHandler his_update_handler;
 	private DirectDevice device;
 	
-	public Path DevicePath() {return path;}
+	public Path DevicePath() {return Paths.get(device.StoragePath().toString() + Device.filesep + this.Name());}
 	public HistoryUpdateHandler HistoryHandler() {return his_update_handler;}
 	public DirectDevice DirectDev() {return device;}
-	public IO_Device(Path path, ByteBuffer data, HistoryUpdateHandler his_update_handler, DirectDevice device)
+	public IO_Device(ByteBuffer data, HistoryUpdateHandler his_update_handler, DirectDevice device)
 	{
 		super(data);
-		this.path=path;
 		this.his_update_handler=his_update_handler;
 		this.device=device;
 		for(IO_System_Logged sys:Systems())

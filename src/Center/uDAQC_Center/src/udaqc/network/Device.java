@@ -47,11 +47,9 @@ public abstract class Device extends TimeSynchronizer
 	public final static String descname ="descripton";
 	
 	protected Path storage_path;
-	
-	private String name = "Unnamed";
-	public String Name()
+	public Path StoragePath()
 	{
-		return name;
+		return storage_path;
 	}
 	
 	protected HistoryUpdateHandler handler;
@@ -87,7 +85,7 @@ public abstract class Device extends TimeSynchronizer
 	{
 		try
 		{
-			Files.createDirectories(storage_path);
+			Files.createDirectories(Paths.get(storage_path.toString()+filesep+iodev.Name()));
 			Files.write(description(), description);
 		}
 		catch (IOException e1)
@@ -98,7 +96,7 @@ public abstract class Device extends TimeSynchronizer
 	
 	protected Path description()
 	{
-		return Paths.get(storage_path + filesep + descname);
+		return Paths.get(iodev.DevicePath() + filesep + descname);
 	}
 	
 	
@@ -109,11 +107,11 @@ public abstract class Device extends TimeSynchronizer
 		if(system != null)
 		{				
 			system.ReceiveData(data);
-			System.out.println("Processed data from " + Name() + ":" + system.Name());
+			System.out.println("Processed data from " + iodev.Name() + ":" + system.Name());
 		}
 		else
 		{
-			System.out.println("System " + system_index + " on device " + Name() + " not found, discarding data.");
+			System.out.println("System " + system_index + " on device " + iodev.Name() + " not found, discarding data.");
 		}
 	}
 	
