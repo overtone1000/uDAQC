@@ -21,7 +21,7 @@
 #include <coredecls.h> // settimeofday_cb(); this has to be included after ESP8266WiFi.h
 
 
-namespace ESP_Managers
+namespace UDAQC
 {
 	namespace Network
 	{

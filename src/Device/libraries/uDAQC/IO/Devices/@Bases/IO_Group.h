@@ -8,7 +8,7 @@
 
 #include "IO_Node.h"
 
-namespace ESP_Managers{ namespace IO
+namespace UDAQC{ namespace IO
 {
   class IO_Node;
 

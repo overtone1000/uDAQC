@@ -1,6 +1,6 @@
 #include "IO_Node.h"
 
-namespace ESP_Managers{ namespace IO
+namespace UDAQC{ namespace IO
 {
 
   size_t PseudoWiFiClient::write(uint8_t)
@@ -98,7 +98,7 @@ namespace ESP_Managers{ namespace IO
     int32_t size = DataSize();
     retval+=client->write((uint8_t*)DescriptionCommand(),sizeof(int16_t));
     retval+=client->write((uint8_t*)&(size),sizeof(size));
-    retval+=ESP_Managers::IO::SendString(client,&device_name);
+    retval+=UDAQC::IO::SendString(client,&device_name);
     return retval;
   };
 }

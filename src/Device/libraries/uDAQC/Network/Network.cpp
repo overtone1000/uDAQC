@@ -1,6 +1,6 @@
 #include "Network.h"
 
-namespace ESP_Managers
+namespace UDAQC
 {
 	namespace Network
 	{
@@ -224,7 +224,7 @@ namespace ESP_Managers
 			since_last_webserve.reset();
 			since_last_webserve.start();
 
-			ESP_Managers::FileSystem::Credentials creds = ESP_Managers::FileSystem::read_credentials();
+			UDAQC::FileSystem::Credentials creds = UDAQC::FileSystem::read_credentials();
 			if (webserver.authenticate(creds.login.c_str(), creds.password.c_str()))
 			//Basic Auth Method with Custom realm and Failure Response
 			//return server.requestAuthentication(BASIC_AUTH, www_realm, authFailResponse);
@@ -300,7 +300,7 @@ namespace ESP_Managers
 			}
 
 		  //Add OTA portion of webserver
-			ESP_Managers::FileSystem::Credentials creds = ESP_Managers::FileSystem::read_credentials();
+			UDAQC::FileSystem::Credentials creds = UDAQC::FileSystem::read_credentials();
 		  httpUpdater.setup(&webserver, update_path, creds.login, creds.password);
 		  webserver.begin();
 			DEBUG_println("Webserver started.");
@@ -536,7 +536,7 @@ namespace ESP_Managers
 				}
 				else
 				{
-					ESP_Managers::FileSystem::replace_credentials(login,pw);
+					UDAQC::FileSystem::replace_credentials(login,pw);
 					String dialog = HTML_Builder::html_header;
 					dialog+=
 					R"(
@@ -624,7 +624,7 @@ namespace ESP_Managers
 			void webserver_send(String webpage)
 			{
 				//Are html header and footer really needed here?? They're messing up SmartThings parsing.
-				//webserver.send(200, "text/html", ESP_Managers::Network::html_header + webpage + ESP_Managers::Network::html_footer);
+				//webserver.send(200, "text/html", UDAQC::Network::html_header + webpage + UDAQC::Network::html_footer);
 				//Adafruit examples don't use it. Try this out.
 				webserver.send(200, "text/html", webpage);
 			}
@@ -657,7 +657,7 @@ namespace ESP_Managers
 			}
 			String getMD5Hash()
 			{
-				ESP_Managers::FileSystem::Credentials creds = ESP_Managers::FileSystem::read_credentials();
+				UDAQC::FileSystem::Credentials creds = UDAQC::FileSystem::read_credentials();
 				String input_string = creds.login + ":" + realm + ":" + creds.password;
 				MD5Builder md5;
 			  md5.begin();

@@ -8,7 +8,7 @@
 
 #include "IO_Value.h"
 
-namespace ESP_Managers{ namespace IO
+namespace UDAQC{ namespace IO
 {
   class IO_System;
   class IO_Timestamp:public IO_Value<int64_t>

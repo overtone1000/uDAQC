@@ -3,7 +3,7 @@
 
 #include "Arduino.h"
 
-namespace ESP_Managers{ namespace IO
+namespace UDAQC{ namespace IO
 {
   class PID:public IO_Group{
     public:

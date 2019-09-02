@@ -8,7 +8,7 @@
 #include <time.h>     // time() ctime()
 #include <sys/time.h> // struct timeval
 
-namespace ESP_Managers
+namespace UDAQC
 {
 namespace IO
 {

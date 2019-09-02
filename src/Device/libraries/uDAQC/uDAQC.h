@@ -1,5 +1,5 @@
-#ifndef ESP_Managers_h
-#define ESP_Managers_h
+#ifndef UDAQC_h
+#define UDAQC_h
 
 #define TLS
 
@@ -17,7 +17,7 @@
 #include "Network/Network.h"
 #include "FileSystem/FileSystem.h"
 
-namespace ESP_Managers
+namespace UDAQC
 {
 	void Initialize(String device_name, Network::SecurityBundle bundle);
 };

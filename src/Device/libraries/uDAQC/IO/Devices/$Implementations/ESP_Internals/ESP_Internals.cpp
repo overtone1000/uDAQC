@@ -1,6 +1,6 @@
 #include "ESP_Internals.h"
 
-namespace ESP_Managers
+namespace UDAQC
 {
 namespace IO
 {

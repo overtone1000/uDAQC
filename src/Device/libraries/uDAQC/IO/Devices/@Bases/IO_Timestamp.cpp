@@ -1,6 +1,6 @@
 #include "IO_Timestamp.h"
 
-namespace ESP_Managers
+namespace UDAQC
 {
   namespace IO
   {

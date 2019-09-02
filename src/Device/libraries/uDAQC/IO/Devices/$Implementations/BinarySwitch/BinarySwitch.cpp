@@ -1,6 +1,6 @@
 #include "BinarySwitch.h"
 
-namespace ESP_Managers{ namespace IO
+namespace UDAQC{ namespace IO
 {
   String BinarySwitch::Report()
   {

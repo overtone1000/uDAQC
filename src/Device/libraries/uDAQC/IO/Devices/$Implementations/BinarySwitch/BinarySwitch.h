@@ -5,7 +5,7 @@
 #include <vector>
 #include <ESP_Utilities.h>
 
-namespace ESP_Managers{ namespace IO
+namespace UDAQC{ namespace IO
 {
   class BinarySwitch:public IO_SaveableValue<bool>
   {

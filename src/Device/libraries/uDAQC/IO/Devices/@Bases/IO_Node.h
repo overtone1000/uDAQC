@@ -6,7 +6,7 @@
 #include <ESP_Utilities.h>
 #include <algorithm>
 
-namespace ESP_Managers{ namespace IO
+namespace UDAQC{ namespace IO
 {
   class IO_Group;
 

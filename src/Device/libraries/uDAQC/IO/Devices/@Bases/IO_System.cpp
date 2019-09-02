@@ -1,6 +1,6 @@
 #include "IO_System.h"
 
-namespace ESP_Managers{ namespace IO
+namespace UDAQC{ namespace IO
 {
   void IO_Device::Rename(String new_name)
   {
@@ -11,7 +11,7 @@ namespace ESP_Managers{ namespace IO
   {
     device.Rename(new_name);
   }
-  //WiFiServer IO_System::tcp_server(ESP_Managers::IO::Constants::tcp_main_port);
+  //WiFiServer IO_System::tcp_server(UDAQC::IO::Constants::tcp_main_port);
   std::vector<IO_Saveable*> IO_System::saveable_members;
 
   IO_Device IO_System::device((String)ESP.getChipId());
@@ -107,10 +107,10 @@ namespace ESP_Managers{ namespace IO
     tcp_clients.push_back(new_client);
 
     //Request authentication
-    ESP_Managers::FileSystem::Credentials creds = ESP_Managers::FileSystem::read_credentials();
+    UDAQC::FileSystem::Credentials creds = UDAQC::FileSystem::read_credentials();
     CommandCodec::TCP_Command_Header auth_request_header;
     auth_request_header.message_length = creds.login.length() + Network::realm.length() + sizeof(int16_t)*2;
-    auth_request_header.command_id = ESP_Managers::IO::NetworkCommands::auth_request;
+    auth_request_header.command_id = UDAQC::IO::NetworkCommands::auth_request;
     new_client.send_command_header(auth_request_header);
     SendString(&new_client, &(creds.login));
     SendString(&new_client, &(Network::realm));
@@ -160,10 +160,10 @@ namespace ESP_Managers{ namespace IO
             //Pretty much just need to handle changes to IO_SaveableValue
             switch(new_command.command_id)
             {
-              case ESP_Managers::IO::NetworkCommands::handshake:
+              case UDAQC::IO::NetworkCommands::handshake:
               DEBUG_println("Handshake.");
               break;
-              case ESP_Managers::IO::NetworkCommands::modifiablevalue_modification:
+              case UDAQC::IO::NetworkCommands::modifiablevalue_modification:
               DEBUG_println("Received modification command.");
               IO_Saveable::HandleModificationCommand(new_command);
               break;
@@ -174,7 +174,7 @@ namespace ESP_Managers{ namespace IO
           }
           else
           {
-            if(new_command.command_id==ESP_Managers::IO::NetworkCommands::auth_provision)
+            if(new_command.command_id==UDAQC::IO::NetworkCommands::auth_provision)
             {
               DEBUG_println("Authentication provision command received.");
 
@@ -313,9 +313,9 @@ namespace ESP_Managers{ namespace IO
     page +="     " + (String)(((float)(ESP.getFreeHeap()))) + " bytes used by the heap" + HTML_Builder::breakline;
 
     page += String(members.size()) + R"( reporters.)" + HTML_Builder::breakline;
-    if(ESP_Managers::IO::IO_Node::errcnt>0)
+    if(UDAQC::IO::IO_Node::errcnt>0)
     {
-      page += String(ESP_Managers::IO::IO_Node::errcnt) + R"( unsuccessful device addition attempts.)" + HTML_Builder::breakline;
+      page += String(UDAQC::IO::IO_Node::errcnt) + R"( unsuccessful device addition attempts.)" + HTML_Builder::breakline;
     }
 
     for(auto it=members.begin();it!=members.end();it++)
@@ -330,25 +330,25 @@ namespace ESP_Managers{ namespace IO
     page += HTML_Builder::html_footer;
     //DEBUG_println("Sending page.");
 
-    ESP_Managers::Network::webserver.send(200, "text/html", page);
+    UDAQC::Network::webserver.send(200, "text/html", page);
     //DEBUG_println("Page sent.");
   }
 
   void IO_System::DirectToReportPage()
   {
-    ESP_Managers::Network::webserver.sendHeader("Location",ESP_Managers::IO::IOpanel_path,true);
-    ESP_Managers::Network::webserver.send ( 302, "text/plain", "");
+    UDAQC::Network::webserver.sendHeader("Location",UDAQC::IO::IOpanel_path,true);
+    UDAQC::Network::webserver.send ( 302, "text/plain", "");
   }
 
 	void IO_System::InitializeUDP()
 	{
     DEBUG_println("Starting UDP multicast listener.");
 		udp.stop();
-		//int retval = udp.beginMulticast(WiFi.localIP(), ESP_Managers::IO::Constants::udp_multicast_IP, ESP_Managers::IO::Constants::udp_multicast_port);
+		//int retval = udp.beginMulticast(WiFi.localIP(), UDAQC::IO::Constants::udp_multicast_IP, UDAQC::IO::Constants::udp_multicast_port);
 
     //multicast doesn't work well (subscription expires), just use broadcasting
     //this is fine, as this isn't really the intended situation for multicasting use
-    udp.begin(ESP_Managers::IO::Constants::udp_multicast_port);
+    udp.begin(UDAQC::IO::Constants::udp_multicast_port);
 
     announceUDP();
 	}
@@ -371,7 +371,7 @@ namespace ESP_Managers{ namespace IO
   {
     CommandCodec::TCP_Command_Header header;
     header.message_length = sizeof(int64_t)*2;
-    header.command_id = ESP_Managers::IO::NetworkCommands::timesync_response;
+    header.command_id = UDAQC::IO::NetworkCommands::timesync_response;
 
     udp.beginPacket(center_address, center_port);
     udp.write((uint8_t*)&(header.message_length),sizeof(header.message_length));
@@ -414,7 +414,7 @@ namespace ESP_Managers{ namespace IO
       {
         switch(header.command_id)
         {
-          case ESP_Managers::IO::NetworkCommands::request_subscription:
+          case UDAQC::IO::NetworkCommands::request_subscription:
     			{
             int32_t center_port;
             udp.read((uint8_t*)(&center_port),sizeof(center_port));
@@ -422,7 +422,7 @@ namespace ESP_Managers{ namespace IO
             yield();
     			}
           break;
-          case ESP_Managers::IO::NetworkCommands::timesync_request:
+          case UDAQC::IO::NetworkCommands::timesync_request:
           {
             //DEBUG_println("Received time sync request.");
             int64_t current_center_time;

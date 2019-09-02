@@ -1,10 +1,10 @@
-#include "ESP_Managers.h"
+#include "uDAQC.h"
 
 #include "IO/IO.cpp"
 #include "Network/Network.cpp"
 #include "FileSystem/FileSystem.cpp"
 
-namespace ESP_Managers {
+namespace UDAQC {
 	void Initialize(String device_name, Network::SecurityBundle bundle)
 	{
 		FileSystem::Initialize(); //do this before configuring

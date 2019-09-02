@@ -1,4 +1,4 @@
-#include <ESP_Managers.h>
+#include <uDAQC.h>
 
 void setup()
 {
@@ -6,13 +6,13 @@ void setup()
 
   delay(5000); //Allow serial monitor time to connect...
 
-  ESP_Managers::FileSystem::Initialize(); //do this so any state info can be loaded first before connecting Wifi. This'll get things working faster after a reset.
+  UDAQC::FileSystem::Initialize(); //do this so any state info can be loaded first before connecting Wifi. This'll get things working faster after a reset.
 
-  //ESP_Managers::FileSystem::replace_credentials("login","password");
+  //UDAQC::FileSystem::replace_credentials("login","password");
 
-  //ESP_Managers::FileSystem::clear_networks();
+  //UDAQC::FileSystem::clear_networks();
 
-  ESP_Managers::FileSystem::add_network(&(ESP_Managers::Network::wifiMulti), "MySpectrumWiFib3-2G", "largenest554");
+  UDAQC::FileSystem::add_network(&(UDAQC::Network::wifiMulti), "MySpectrumWiFib3-2G", "largenest554");
 }
 
 void loop()

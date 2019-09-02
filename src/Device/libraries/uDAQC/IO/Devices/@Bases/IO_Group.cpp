@@ -1,6 +1,6 @@
 #include "IO_Group.h"
 
-namespace ESP_Managers{ namespace IO
+namespace UDAQC{ namespace IO
 {
   IO_Group::IO_Group(String name, IO_Group* collection):IO_Node(name,collection)
   {

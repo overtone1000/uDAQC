@@ -1,13 +1,13 @@
-#include <ESP_Managers.h>
+#include <uDAQC.h>
 #include <cmath>
 
-ESP_Managers::IO::IO_System system1("System 1");
-ESP_Managers::IO::IO_SaveableValue<float> test_float("Test float1", "barfoos", &system1);
-ESP_Managers::IO::IO_Value<float> test_input_temp1("Test input0","degC", &system1);
-ESP_Managers::IO::PID test_PID("Test PID1", "degC", "%", &system1);
+UDAQC::IO::IO_System system1("System 1");
+UDAQC::IO::IO_SaveableValue<float> test_float("Test float1", "barfoos", &system1);
+UDAQC::IO::IO_Value<float> test_input_temp1("Test input0","degC", &system1);
+UDAQC::IO::PID test_PID("Test PID1", "degC", "%", &system1);
 
-ESP_Managers::IO::IO_System system2("System 2");
-ESP_Managers::IO::IO_Value<float> test_input_temp2("Test input1","degC", &system2);
+UDAQC::IO::IO_System system2("System 2");
+UDAQC::IO::IO_Value<float> test_input_temp2("Test input1","degC", &system2);
 
 const int LED_PIN = 5; // Thing's onboard, green LED
 
@@ -22,13 +22,13 @@ void setup()
   #endif
 
   DEBUG_println("Serial configured.");
-  ESP_Managers::FileSystem::Initialize(); //do this so any state info can be loaded first before connecting Wifi. This'll get things working faster after a reset.
+  UDAQC::FileSystem::Initialize(); //do this so any state info can be loaded first before connecting Wifi. This'll get things working faster after a reset.
 
   DEBUG_println("Setting pin modes.");
   pinMode(LED_PIN, OUTPUT);
 
   DEBUG_println("Initializing wifi manager.");
-  ESP_Managers::Initialize("uDAQC Template Device", bundle);
+  UDAQC::Initialize("uDAQC Template Device", bundle);
 
   DEBUG_println("Main loop complete.");
 }
@@ -56,5 +56,5 @@ void loop()
     DEBUG_println("Sending update1 at " + (String)millis());
   }
 
-  ESP_Managers::Network::Loop();
+  UDAQC::Network::Loop();
 }

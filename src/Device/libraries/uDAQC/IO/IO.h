@@ -10,7 +10,7 @@
 #include <ESP_Utilities.h>
 #include <ESP8266WebServer.h>
 
-namespace ESP_Managers
+namespace UDAQC
 {
 namespace IO
 {
@@ -58,7 +58,7 @@ namespace IO
 
 #include "Devices/@Bases/IO_System.h"
 
-namespace ESP_Managers
+namespace UDAQC
 {
   namespace IO
 {

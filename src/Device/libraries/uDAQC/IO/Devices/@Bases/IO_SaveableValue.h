@@ -7,14 +7,14 @@
 
 #define DIR R"(/d/)"
 
-namespace ESP_Managers{ namespace IO
+namespace UDAQC{ namespace IO
 {
   class IO_Saveable
   {
   public:
     IO_Saveable()
     {
-      this->saveable_index=ESP_Managers::IO::IO_System::Current()->add_saveable(this); //assigned on instantiation, guaranteed to be unique
+      this->saveable_index=UDAQC::IO::IO_System::Current()->add_saveable(this); //assigned on instantiation, guaranteed to be unique
     }
     ~IO_Saveable()
     {}
@@ -84,7 +84,7 @@ namespace ESP_Managers{ namespace IO
     void Set_NoSave(T new_val);
 
   protected:
-    virtual const int16_t* DescriptionCommand(){return &(ESP_Managers::IO::NetworkCommands::modifiablevalue_description);}
+    virtual const int16_t* DescriptionCommand(){return &(UDAQC::IO::NetworkCommands::modifiablevalue_description);}
     void callback();
     String form_name(){return IO_Value<T>::SafeFullName() + "_frm";}
     String input_name(){return IO_Value<T>::SafeFullName() + "_in";}
@@ -193,38 +193,38 @@ namespace ESP_Managers{ namespace IO
   template<>
   inline void IO_SaveableValue<float>::callback()
   {
-    if(!ESP_Managers::Network::session_authenticated())
+    if(!UDAQC::Network::session_authenticated())
     {
       return;
     }
-    float new_value = ESP_Managers::Network::webserver.arg(input_name()).toFloat();
+    float new_value = UDAQC::Network::webserver.arg(input_name()).toFloat();
     Set(new_value);
-    ESP_Managers::IO::IO_System::Current()->DirectToReportPage();
+    UDAQC::IO::IO_System::Current()->DirectToReportPage();
   }
 
   template<>
   inline void IO_SaveableValue<int>::callback()
   {
-    if(!ESP_Managers::Network::session_authenticated())
+    if(!UDAQC::Network::session_authenticated())
     {
       return;
     }
-    float new_value = ESP_Managers::Network::webserver.arg(input_name()).toInt();
+    float new_value = UDAQC::Network::webserver.arg(input_name()).toInt();
     Set(new_value);
-    ESP_Managers::IO::IO_System::Current()->DirectToReportPage();
+    UDAQC::IO::IO_System::Current()->DirectToReportPage();
   }
 
   template<typename T>
   void IO_SaveableValue<T>::callback()
 	{
-    if(!ESP_Managers::Network::session_authenticated())
+    if(!UDAQC::Network::session_authenticated())
     {
       return;
     }
-    T new_value = (T)ESP_Managers::Network::webserver.arg(input_name());
+    T new_value = (T)UDAQC::Network::webserver.arg(input_name());
 	  Set(new_value);
 
-    ESP_Managers::IO::IO_System::Current()->DirectToReportPage();
+    UDAQC::IO::IO_System::Current()->DirectToReportPage();
 	}
 
   template<typename T>
@@ -234,7 +234,7 @@ namespace ESP_Managers{ namespace IO
 
     if(!request_handler_set)
     {
-      ESP_Managers::Network::webserver.on("/" + form_name(),std::bind(&IO_SaveableValue::callback,this));
+      UDAQC::Network::webserver.on("/" + form_name(),std::bind(&IO_SaveableValue::callback,this));
       request_handler_set=true;
     }
 

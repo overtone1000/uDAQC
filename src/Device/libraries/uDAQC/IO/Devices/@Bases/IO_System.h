@@ -11,7 +11,7 @@
 #include "IO_Group.h"
 #include "IO_Timestamp.h"
 
-namespace ESP_Managers{ namespace IO
+namespace UDAQC{ namespace IO
 {
   class Timestamp;
   class IO_Saveable;
@@ -27,7 +27,7 @@ namespace ESP_Managers{ namespace IO
   class IO_System:public IO_Group
   /*
   This class encompasses the IO for an entire device.
-  An instance is created in the ESP_Managers::IO namespace in ESP_Managers::IO.h and ESP_Managers::IO.cpp.
+  An instance is created in the UDAQC::IO namespace in UDAQC::IO.h and UDAQC::IO.cpp.
   */
   {
   private:

@@ -1,8 +1,8 @@
 #include "PID.h"
 
-namespace ESP_Managers{ namespace IO
+namespace UDAQC{ namespace IO
 {
-		float ESP_Managers::IO::PID::timeconstant = 60.0*1000.0; //60E3 ms (1 minute)
+		float UDAQC::IO::PID::timeconstant = 60.0*1000.0; //60E3 ms (1 minute)
 
 		PID::PID(String name, String input_units, String output_units, IO_Group* collection):
 		IO_Group(name, collection),
