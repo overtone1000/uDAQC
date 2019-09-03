@@ -2,6 +2,7 @@
 #define ESP_FileSystem_h
 
 #include <FS.h>
+#include <ESP8266WiFiMulti.h>
 
 namespace UDAQC
 {

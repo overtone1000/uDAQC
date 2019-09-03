@@ -7,7 +7,6 @@
 #include <list>
 #include <WiFiUdp.h>
 
-#include <ESP_Utilities.h>
 #include "IO_Group.h"
 #include "IO_Timestamp.h"
 
@@ -24,7 +23,7 @@ namespace UDAQC{ namespace IO
     void Rename(String new_name);
   };
 
-  class IO_System:public IO_Group
+  class IO_System:public IO_Group, public Network::PanelReporter
   /*
   This class encompasses the IO for an entire device.
   An instance is created in the UDAQC::IO namespace in UDAQC::IO.h and UDAQC::IO.cpp.

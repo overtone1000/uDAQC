@@ -302,6 +302,8 @@ namespace UDAQC{ namespace IO
 
   void IO_System::ShowReportPage()
   {
+    IO::IO_System::SetCurrent(this); //This is now the active system, so it should be sent any web traffic from client
+
     //DEBUG_println("Building page.");
     String page;
 	  page = HTML_Builder::html_header;

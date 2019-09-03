@@ -595,13 +595,12 @@ namespace UDAQC
 			  redirect();
 			}
 
-			void wifiserver_handle_showIOpanel(IO::IO_System* system)
+			void wifiserver_handle_showIOpanel(PanelReporter* system)
 			{
 				if(!session_authenticated())
 				{
 					return;
 				}
-				IO::IO_System::SetCurrent(system);
 				system->ShowReportPage();
 			}
 

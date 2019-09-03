@@ -10,12 +10,10 @@
 
 #include <cmath>
 
-#include <ESP_Utilities.h>
-
-#include "IO/IO.h"
-
-#include "Network/Network.h"
+#include "ESP_Utilities/ESP_Utilities.h"
 #include "FileSystem/FileSystem.h"
+#include "Network/Network.h"
+#include "IO/IO.h"
 
 namespace UDAQC
 {

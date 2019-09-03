@@ -3,7 +3,6 @@
 
 #include <Arduino.h>
 #include <vector>
-#include <ESP_Utilities.h>
 
 #include <time.h>     // time() ctime()
 #include <sys/time.h> // struct timeval

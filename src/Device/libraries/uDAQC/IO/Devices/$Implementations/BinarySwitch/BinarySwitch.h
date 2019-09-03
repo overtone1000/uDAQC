@@ -3,7 +3,6 @@
 
 #include <Arduino.h>
 #include <vector>
-#include <ESP_Utilities.h>
 
 namespace UDAQC{ namespace IO
 {

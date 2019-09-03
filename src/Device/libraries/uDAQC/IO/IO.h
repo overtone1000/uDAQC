@@ -7,7 +7,6 @@
 #endif
 
 #include <vector>
-#include <ESP_Utilities.h>
 #include <ESP8266WebServer.h>
 
 namespace UDAQC

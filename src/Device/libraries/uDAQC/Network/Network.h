@@ -10,7 +10,7 @@
 #include <ESP8266HTTPUpdateServer.h>
 //#include <ESP8266mDNS.h>
 
-#include "../FileSystem/FileSystem.h"
+//#include "../FileSystem/FileSystem.h"
 
 //Time includes
 //3600000 one hour
@@ -23,8 +23,16 @@
 
 namespace UDAQC
 {
+
+	//Declare the IO namespace and the IO_System class for use by wifiserver_handle_showIOpanel
 	namespace Network
 	{
+		class PanelReporter
+		{
+		public:
+			virtual void ShowReportPage()=0;
+		};
+
 		extern ESP8266WiFiMulti wifiMulti;
 		extern const String realm;
 
@@ -66,7 +74,7 @@ namespace UDAQC
 		String network_to_html(int index, String SSID);
 		void wifiserver_handle_newnetwork();
 		void wifiserver_handle_managenetwork();
-		void wifiserver_handle_showIOpanel(IO::IO_System* system);
+		void wifiserver_handle_showIOpanel(PanelReporter* system);
 		void serialprintallargs();
 
  		ESP8266WebServer* get_webserver(); //Don't do this. Doesn't work. Ruins serial output.
