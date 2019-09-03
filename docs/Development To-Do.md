@@ -2,7 +2,6 @@
 
 ## Device
 * Convert to saving only hashed password once ESP8266 Arduino library v2.6.0 is released
-* Make Device library compatible with Arduino standards.
 * Fix Device web interface (broken by changes allowing multiple systems on one device, see Network.cpp:299).
 
 ## Web Interface
@@ -13,3 +12,8 @@
 
 ## Documentation
 * Improve README.md.
+
+## Deployment
+* Move deployment directory to main repository directory
+* Separate Center deployment into a separate deploy subdirectory
+* Include Arduino library in deployment directory
