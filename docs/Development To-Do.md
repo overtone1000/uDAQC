@@ -3,7 +3,9 @@
 ## Device
 * Convert to saving only hashed password once ESP8266 Arduino library v2.6.0 is released
 * Fix Device web interface (broken by changes allowing multiple systems on one device, see Network.cpp:299).
-* Make library available via Library Manager? https://github.com/arduino/Arduino/wiki/Library-Manager-FAQ
+* Make library available via Library Manager? 
+  * https://github.com/arduino/Arduino/wiki/Library-Manager-FAQ
+  * https://platformio.org/lib/search?query=daq
 
 ## Web Interface
 * Change device credentials page to a dropdown list for domain (admin or guest only).
