@@ -3,10 +3,9 @@
 ## Repository
 * Rename "src" in git repository to "Components"
 * Rename "docs" in git repository to "Documentation" (and update hyperlinks in README.md)
-* Move all contents of library durectory (currently uDAQC/src/Device/libraries/uDAQC) except keywords.txt and library.properties to a "src" subdirectory
-* Move contents of uDAQC/src/Device/examples to the library directory in an "examples" subdirectory
+* Move all contents of library durectory (currently uDAQC/src/Device/libraries/uDAQC) except keywords.txt, library.properties, uDAQC.h, and uDAQC.cpp to a "src" subdirectory (don't forget to change includes in uDAQC.h and uDAQC.cpp!)
+* Move contents of uDAQC/src/Device/examples to the library directory in an "examples" subdirectory (don't forget to change includes for the examples!)
 * Move library directory contents directly to uDAQC/src/Device
-
 
 ## Device
 * Convert to saving only hashed password once ESP8266 Arduino library v2.6.0 is released
