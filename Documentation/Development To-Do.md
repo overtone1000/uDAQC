@@ -1,10 +1,5 @@
 # **Development Tasks**
 
-## Repository
-* Move all contents of library durectory (currently uDAQC/src/Device/libraries/uDAQC) except keywords.txt, library.properties, uDAQC.h, and uDAQC.cpp to a "src" subdirectory (don't forget to change includes in uDAQC.h and uDAQC.cpp!)
-* Move contents of uDAQC/src/Device/examples to the library directory in an "examples" subdirectory (don't forget to change includes for the examples!)
-* Move library directory contents directly to uDAQC/src/Device
-
 ## Device
 * Convert to saving only hashed password once ESP8266 Arduino library v2.6.0 is released
 * Fix Device web interface (broken by changes allowing multiple systems on one device, see Network.cpp:299).
