@@ -13,12 +13,12 @@ cd uDAQC_Center
 
 Download the deployment zip from the GitHub repository into this directory. Be sure to get the version you'd like. For example, to download the v0.1.0 release, use the following URL:
 ```
-wget https://github.com/overtone1000/uDAQC/raw/v0.1.0/src/Center/uDAQC_Center/deploy/deploy.zip
+wget https://github.com/overtone1000/uDAQC/raw/v0.1.0/Components/Center/uDAQC_Center/deploy/deploy.zip
 ```
 
 If you'd like the deployment zip from the master branch, just put the branch name in place of the release version name in the URL:
 ```
-wget https://github.com/overtone1000/uDAQC/raw/master/src/Center/uDAQC_Center/deploy/deploy.zip
+wget https://github.com/overtone1000/uDAQC/raw/master/Components/Center/uDAQC_Center/deploy/deploy.zip
 ```
 
 Unzip the contents of the deployment zip, remove the zip, and run the configuration script.
