@@ -12,7 +12,7 @@ void setup()
 
   //UDAQC::FileSystem::clear_networks();
 
-  UDAQC::FileSystem::add_network(&(UDAQC::Network::wifiMulti), "MySpectrumWiFib3-2G", "largenest554");
+  UDAQC::FileSystem::add_network(&(UDAQC::Network::wifiMulti), "SSID", "password");
 }
 
 void loop()
