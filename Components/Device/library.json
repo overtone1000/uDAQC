@@ -7,7 +7,13 @@
         "name": "Tyler Moore",
         "url": "https://github.com/overtone1000/uDAQC/"
     },
-    "version": "0.2.0",
+    "repository":
+    {
+        "type": "git",
+        "url": "https://github.com/overtone1000/uDAQC.git"
+    },
+    "include": "Components/Device",
+    "version": "0.2.1",
     "export": {
         "include": "uDAQC"
     },
