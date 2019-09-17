@@ -1,0 +1,16 @@
+{
+    "name": "uDAQC_Device",
+    "keywords": "device, control",
+    "description": "A library for creating a uDAQC device. This allows data acquisition from and control of a microcontroller through the uDAQC architecture",
+    "authors":
+    {
+        "name": "Tyler Moore",
+        "url": "https://github.com/overtone1000/uDAQC/"
+    },
+    "version": "0.2.0",
+    "export": {
+        "include": "uDAQC"
+    },
+    "frameworks": "arduino",
+    "platforms": "esp8266"
+}
