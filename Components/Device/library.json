@@ -1,5 +1,5 @@
 {
-    "name": "uDAQC_Device",
+    "name": "uDAQC",
     "keywords": "device, control",
     "description": "A library for creating a uDAQC device. This allows data acquisition from and control of a microcontroller through the uDAQC architecture",
     "authors":
