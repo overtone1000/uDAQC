@@ -13,6 +13,7 @@
 
 ## Documentation
 * Improve README.md.
+* Add instructions for creating Device key using shell script.
 
 ## Deployment
 * Move deployment directory to main repository directory

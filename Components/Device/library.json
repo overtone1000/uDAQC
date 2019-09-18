@@ -13,10 +13,10 @@
         "url": "https://github.com/overtone1000/uDAQC.git"
     },
     "include": "Components/Device",
-    "version": "0.2.4",
     "export": {
         "include": "uDAQC"
     },
+    "version": "0.2.4",
     "frameworks": "arduino",
     "platforms": "esp8266"
 }

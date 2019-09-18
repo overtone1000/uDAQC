@@ -55,7 +55,7 @@ namespace IO
 
 #include "Devices/TCP/CommandCodec.h"
 
-#include "Devices/@Bases/IO_System.h"
+#include "Devices/Bases/IO_System.h"
 
 namespace UDAQC
 {
@@ -64,11 +64,11 @@ namespace UDAQC
   extern const char* IOpanel_path;
 }};
 
-#include "Devices/@Bases/IO_SaveableValue.h"
+#include "Devices/Bases/IO_SaveableValue.h"
 
 //Then derived classes
-#include "Devices/$Implementations/ESP_Internals/ESP_Internals.h"
-#include "Devices/$Implementations/BinarySwitch/BinarySwitch.h"
-#include "Devices/$Implementations/PID/PID.h"
+#include "Devices/Implementations/ESP_Internals/ESP_Internals.h"
+#include "Devices/Implementations/BinarySwitch/BinarySwitch.h"
+#include "Devices/Implementations/PID/PID.h"
 
 #endif

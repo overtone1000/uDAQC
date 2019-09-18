@@ -1,4 +1,4 @@
-#include <uDAQC.h>
+#include "uDAQC.h"
 #include <cmath>
 
 UDAQC::IO::IO_System system1("System 1");

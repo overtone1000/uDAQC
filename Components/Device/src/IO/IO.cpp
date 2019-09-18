@@ -55,13 +55,13 @@ namespace IO
 
 #include "Devices/TCP/CommandCodec.cpp"
 
-#include "Devices/@Bases/IO_Node.cpp"
-#include "Devices/@Bases/IO_Group.cpp"
-#include "Devices/@Bases/IO_Timestamp.cpp"
-#include "Devices/@Bases/IO_System.cpp"
+#include "Devices/Bases/IO_Node.cpp"
+#include "Devices/Bases/IO_Group.cpp"
+#include "Devices/Bases/IO_Timestamp.cpp"
+#include "Devices/Bases/IO_System.cpp"
 
 //#include "Devices/@Bases/IO_SaveableValue.cpp"
 
-#include "Devices/$Implementations/ESP_Internals/ESP_Internals.cpp"
-#include "Devices/$Implementations/BinarySwitch/BinarySwitch.cpp"
-#include "Devices/$Implementations/PID/PID.cpp"
+#include "Devices/Implementations/ESP_Internals/ESP_Internals.cpp"
+#include "Devices/Implementations/BinarySwitch/BinarySwitch.cpp"
+#include "Devices/Implementations/PID/PID.cpp"
