@@ -13,7 +13,7 @@
         "url": "https://github.com/overtone1000/uDAQC.git"
     },
     "include": "Components/Device",
-    "version": "0.2.3",
+    "version": "0.2.4",
     "export": {
         "include": "uDAQC"
     },
