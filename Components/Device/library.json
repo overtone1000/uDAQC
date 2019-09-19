@@ -16,7 +16,15 @@
     "export": {
         "include": "uDAQC"
     },
-    "version": "0.2.4",
+    "build":
+    {
+        "srcFilter":
+        [
+            "+<uDAQC.cpp>",
+            "+<uDAQC.h>"
+        ]
+    },
+    "version": "0.3.0",
     "frameworks": "arduino",
     "platforms": "esp8266"
 }

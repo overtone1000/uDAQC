@@ -2,6 +2,7 @@
 #define IO_Node_h
 
 #include <Arduino.h>
+#include <ESP8266WiFi.h>
 #include <vector>
 #include <algorithm>
 
