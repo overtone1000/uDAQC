@@ -156,7 +156,7 @@ public class HTTP_PostHandler implements Handler
 		String pw2 = request.getParameter(password2);
 		System.out.println("Pw2:" + pw2);
 		String rlm = request.getParameter(realm);
-		System.out.println("Realm:" + pw2);
+		System.out.println("Realm:" + rlm);
 		
 		String message = "";
 		

@@ -303,7 +303,7 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 		System.out.println("Input bytes:");
 		for(byte b:conglomerate_bytes)
 		{
-			short c = (short)b;
+			//short c = (short)b;
 			//if(c<0)
 			//{
 			//	c+= 256;

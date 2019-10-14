@@ -6,7 +6,6 @@
 * Check PlatformIO library availability and add to installation instructions.
 
 ## Web Interface
-* Change device credentials page to a dropdown list for domain (admin or guest only).
 * Profile performance. There is probably need for decimation to allow charting large quantities of data.
 * Should probably store historical data on client hard drive. When reconnecting, it should only update history instead of transmitting the entire history.
 * Make x-axis manipulation faster and more aesthetic.
@@ -16,7 +15,7 @@
 * Add instructions for creating Device key using shell script.
 
 ## Deployment
-* Move deployment directory to main repository directory
+* Move deployment directory to main repository directory (and update docs)
 * Separate Center deployment into a separate deploy subdirectory
 * Include Arduino library in deployment directory
 
