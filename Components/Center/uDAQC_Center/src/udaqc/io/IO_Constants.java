@@ -21,6 +21,7 @@ public class IO_Constants {
 		public static final short history_addendum=14;
 		public static final short timesync_request=15;
 		public static final short timesync_response=16;
+		public static final short history_request=17;
 	}
 	
 	public static class DataTypes

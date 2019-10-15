@@ -16,7 +16,8 @@ const IO_Constants =
     new_device_available: 13,
     history_addendum: 14,
     timesync_request: 15,
-    timesync_response: 16
+    timesync_response: 16,
+    history_request: 17
 };
 
 const DataTypes =
@@ -390,13 +391,22 @@ class Command
     let retval = new Command(message_length,command_ID,message);
     return retval;
   }
-  static createArrayBuffer(command_ID, message)
+  
+  createArrayBuffer()
   {
     let writer = new DataViewWriter(Command.headerSize() + message.length);
-    writer.putInt32(message.length);
-    writer.putInt16(command_ID);
-    writer.putArray(message);
+    writer.putInt32(this.message.byteLength);
+    writer.putInt16(this.command_ID);
+    writer.putArray(new Uint8Array(this.message.view.buffer));
     return writer.view.buffer;
+  }
+
+  sendto(websocket)
+  {
+    let ptcom = this.createArrayBuffer();
+    console.debug("Sending to Command websocket.");
+    console.debug(new Uint8Array(ptcom));
+    websocket.send(ptcom);
   }
 }
 
@@ -420,20 +430,27 @@ class PTCommand
     let retval = new PTCommand(source_ID,internal_command_ID,command.message);
     return retval;
   }
-  static createArrayBuffer(source_ID, internal_command_ID, message)
+  
+  createArrayBuffer()
   {
     //Would be more maintainable code to call the Command version of this function,
     //But would result in an extra memory allocation.
-    let writer = new DataViewWriter(Command.headerSize() + PTCommand.headerSize() + message.length);
-    console.debug("Writer created.");
-    writer.putInt32(PTCommand.headerSize() + message.length);
+    let writer = new DataViewWriter(Command.headerSize() + PTCommand.headerSize() + this.message.view.byteLength);
+    writer.putInt32(PTCommand.headerSize() + this.message.view.byteLength);
     writer.putInt16(IO_Constants.passthrough);
-    writer.putInt16(source_ID);
-    writer.putInt16(internal_command_ID);
-    console.debug("Header written.");
-    writer.putArray(message);
-    console.debug("Message of size " + message.length + " written.");
+    writer.putInt16(this.source_ID);
+    writer.putInt16(this.internal_command_ID);
+    let message_arr = new Uint8Array(this.message.view.buffer);
+    writer.putArray(message_arr);
     return writer.view.buffer;
+  }
+
+  sendto(websocket)
+  {
+    let ptcom = this.createArrayBuffer();
+    console.debug("Sending PTCommand to websocket.");
+    console.debug(new Uint8Array(ptcom));
+    websocket.send(ptcom);
   }
 }
 
@@ -915,16 +932,12 @@ class IO_ModifiableValue extends IO_Value
   ModifyValue()
   {
     let message_size = 2+this.byte_count;
-    console.debug("Message size is " + message_size);
     let message = new DataViewWriter(message_size);
-    console.debug("Created message.");
     message.putInt16(this.modval_index);
     message.put(this.data_type,this.byte_count,this.input_field.value);
-    console.debug("Message written.");
-    let ptcom = PTCommand.createArrayBuffer(this.device_index,IO_Constants.modifiablevalue_modification,message.toBytes());
-    console.debug("Created command.");
-    console.debug(new Uint8Array(ptcom));
-    websocket.send(ptcom);
+    let message_reader = new DataViewReader(message.view.buffer);
+    let ptcom = new PTCommand(this.device_index,IO_Constants.modifiablevalue_modification,message_reader);
+    ptcom.sendto(websocket);
   }
 }
 

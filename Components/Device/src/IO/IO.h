@@ -39,6 +39,7 @@ namespace IO
     extern const int16_t history_addendum;
     extern const int16_t timesync_request;
     extern const int16_t timesync_response;
+    extern const int16_t history_request;
   };
 
   namespace DataTypes

@@ -32,6 +32,7 @@ namespace IO
     const int16_t history_addendum=14;
     const int16_t timesync_request=15;
     const int16_t timesync_response=16;
+    const int16_t history_request=17;
   };
   namespace DataTypes
   {
