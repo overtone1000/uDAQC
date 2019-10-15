@@ -9,6 +9,7 @@
 * Profile performance. There is probably need for decimation to allow charting large quantities of data.
 * Should probably store historical data on client hard drive. When reconnecting, it should only update history instead of transmitting the entire history.
 * Make x-axis manipulation faster and more aesthetic.
+* When there are more points than pixels along the x-axis, convert to a different drawing regime (bin the data and then draw min-max curves)
 
 ## Documentation
 * Improve README.md.
@@ -21,3 +22,5 @@
 
 ## Deferred
 * Can't put library on Arduino Library Manager (https://github.com/arduino/Arduino/wiki/Library-Manager-FAQ) because the whole git repository must be dedicated to that library only.
+* No need for guest domain behavior for device credentials. Just limited web interface dropdown to one available selection.
+* Guest credentials for server could be interesting, but low priority now.
