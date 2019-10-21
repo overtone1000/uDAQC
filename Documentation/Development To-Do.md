@@ -13,6 +13,7 @@ Added a "history_request" command. Instead of automatically sending historical u
 * Should probably store historical data on client hard drive. When reconnecting, it should only update history instead of transmitting the entire history.
 * Make x-axis manipulation faster and more aesthetic.
 * When there are more points than pixels along the x-axis, convert to a different drawing regime (bin the data and then draw min-max curves)
+* Consider making it possible to configure the Center to use a certificate and private key managed by certbot
 
 ## Documentation
 * Improve README.md.
