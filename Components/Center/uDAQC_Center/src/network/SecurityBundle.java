@@ -3,19 +3,36 @@ package network;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
+import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.cert.Certificate;
+import java.security.cert.CertificateException;
+import java.security.cert.CertificateFactory;
+import java.security.cert.X509Certificate;
+import java.security.interfaces.RSAPublicKey;
+import java.security.spec.InvalidKeySpecException;
+import java.security.spec.PKCS8EncodedKeySpec;
+import java.security.spec.X509EncodedKeySpec;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
 import java.util.Locale;
 import java.util.Random;
+import java.util.Vector;
 import java.util.PrimitiveIterator.OfInt;
 import java.util.stream.IntStream;
 
@@ -62,13 +79,118 @@ public class SecurityBundle
 	}
 	
 	public SecurityBundle(String directory)
-	{
-		
+	{		
 		//Creates a security bundle that's saved to disk.
 		keystore_filename=directory+"/self.ks";
 		String bundle_filename=directory+"/random.txt";
 		Path p = Paths.get(bundle_filename);
 		File f = new File(bundle_filename);
+		File external_certificates_filename=new File(directory+"/external_certificate.txt");
+		
+		final String cert_preface="PublicCertificateDirectory=";
+		final String key_preface="PrivateKeyDirectory=";
+		
+		if(external_certificates_filename.exists())
+		{
+			BufferedReader fis;
+			try
+			{
+				fis = new BufferedReader(new FileReader(external_certificates_filename));
+				String public_cert = fis.readLine();
+				String private_key = fis.readLine();
+				fis.close();
+				
+				public_cert=public_cert.substring(cert_preface.length(),public_cert.length());
+				private_key=private_key.substring(key_preface.length(),private_key.length());
+				
+				System.out.println("Public certificate at " + Paths.get(public_cert).toAbsolutePath().toString());
+				System.out.println("Private key at " + Paths.get(private_key).toAbsolutePath().toString());
+				
+				if(!Files.exists(Paths.get(public_cert)))
+				{
+					System.out.println("public certificate file not found");
+				}
+				else if(!Files.exists(Paths.get(private_key)))
+				{
+					System.out.println("private certificate file not found");
+				}
+				else
+				{
+					final String priv_key_head = "-----BEGIN PRIVATE KEY-----";
+					final String priv_key_foot = "-----END PRIVATE KEY-----";
+					final String pub_key_head = "-----BEGIN CERTIFICATE-----";
+					final String pub_key_foot = "-----END CERTIFICATE-----";
+							
+					System.out.println("Loading externally maintained certificate.");
+					//Ripped from https://gist.github.com/destan/b708d11bd4f403506d6d5bb5fe6a82c5
+					//Ripped from https://gist.github.com/wsargent/26c0d478d0901d4b0a11eeb10dcbe0d1
+					
+					System.out.println("Reading files.");
+					String privateKeyContent = new String(Files.readAllBytes(Paths.get(private_key)));
+			        String publicKeyContent = new String(Files.readAllBytes(Paths.get(public_cert)));
+			        
+			        System.out.println("Removing headers and footers.");
+			        privateKeyContent = privateKeyContent.replaceAll("\\n", "").replace(priv_key_head, "").replace(priv_key_foot, "");
+			        
+			        Vector<String> public_keys = new Vector<String>();
+			        //System.out.println(publicKeyContent);
+			        while(publicKeyContent.indexOf(pub_key_foot)>=0)
+			        {
+			        	String next = publicKeyContent.substring(0,publicKeyContent.indexOf(pub_key_foot));
+			        	next = next.replaceAll("\\n", "").replace(pub_key_head, "").replace(pub_key_foot, "");
+			        	System.out.println("Next cert:");
+			        	System.out.println(next);
+			        	public_keys.add(next);
+			        	publicKeyContent=publicKeyContent.substring(publicKeyContent.indexOf(pub_key_foot)+pub_key_foot.length(),publicKeyContent.length());
+			        }
+			        
+			        System.out.println("Creating RSA keystore.");
+			        KeyFactory kf = KeyFactory.getInstance("RSA");
+			        
+			        System.out.println("Getting private key.");
+			        PKCS8EncodedKeySpec keySpecPKCS8 = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyContent));
+			        PrivateKey privKey = kf.generatePrivate(keySpecPKCS8);
+			        
+			        System.out.println("Private key:");
+			        System.out.println(privKey.toString());
+			        
+			        System.out.println("Getting public certificates.");
+			        CertificateFactory certfac = CertificateFactory.getInstance("X.509");
+			        Vector<X509Certificate> certs = new Vector<X509Certificate>();
+			        FileInputStream public_cert_is = new FileInputStream(public_cert);
+			        List<X509Certificate> certificates = new ArrayList<>();
+			        certificates = (List<X509Certificate>)certfac.generateCertificates(public_cert_is);
+			        
+			        for(X509Certificate cert:certificates)
+			        {
+			        	System.out.println("Public cert:");
+				        System.out.println(cert.toString());
+			        }
+				}
+		        
+			} catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException | CertificateException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}			 
+		}
+		
+		else
+		{
+			try
+			{
+				Files.createDirectories(Paths.get(directory));
+				external_certificates_filename.createNewFile();
+				PrintWriter fos = new PrintWriter(external_certificates_filename);
+				fos.println(cert_preface);
+				fos.println(key_preface);
+				fos.close();
+			} catch (IOException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
 		if(!Files.exists(p))
 		{
 			GeneratePasswords();

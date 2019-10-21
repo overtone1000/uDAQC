@@ -117,6 +117,7 @@ public class TCP_Commons
 		try
 		{
 			retval = certFactory.generateCertificate(new ByteArrayInputStream(certificateHolder.getEncoded()));
+			
 		} catch (CertificateException e)
 		{
 			// TODO Auto-generated catch block
