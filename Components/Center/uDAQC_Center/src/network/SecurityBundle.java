@@ -63,9 +63,10 @@ public class SecurityBundle
 	
 	public SecurityBundle(String directory)
 	{
+		
 		//Creates a security bundle that's saved to disk.
-		keystore_filename=directory+"/ks";
-		String bundle_filename=directory+"/b";
+		keystore_filename=directory+"/self.ks";
+		String bundle_filename=directory+"/random.txt";
 		Path p = Paths.get(bundle_filename);
 		File f = new File(bundle_filename);
 		if(!Files.exists(p))
