@@ -182,53 +182,39 @@ public class IO_System_Logged extends IO_System
 		}
 	}
 	
-	public void PassthroughInitialization(Endpoint ep)
+	public void PassthroughInitialization(Endpoint ep, Integer regime, Long last_time)
 	{
-		for(Regime r:Regime.values())
+		Regime r = Regime.values()[regime];
+		System.out.println("Sending regime " + r.toString() + " to passthrough.");
+		File file = regPath(r).toFile();
+		FileInputStream f;
+		try
 		{
-			System.out.println("Sending regime " + r.toString() + " to passthrough.");
-			File file = regPath(r).toFile();
-			FileInputStream f;
-			try
-			{
-				f = new FileInputStream(file);
-			} catch (FileNotFoundException e)
-			{
-				e.printStackTrace();
-				break;
-			}
-			
-			ByteBuffer message = ByteBuffer.allocate((int) (Short.BYTES + Integer.BYTES + Long.BYTES + file.length()));
-			message.order(ByteOrder.LITTLE_ENDIAN);
-			message.putShort(system_index);
-			message.putInt(r.ordinal());
-			message.putLong(logs.get(r).Size());
-			//message.putLong(500L);
-			//message.putLong(-500L);
-			//message.putLong(254305453037L);
-			//message.putLong(-254305453037L);
-			//message.putLong(9007199254740992L); //unsafe for javascript
-			//System.err.println("Message length is still in a non-functional testing mode.");
-							
-			try
-			{
-				f.read(message.array(),message.position(),message.remaining());
-				f.close();
-			} catch (IOException e)
-			{
-				e.printStackTrace();
-				break;
-			}
-			
-			//System.out.println("Message is: ");
-			//for(int n=0;n<message.array().length;n++)
-			//{
-			//	System.out.println(Integer.toBinaryString((char)(message.array()[n])));
-			//}
-			
-			Command hc = new Command(Command_IDs.history,message.array());
-			PT_Command pthc = new PT_Command(iodev.DirectDev().DeviceIndex(),hc);
-			ep.SendCommand(pthc);
+			f = new FileInputStream(file);
+		} catch (FileNotFoundException e)
+		{
+			e.printStackTrace();
+			return;
 		}
+		
+		ByteBuffer message = ByteBuffer.allocate((int) (Short.BYTES + Integer.BYTES + Long.BYTES + file.length()));
+		message.order(ByteOrder.LITTLE_ENDIAN);
+		message.putShort(system_index);
+		message.putInt(r.ordinal());
+		message.putLong(logs.get(r).Size());
+		
+		try
+		{
+			f.read(message.array(),message.position(),message.remaining());
+			f.close();
+		} catch (IOException e)
+		{
+			e.printStackTrace();
+			return;
+		}
+				
+		Command hc = new Command(Command_IDs.history,message.array());
+		PT_Command pthc = new PT_Command(iodev.DirectDev().DeviceIndex(),hc);
+		ep.SendCommand(pthc);
 	}
-	}
+}

@@ -16,9 +16,12 @@ public class Socket_uD extends WebSocketAdapter
 		this.parent=parent;
 	}
 	
+	private Session session=null;
+	
     @Override
     public void onWebSocketConnect(Session sess)
     {
+    	this.session=sess;
         super.onWebSocketConnect(sess);
         System.out.println("Socket Connected: " + sess);
         parent.SessionOpened(sess);
@@ -27,6 +30,7 @@ public class Socket_uD extends WebSocketAdapter
     @Override
     public void onWebSocketClose(int statusCode, String reason)
     {
+    	this.session=null;
         super.onWebSocketClose(statusCode,reason);
         System.out.println("Socket Closed: [" + statusCode + "] " + reason);
         parent.SessionClosed(this.getSession());
@@ -52,7 +56,7 @@ public class Socket_uD extends WebSocketAdapter
     	{
     		return;
     	}
-    	parent.HandleCommand(c);
+    	parent.HandleCommand(c,session);
     }
     
     @Override

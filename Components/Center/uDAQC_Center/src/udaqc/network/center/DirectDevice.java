@@ -136,12 +136,18 @@ public class DirectDevice extends Device
 			PT_Command ptc = new PT_Command(d.DeviceIndex(),c);
 			ep.SendCommand(ptc);
 			
-			Vector<IO_System_Logged> i = d.iodev.Systems();
-			for(IO_System_Logged s:i)
-			{
-				s.PassthroughInitialization(ep);				
-			}
+			//This now only happens upon request from the client
+			//Vector<IO_System_Logged> i = d.iodev.Systems();
+			//for(IO_System_Logged s:i)
+			//{
+			//	s.PassthroughInitialization(ep);				
+			//}
 		}
+	}
+	
+	public IO_System_Logged GetSystem(short index)
+	{
+		return this.iodev.System(index);
 	}
 	
 	

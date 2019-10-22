@@ -86,8 +86,15 @@ The raw data message contains this raw timestamp. When the server receives the m
 
 There is currently a timing discrepancy. The raw tiemstamp is in microseconds since but, but Java converts to milliseconds since Unix epoch. This is simply due Java's limited compatibility with microsecond times. Use of microseconds would be alright from a type perspective even in Javascript, as 2,147,483,647,000,000 microseconds per epoch is still less than the safe integer value for Javascript.
 
+# History Request Structure
+This message is a command that contains a request from a web client to the Center to send historical data. Its structure is as follows:
+1. int_16 indicating the IO_Device index for the device about which data is being requested
+2. int_16 indicating the IO_System index for the system about which data is being requested
+3. int_32 indicating the temporal regime
+4. int_64 containing the timestamp of the last datum the Center already has for this regime. If it has none, this value will be left at zero.
+
 # History Structure
-This message contains the logged data for a single regime. Its structure is as follows:
+This message contains the logged data for a single regime. It's a passthrough command. After the passthrough command header, the message contains:
 1. int_16 indicating the IO_System index for this IO_Device
 2. int_32 indicating the temporal regime (0 for live, 1 for minute, 2 for hour, 3 for day). This might be improved by instead sending the number of microseconds or milliseconds over which this time series has been averaged or otherwise consolidated.
 3. int_64 indicating the maximum size of the following byte array (NOT necessarily the number provided in this message). Although javascript does not handle 64-bit integers well, this is likely large enough for practical purposes.

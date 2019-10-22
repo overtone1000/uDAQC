@@ -10,11 +10,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.Semaphore;
 
 import network.http.websocket.Servlet_uD;
 import network.SecurityBundle;
 import udaqc.io.IO_Constants;
+import udaqc.io.log.IO_System_Logged;
 import udaqc.network.center.Center;
 import udaqc.network.center.DirectDevice;
 import udaqc.network.center.command.Command;
@@ -400,7 +402,7 @@ public class HTTPS_Server
 		}
     }
     
-    public void HandleCommand(Command command)
+    public void HandleCommand(Command command, Session session)
     {
     	switch(command.Header().command_id)
     	{
@@ -408,6 +410,18 @@ public class HTTPS_Server
     		PT_Command ptc = new PT_Command(command);
     		parent.Passthrough_from_Secondary(ptc);
     		break;
+    	case IO_Constants.Command_IDs.history_request:
+    	{
+    		ByteBuffer mes = command.getmessage();
+    		Short device_index = mes.getShort();
+    		Short system_index = mes.getShort();
+    		Integer regime = mes.getInt();
+    		Long last_time = mes.getLong();
+    		System.out.println("History request for regime " + regime + " after " + last_time);
+    		
+    		DirectDevice.getDirectDevice(device_index).GetSystem(system_index).PassthroughInitialization(new WS_Endpoint(session), regime, last_time);
+    	}
+    	break;
     	default:
     		System.out.println("Unknown command received from web client.");
     	}
