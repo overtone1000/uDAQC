@@ -69,7 +69,9 @@ public class TCP_Commons
 		
 		java.math.BigInteger serial = new java.math.BigInteger(64, new SecureRandom());
 		java.util.Date notBeforeDate=new java.util.Date();
-		java.util.Date notAfter=new java.util.Date(1000*60*24*365*50); //50 years
+		java.util.Date notAfter=new java.util.Date(notBeforeDate.toInstant().plusSeconds(60*60*24*365*50).toEpochMilli()); //50 years
+		System.out.println("Certificate start date: " + notBeforeDate.toString());
+		System.out.println("Certificate expiration date: " + notAfter.toString());
 		SubjectPublicKeyInfo publicKeyInfo = SubjectPublicKeyInfo.getInstance(keyPair.getPublic().getEncoded());
 		
 		X509v3CertificateBuilder cert = new X509v3CertificateBuilder(issuer,serial,notBeforeDate,notAfter,issuer,publicKeyInfo);

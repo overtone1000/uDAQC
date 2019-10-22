@@ -293,7 +293,8 @@ public class HTTPS_Server
         https_config.addCustomizer(src);
         
         SslContextFactory sslContextFactory = new SslContextFactory.Server();
-        sslContextFactory.setKeyStorePath(bundle.keystore_filename);
+        sslContextFactory.setKeyStore(bundle.keystore);
+        //sslContextFactory.setKeyStorePath(bundle.keystore_filename);
         sslContextFactory.setKeyStorePassword(bundle.keystore_password);
         sslContextFactory.setKeyManagerPassword(bundle.key_password);
 

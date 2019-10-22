@@ -12,10 +12,12 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.Key;
 import java.security.KeyFactory;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
@@ -29,6 +31,7 @@ import java.security.spec.PKCS8EncodedKeySpec;
 import java.security.spec.X509EncodedKeySpec;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -78,19 +81,30 @@ public class SecurityBundle
 		CreateKeystore();
 	}
 	
-	public SecurityBundle(String directory)
-	{		
-		//Creates a security bundle that's saved to disk.
-		keystore_filename=directory+"/self.ks";
-		String bundle_filename=directory+"/random.txt";
-		Path p = Paths.get(bundle_filename);
-		File f = new File(bundle_filename);
+	final private String algorithm = "RSA";
+	
+	private boolean BuildFromExternal(String directory)
+	{
 		File external_certificates_filename=new File(directory+"/external_certificate.txt");
 		
-		final String cert_preface="PublicCertificateDirectory=";
-		final String key_preface="PrivateKeyDirectory=";
-		
-		if(external_certificates_filename.exists())
+		if(!external_certificates_filename.exists())
+		{
+			try
+			{
+				Files.createDirectories(Paths.get(directory));
+				external_certificates_filename.createNewFile();
+				PrintWriter fos = new PrintWriter(external_certificates_filename);
+				fos.println(cert_preface);
+				fos.println(key_preface);
+				fos.close();
+			} catch (IOException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+			return false;
+		}
+		else
 		{
 			BufferedReader fis;
 			try
@@ -99,20 +113,27 @@ public class SecurityBundle
 				String public_cert = fis.readLine();
 				String private_key = fis.readLine();
 				fis.close();
-				
+							
 				public_cert=public_cert.substring(cert_preface.length(),public_cert.length());
 				private_key=private_key.substring(key_preface.length(),private_key.length());
+				
+				if(public_cert=="" || private_key=="")
+				{
+					return false;
+				}
 				
 				System.out.println("Public certificate at " + Paths.get(public_cert).toAbsolutePath().toString());
 				System.out.println("Private key at " + Paths.get(private_key).toAbsolutePath().toString());
 				
-				if(!Files.exists(Paths.get(public_cert)))
+				if(!Files.exists(Paths.get(public_cert)) || Files.isDirectory(Paths.get(public_cert)))
 				{
 					System.out.println("public certificate file not found");
+					return false;
 				}
-				else if(!Files.exists(Paths.get(private_key)))
+				else if(!Files.exists(Paths.get(private_key)) || Files.isDirectory(Paths.get(private_key)))
 				{
 					System.out.println("private certificate file not found");
+					return false;
 				}
 				else
 				{
@@ -138,14 +159,14 @@ public class SecurityBundle
 			        {
 			        	String next = publicKeyContent.substring(0,publicKeyContent.indexOf(pub_key_foot));
 			        	next = next.replaceAll("\\n", "").replace(pub_key_head, "").replace(pub_key_foot, "");
-			        	System.out.println("Next cert:");
-			        	System.out.println(next);
+			        	//System.out.println("Next cert:");
+			        	//System.out.println(next);
 			        	public_keys.add(next);
 			        	publicKeyContent=publicKeyContent.substring(publicKeyContent.indexOf(pub_key_foot)+pub_key_foot.length(),publicKeyContent.length());
 			        }
 			        
-			        System.out.println("Creating RSA keystore.");
-			        KeyFactory kf = KeyFactory.getInstance("RSA");
+			        System.out.println("Creating " + algorithm + " keystore.");
+			        KeyFactory kf = KeyFactory.getInstance(algorithm);
 			        
 			        System.out.println("Getting private key.");
 			        PKCS8EncodedKeySpec keySpecPKCS8 = new PKCS8EncodedKeySpec(Base64.getDecoder().decode(privateKeyContent));
@@ -156,44 +177,67 @@ public class SecurityBundle
 			        
 			        System.out.println("Getting public certificates.");
 			        CertificateFactory certfac = CertificateFactory.getInstance("X.509");
-			        Vector<X509Certificate> certs = new Vector<X509Certificate>();
 			        FileInputStream public_cert_is = new FileInputStream(public_cert);
-			        List<X509Certificate> certificates = new ArrayList<>();
-			        certificates = (List<X509Certificate>)certfac.generateCertificates(public_cert_is);
 			        
-			        for(X509Certificate cert:certificates)
+			        System.out.println("Converting public certificates.");
+			        @SuppressWarnings("unchecked")
+					List<X509Certificate> certificates = (List<X509Certificate>) certfac.generateCertificates(public_cert_is);
+			        
+			        System.out.println(certificates.size() + " public certificates found.");
+			        Certificate[] certs = new Certificate[certificates.size()];
+			        for(int n=0;n<certificates.size();n++)
 			        {
-			        	System.out.println("Public cert:");
-				        System.out.println(cert.toString());
+			        	certs[n]=certificates.get(n);
 			        }
+			        //System.out.println("Listing public certificates.");
+			        //for(X509Certificate cert:certificates)
+			        //{
+			        	//System.out.println("Public certificate added from " + cert.getIssuerAlternativeNames().toString());
+				        //System.out.println(cert.toString());
+			        //}
+			        
+			        System.out.println("Getting keystore.");
+					keystore  = KeyStore.getInstance(KeyStore.getDefaultType());
+					
+					System.out.println("Loading keystore.");
+					keystore.load(null, keystore_password.toCharArray());
+					
+					System.out.println("Setting key and certificates.");
+			    	keystore.setKeyEntry("key1", privKey, key_password.toCharArray(), certs);
+			    	System.out.println("Keystore generated from external key and certificates.");
 				}
 		        
-			} catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException | CertificateException e)
+			} catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException | CertificateException | KeyStoreException e)
 			{
 				// TODO Auto-generated catch block
 				e.printStackTrace();
+				return false;
 			}			 
 		}
+	    System.out.println("External keystore function returning true.");
+		return true;
+	}
+	
+	private final String cert_preface="PublicCertificateDirectory=";
+	private final String key_preface="PrivateKeyDirectory=";
+	
+	public SecurityBundle(String directory)
+	{		
+		//Creates a security bundle that's saved to disk.
+		keystore_filename=directory+"/self.ks";
+		String bundle_filename=directory+"/random.txt";
+		Path p = Paths.get(bundle_filename);
+		File f = new File(bundle_filename);
 		
-		else
+		GeneratePasswords();
+		
+		if(BuildFromExternal(directory))
 		{
-			try
-			{
-				Files.createDirectories(Paths.get(directory));
-				external_certificates_filename.createNewFile();
-				PrintWriter fos = new PrintWriter(external_certificates_filename);
-				fos.println(cert_preface);
-				fos.println(key_preface);
-				fos.close();
-			} catch (IOException e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
+			return;
 		}
+
 		if(!Files.exists(p))
 		{
-			GeneratePasswords();
 			try
 			{
 				Files.createDirectories(Paths.get(directory));
@@ -218,18 +262,16 @@ public class SecurityBundle
 				fis.close();
 			} catch (IOException e)
 			{
-				GeneratePasswords();
 				e.printStackTrace();
 			}
 		}
-		CreateKeystore();			
+		CreateKeystore();
 	}
 	
 	protected void CreateKeystore()
 	{
 		try
 		{
-			String algorithm = "RSA";
 			keystore  = KeyStore.getInstance(KeyStore.getDefaultType());
 			
 			boolean generate = true;
@@ -247,7 +289,7 @@ public class SecurityBundle
 			}
 	        
 			if(generate)
-			{				
+			{
 		    	KeyPairGenerator kpg = KeyPairGenerator.getInstance(algorithm);
 		    	kpg.initialize(2048);
 		    	KeyPair kp = kpg.generateKeyPair();
