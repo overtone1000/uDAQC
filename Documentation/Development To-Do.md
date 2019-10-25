@@ -3,7 +3,7 @@
 ## In Progress Notes
 Added a "history_request" command. Instead of automatically sending historical update when a client connects to the Center web interface, the client shoudl request history FOR EACH SYSTEM and provide the time of the most recent datum the client has FOR THAT SYSTEM. This will allow saving historical data in a temp directory. Using this saved data instead of downloading again will limit bandwidth consumption on subsequent sessions. It'll also eventually allow for a smaller memory footprint.
 
-Center code is working. Should correctly interpret history_request commands and respond only with a select history for one regime of one device of one system. Still need to modify the PassthroughInitialization function in IO_System_Logged.java to remove all data equal to or older than the supplied last_time before sending.
+Center code is drafted. Should correctly interpret history_request commands and respond only with a select history for one regime of one device of one system. Still need to modify the PassthroughInitialization function in IO_System_Logged.java to remove all data equal to or older than the supplied last_time before sending.
 
 ## Device
 * Convert to saving only hashed password once ESP8266 Arduino library v2.6.0 is released

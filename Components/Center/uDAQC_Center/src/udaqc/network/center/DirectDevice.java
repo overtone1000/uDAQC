@@ -58,21 +58,24 @@ public class DirectDevice extends Device
 		boolean known = retval.device_IsKnown();
 		if(known)
 		{
+			System.out.println("Device already known.");
 			for(DirectDevice d:devices) {
 				if(d.isEqual(retval))
 				{
+					System.out.println("Found device in device list. Returning.");
 					return d;
 				}
 			}
 		}
 		else
 		{
+			System.out.println("Unknown device. Saving.");
 			retval.description_toFile();
-			retval.device_index=(short) devices.size();
 		}
 		
+		System.out.println("Adding device to device list.");
+		retval.device_index=(short) devices.size();
 		devices.add(retval);
-				
 		device_list_mutex.release();
 		
 		return retval;
@@ -94,6 +97,7 @@ public class DirectDevice extends Device
 	
 	public static void LoadSavedDevices(Path path, Center center)
 	{
+		System.out.println("Loading saved devices.");
 		try
 		{
 			Files.createDirectories(path);
@@ -116,6 +120,7 @@ public class DirectDevice extends Device
 						data.position(0);
 						data.order(ByteOrder.LITTLE_ENDIAN);
 						
+						System.out.println("Calling getDirectDevice function.");
 						getDirectDevice(path,data,center); //use the getSystem function for thread safety because it uses the mutex and makes sure this isn't a duplicate
 					}
 				}
@@ -134,6 +139,7 @@ public class DirectDevice extends Device
 			System.out.println("Sending " + d.iodev.Name());
 			Command c = new Command(Command_IDs.group_description,d.description);
 			PT_Command ptc = new PT_Command(d.DeviceIndex(),c);
+			System.out.println("Sending initialization for device of index " + d.DeviceIndex());
 			ep.SendCommand(ptc);
 			
 			//This now only happens upon request from the client

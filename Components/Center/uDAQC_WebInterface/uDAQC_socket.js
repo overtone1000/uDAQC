@@ -45,8 +45,29 @@ function handlePassthroughCommand(ptcom)
   switch(ptcom.internal_command_ID)
   {
     case IO_Constants.group_description:
-      new IO_Device(ptcom.message,ptcom.source_ID);
+      console.debug("Received description for device " + ptcom.source_ID);
+      let new_device = new IO_Device(ptcom.message,ptcom.source_ID);
       update_devices();
+      //new_device.index contains the device's index
+      //new_device.member_count should contain the number of systems
+      //.system_index will contain the index for a given system
+      //new_device.members[] returns systems
+      //new_device.members[n].system_index should give the index for each system
+      const history_request_size = 2+2+4+8;
+      for(let sys_index = 0; sys_index<new_device.member_count; sys_index++)
+      {
+        for(const regime of RegimesIterable)
+        {
+          let message = new DataViewWriter(history_request_size);
+          message.putInt16(new_device.index);
+          message.putInt16(new_device.members[sys_index].system_index);
+          message.putInt32(regime);
+          message.putInt64(0);
+          console.debug("Requesting from device " + new_device.index + " system " + new_device.members[sys_index].system_index + " regime " + regime);
+          let command = new Command(history_request_size,IO_Constants.history_request, message);
+          command.sendto(websocket);
+        }
+      }
       break;
     case IO_Constants.history:
       handleHistory(ptcom);

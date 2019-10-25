@@ -1,5 +1,7 @@
 "use strict";
 
+const max_uint32 = Math.pow(2,32);
+
 const IO_Constants =
 {
     system_description: 17,
@@ -36,6 +38,12 @@ const Regimes =
   hour: 2,
   day: 3
 };
+const RegimesIterable = [
+  Regimes.live,
+  Regimes.minute,
+  Regimes.hour,
+  Regimes.day
+];
 
 let Globals =
 {
@@ -127,8 +135,27 @@ class DataViewWriter{
   }
 
   putInt64(value){
-    console.error("Int64 put not yet implemented");
-    this.pointer+=8;
+
+    if(Math.abs(value)>Number.MAX_SAFE_INTEGER)
+    {
+        console.warn("Unsafe integer size = " + retval);
+    }
+
+    let little;
+    let big;
+
+    big=Math.floor(value/max_uint32);
+    little=value%max_uint32;
+    
+    if(this.view.isLittleEndian)
+    {
+      this.putInt32(little, this.view.isLittleEndian);
+      this.putInt32(big, this.view.isLittleEndian);
+    }
+    else {
+      this.putInt32(big, this.view.isLittleEndian);
+      this.putInt32(little, this.view.isLittleEndian);
+    }
   }
 
   putUint8(value){
@@ -211,8 +238,6 @@ class DataViewReader {
       big = this.getInt32(this.pointer, this.view.isLittleEndian);
       little = this.getUint32(this.pointer, this.view.isLittleEndian);
     }
-
-    const max_uint32 = Math.pow(2,32);
 
     let retval;
     if(big>=0)
@@ -394,8 +419,8 @@ class Command
   
   createArrayBuffer()
   {
-    let writer = new DataViewWriter(Command.headerSize() + message.length);
-    writer.putInt32(this.message.byteLength);
+    let writer = new DataViewWriter(Command.headerSize() + this.message.view.byteLength);
+    writer.putInt32(this.message.view.byteLength);
     writer.putInt16(this.command_ID);
     writer.putArray(new Uint8Array(this.message.view.buffer));
     return writer.view.buffer;
