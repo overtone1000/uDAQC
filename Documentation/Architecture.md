@@ -86,14 +86,39 @@ The raw data message contains this raw timestamp. When the server receives the m
 
 There is currently a timing discrepancy. The raw tiemstamp is in microseconds since but, but Java converts to milliseconds since Unix epoch. This is simply due Java's limited compatibility with microsecond times. Use of microseconds would be alright from a type perspective even in Javascript, as 2,147,483,647,000,000 microseconds per epoch is still less than the safe integer value for Javascript.
 
-# History Request Structure
+# Lossy Data
+## Lossy Data Request Structure
+The web client submits requests for data from the server depending on the graphing requirements. The request contains:
+1. int_32 indicating the temporal regime
+2. int_64 containing the timestamp of the start time
+3. int_64 containing the timestamp of the end time; if the most current data is requested, a negative value will be sent
+
+## Lossy Data Structure
+The server supplies data in response to a data request. The response contains:
+1. int_64 containing the timestamp of the start time
+2. int_64 containing the timestamp of the end time
+3. uint_8 containing flags for the nature of the data included
+  * 0 bit: raw value
+  * 1 bit: max value
+  * 2 bit: min value
+  For now, only these three bits will be used. The server will either send raw data (if the number of data for the pertinent temporal range is less than a given cutoff value like 1024) or min and max data (if greater than the cutoff). This will keep rendering times and transmission volumes reasonable.
+4. int_32 containing the number of data in each data set.
+5. The remainder of the message will be one data set for each of the flags marked in #3 above.
+
+## Lossy Data Addendum
+If the web client requested current data in its request, the server will send addenda:
+1. The message will have one datum for each of the flags marked in the most recent lossy data structure received.
+Of note, the client must be able to handle this addendum as either an update to an existing bin of data with the same timestamp or as a new timestamp.
+
+# History (deprecated)
+## History Request Structure (deprecated)
 This message is a command that contains a request from a web client to the Center to send historical data. Its structure is as follows:
 1. int_16 indicating the IO_Device index for the device about which data is being requested
 2. int_16 indicating the IO_System index for the system about which data is being requested
 3. int_32 indicating the temporal regime
 4. int_64 containing the timestamp of the last datum the Center already has for this regime. If it has none, this value will be left at zero.
 
-# History Structure
+## History Structure (deprecated)
 This message contains the logged data for a single regime. It's a passthrough command. After the passthrough command header, the message contains:
 1. int_16 indicating the IO_System index for this IO_Device
 2. int_32 indicating the temporal regime (0 for live, 1 for minute, 2 for hour, 3 for day). This might be improved by instead sending the number of microseconds or milliseconds over which this time series has been averaged or otherwise consolidated.
@@ -107,13 +132,14 @@ The log file itself is composed of a series of entries with the following struct
 2. int_64 containing timestamp (ms since last Java epoch). Although javascript does not handle 64-bit integers well, the max safe value is 9,007,199,254,740,991 while an epoch only contains 2,147,483,647,000 milliseconds (more than 3 orders of magnitude)
 3. float_32 for each IO_Value in this system (in the same order as that found in a data message)
 
-# History Addendum structure
+## History Addendum structure (deprecated)
 This message contains an additional datum for a single regime. Its structure is as follows:
 1. int_32 indicating the temporal regime.
 2. int_64 indicating the timestamp of the first datum in the archive. If a datum is older, it is expired and should be deleted.
 3. byte[] containing the log file with the same structure as in the above but containing only a single datum
 
-# Value Modification Structure
+# Modifying Values
+## Value Modification Structure
 IO_ModifiableValue modification message is a command whose message has the following structure:
 1. int_16 containing the index for the ModifiableValue (see above)
 2. byte[] containing the value to which the ModifiableValue should be changed. The array is equal to the length of the data for this object (inherited from IO_Node).

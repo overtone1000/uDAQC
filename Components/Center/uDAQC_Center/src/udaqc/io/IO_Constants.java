@@ -22,6 +22,9 @@ public class IO_Constants {
 		public static final short timesync_request=15;
 		public static final short timesync_response=16;
 		public static final short history_request=17;
+		public static final short lossy_data_request=18;
+		public static final short lossy_data=19;
+		public static final short lossy_data_addendum=20;
 	}
 	
 	public static class DataTypes

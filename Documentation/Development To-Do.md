@@ -1,7 +1,8 @@
 # **Development Tasks**
 
 ## In Progress Notes
-
+### Decimation
+The new strategy is to send data of varying temporal resolution to the web client on demand for chart rendering. This is detailed in changes to "Architecture.md"
 
 ## Device
 * Convert to saving only hashed password once ESP8266 Arduino library v2.6.0 is released
@@ -13,6 +14,8 @@
 * ~~Should probably store historical data on client hard drive. When reconnecting, it should only update history instead of transmitting the entire history.~~ HTML5 API for local storage appears to be only implemented in Chrome. Can't store local data.
 * Make x-axis manipulation faster and more aesthetic.
 * When there are more points than pixels along the x-axis, convert to a different drawing regime (bin the data and then draw min-max curves)
+* Migrate to decimation server side to allow serving up smaller data sets for the chart needed at that time. 
+* Nneed to be able to download all data to a file.
 
 ## Documentation
 * Improve README.md.

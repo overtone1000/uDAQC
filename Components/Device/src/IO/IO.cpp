@@ -33,6 +33,9 @@ namespace IO
     const int16_t timesync_request=15;
     const int16_t timesync_response=16;
     const int16_t history_request=17;
+    const int16_t lossy_data_request=18;
+		const int16_t lossy_data=19;
+		const int16_t lossy_data_addendum=20;
   };
   namespace DataTypes
   {
