@@ -17,6 +17,7 @@ import network.http.websocket.Servlet_uD;
 import network.SecurityBundle;
 import udaqc.io.IO_Constants;
 import udaqc.io.log.IO_System_Logged;
+import udaqc.io.log.IO_System_Logged.Regime;
 import udaqc.network.center.Center;
 import udaqc.network.center.DirectDevice;
 import udaqc.network.center.command.Command;
@@ -48,6 +49,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
+import org.joda.time.DateTime;
 import org.eclipse.jetty.util.security.Credential;
 
 public class HTTPS_Server
@@ -420,6 +422,24 @@ public class HTTPS_Server
     		System.out.println("History request for regime " + regime + " after " + last_time);
     		
     		DirectDevice.getDirectDevice(device_index).GetSystem(system_index).PassthroughInitialization(new WS_Endpoint(session), regime, last_time);
+    	}
+    	break;
+    	case IO_Constants.Command_IDs.lossy_data_request:
+    	{
+    		ByteBuffer mes = command.getmessage();
+    		Integer regime = mes.getInt();
+    		Long start_time = mes.getLong();
+    		Long end_time = mes.getLong();
+
+    		DateTime start = new DateTime(start_time);
+    		DateTime end = null;
+    		if(end_time>=0)
+    		{
+    			end = new DateTime(end_time);
+    		}
+    		
+    		
+    		DirectDevice.HandleLossyDataRequest(new WS_Endpoint(session), Regime.values()[regime], start, end);
     	}
     	break;
     	default:

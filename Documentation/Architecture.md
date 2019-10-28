@@ -94,20 +94,21 @@ The web client submits requests for data from the server depending on the graphi
 3. int_64 containing the timestamp of the end time; if the most current data is requested, a negative value will be sent
 
 ## Lossy Data Structure
-The server supplies data in response to a data request. The response contains:
-1. int_64 containing the timestamp of the start time
-2. int_64 containing the timestamp of the end time
-3. uint_8 containing flags for the nature of the data included
+The server supplies data in response to a data request. The response contains a passthrough command. After the initial passthrough information, the message contains:
+1. int_16 inidicated the IO_System index
+2. uint_8 containing flags for the nature of the data included
   * 0 bit: raw value
   * 1 bit: max value
   * 2 bit: min value
   For now, only these three bits will be used. The server will either send raw data (if the number of data for the pertinent temporal range is less than a given cutoff value like 1024) or min and max data (if greater than the cutoff). This will keep rendering times and transmission volumes reasonable.
-4. int_32 containing the number of data in each data set.
-5. The remainder of the message will be one data set for each of the flags marked in #3 above.
+3. int_32 containing the number of epochs in each data set.
+4. int_32[n], each containing the number of data contained by epoch[n]
+5. The remainder of the message will be one data set for each of the flags marked in #2 above.
 
 ## Lossy Data Addendum
-If the web client requested current data in its request, the server will send addenda:
-1. The message will have one datum for each of the flags marked in the most recent lossy data structure received.
+If the web client requested current data in its request, the server will send addenda as additional passthrough commands. After the passthrough header, the message contains:
+1. int_16 inidicated the IO_System index
+2. The message will have one datum for each of the flags marked in the most recent lossy data structure received.
 Of note, the client must be able to handle this addendum as either an update to an existing bin of data with the same timestamp or as a new timestamp.
 
 # History (deprecated)

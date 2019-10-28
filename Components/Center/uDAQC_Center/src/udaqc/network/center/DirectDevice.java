@@ -13,10 +13,12 @@ import java.util.Vector;
 import java.util.concurrent.Semaphore;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.mina.transport.socket.nio.NioSession;
+import org.joda.time.DateTime;
 
 import udaqc.io.IO_Constants.Command_IDs;
 import udaqc.io.IO_Device;
 import udaqc.io.log.IO_System_Logged;
+import udaqc.io.log.IO_System_Logged.Regime;
 import udaqc.network.Constants;
 import udaqc.network.Device;
 import udaqc.network.center.command.Command;
@@ -130,6 +132,18 @@ public class DirectDevice extends Device
 			System.out.println(ExceptionUtils.getStackTrace(e));
 		}
 	}	
+	
+	public static void HandleLossyDataRequest(Endpoint ep, Regime regime, DateTime start, DateTime end)
+	{
+		System.out.println("Handling lossy data request for regime " + regime.toString() + "(" + start.toString() + " - " + end.toString() + ")");
+		for(DirectDevice d:devices)
+		{
+			for(IO_System_Logged sys:d.iodev.Systems())
+			{
+				sys.HandleLossyDataRequest(ep, regime, start, end);
+			}
+		}
+	}
 	
 	public static void PassthroughInitialization(Endpoint ep)
 	{

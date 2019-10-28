@@ -1,4 +1,5 @@
 # **Development Tasks**
+* Working on server creating the new Lossy Data structure. Work is ongoing primarily in the IO_Log and IO_System_Logged classes.
 
 ## In Progress Notes
 ### Decimation
@@ -9,13 +10,17 @@ The new strategy is to send data of varying temporal resolution to the web clien
 * Fix Device web interface (broken by changes allowing multiple systems on one device, see Network.cpp:299).
 * Check PlatformIO library availability and add to installation instructions.
 
+## Center
+* Get rid of the "Point" class and just use a Float or a Double
+* Would be wonderful if organization of IO_Log data in memory matched requirements for LossyDataStructure
+
 ## Web Interface
 * Profile performance. There is probably need for decimation to allow charting large quantities of data.
 * ~~Should probably store historical data on client hard drive. When reconnecting, it should only update history instead of transmitting the entire history.~~ HTML5 API for local storage appears to be only implemented in Chrome. Can't store local data.
 * Make x-axis manipulation faster and more aesthetic.
 * When there are more points than pixels along the x-axis, convert to a different drawing regime (bin the data and then draw min-max curves)
 * Migrate to decimation server side to allow serving up smaller data sets for the chart needed at that time. 
-* Nneed to be able to download all data to a file.
+* Need to be able to download all data to a file.
 
 ## Documentation
 * Improve README.md.

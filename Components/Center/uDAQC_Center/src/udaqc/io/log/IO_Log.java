@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Vector;
+import java.util.concurrent.Semaphore;
 
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
@@ -25,6 +26,8 @@ public class IO_Log
 	private DateTime last_update = DateTime.now();
 	private Duration datum_duration=Duration.ZERO;
 	private Vector<IO_Value> values;
+	
+	private Semaphore deletion_mutex = new Semaphore(1);
 	
 	private RandomAccessFile file;
 	
@@ -299,16 +302,24 @@ public class IO_Log
 	
 	public void Trim()
 	{
-		//This is called by WriteEntry function
-		int count=0;
-		for(Epoch e:epochs)
+		try
 		{
-			count += e.size();
-		}
-		count+=current_epoch.size();
-		if(count>max_entries)
+			deletion_mutex.acquire();
+			//This is called by WriteEntry function
+			int count=0;
+			for(Epoch e:epochs)
+			{
+				count += e.size();
+			}
+			count+=current_epoch.size();
+			if(count>max_entries)
+			{
+				RemoveOldest(count-max_entries);
+			}
+			deletion_mutex.release();
+		} catch (InterruptedException e1)
 		{
-			RemoveOldest(count-max_entries);
+			e1.printStackTrace();
 		}
 	}
 	
@@ -523,10 +534,162 @@ public class IO_Log
 				return times.get(0);
 			}
 		}
+		public DateTime EndTime()
+		{
+			if(isEmpty())
+			{
+				return new DateTime(0);
+			}
+			else
+			{
+				return times.get(times.size()-1);
+			}
+		}
 	}
 	
 	private LinkedList<Epoch> epochs=new LinkedList<Epoch>();
 	private Epoch current_epoch;
+	
+	private static final int x_bins = 1024;
+	public static class LogSubset
+	{
+		public enum LossyDataTypeFlags
+		{
+			Raw,
+			Max,
+			Min;
+			public byte toFlag()
+			{
+				return (byte)(1<<this.ordinal());
+			}
+			public boolean checkForFlag(byte flags)
+			{
+				return (this.toFlag()&flags)!=0;
+			}
+		}
+		
+		private byte flags;
+		public byte Flags() {return flags;}
+		
+		private Vector<DateTime> times = new Vector<DateTime>();
+		private HashMap<LossyDataTypeFlags,Vector<Float[]>> values = new HashMap<LossyDataTypeFlags,Vector<Float[]>>();
+		
+		public LogSubset()
+		{
+			for(LossyDataTypeFlags f:LossyDataTypeFlags.values()) 
+			{
+				values.put(f,new Vector<Float[]>());
+			}
+		}
+		
+		private boolean binning;
+		private int datum_count;
+		private int bin_count;
+		private int pointer;
+		public void SetBinning(int count, DateTime start, DateTime stop, int bins)
+		{
+			this.binning=count>x_bins;
+			this.datum_count=count;
+			this.bin_count=bins;
+			
+			if(binning)
+			{
+				this.flags=LossyDataTypeFlags.Raw.toFlag();
+				times.setSize(bin_count);
+				values.get(LossyDataTypeFlags.Raw).setSize(bin_count);
+				
+				double one = 1;
+				double denom = bin_count-1;
+				for(int n=0;n<bin_count;n++)
+				{
+					double along = n/one;
+					DateTime this_time = start.getMillis()*(one-along)+stop.getMillis()*along
+					times.set(n, element)
+				}
+			}
+			else
+			{
+				this.flags=(byte)(LossyDataTypeFlags.Max.toFlag() | LossyDataTypeFlags.Min.toFlag());
+				times.setSize(datum_count);
+				values.get(LossyDataTypeFlags.Max).setSize(datum_count);
+				values.get(LossyDataTypeFlags.Min).setSize(datum_count);
+			}
+						
+			pointer=0;
+		}
+		public void AddDatum(DateTime new_time, Float[] new_values)
+		{
+			if(binning)
+			{
+				
+			}
+			else
+			{
+				times.set(pointer, new_time);
+				values.get(LossyDataTypeFlags.Raw).set(pointer, new_values.clone());
+			}
+			
+			pointer++;
+		}
+	}
+	
+	public LogSubset GetSubset(DateTime start, DateTime end)
+	{
+		LogSubset retval = new LogSubset();
+		
+		try
+		{
+			deletion_mutex.acquire();
+			
+			Vector<Vector<Integer>> includes = new Vector<Vector<Integer>>();
+			for(Epoch e:epochs)
+			{
+				Vector<Integer> next_epoch = new Vector<Integer>();
+				if(!(e.EndTime().isBefore(start) || e.StartTime().isAfter(end)))
+				{
+					for(Integer n = 0; n<e.times.size(); n++)
+					{
+						DateTime dt = e.times.get(n);
+						if(dt.isAfter(start) && dt.isBefore(end))
+						{
+							next_epoch.add(n);
+						}
+					}
+				}
+				includes.add(next_epoch);
+			}
+			
+			int count=0;
+			for(Vector<Integer> vec:includes)
+			{
+				count+=vec.size();
+			}
+			
+			retval.SetBinning(count,start,end,x_bins);
+			
+			Float[] vals = new Float[values.size()];
+			for(int ep_ind=0;ep_ind<epochs.size();ep_ind++)
+			{
+				Epoch e = epochs.get(ep_ind);
+				for(Integer n:includes.get(ep_ind))
+				{
+					for(int v_ind=0;v_ind<vals.length;v_ind++)
+					{
+						vals[v_ind]=e.points.get(values.get(v_ind)).get(n).y;
+					}
+					retval.AddDatum(e.times.get(n),vals);
+				}
+			}
+			
+			deletion_mutex.release();
+			
+		} catch (InterruptedException e1)
+		{
+			e1.printStackTrace();
+		}
+		
+		return retval;
+	}
 	
 	public void CloseCurrentEpoch()
 	{

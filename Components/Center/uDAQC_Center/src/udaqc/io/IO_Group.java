@@ -28,7 +28,7 @@ public class IO_Group extends IO_Node
 		super(data);
 		Construct(data);
 	}
-	
+		
 	public Vector<IO_Value> GetNestedValues()
 	{
 		Vector<IO_Value> retval=new Vector<IO_Value>();

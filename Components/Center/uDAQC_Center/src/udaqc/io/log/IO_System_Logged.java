@@ -12,6 +12,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.TreeMap;
+import java.util.Vector;
+
 import org.joda.time.DateTime;
 import org.joda.time.Duration;
 
@@ -19,6 +21,7 @@ import logging.Point;
 import udaqc.io.IO_System;
 import udaqc.io.IO_Value;
 import udaqc.io.IO_Constants.Command_IDs;
+import udaqc.io.log.IO_System_Logged.Regime;
 import udaqc.io.IO_Device;
 import udaqc.io.IO_Node;
 import udaqc.network.center.DirectDevice;
@@ -180,6 +183,72 @@ public class IO_System_Logged extends IO_System
 		{
 			log.CloseCurrentEpoch();
 		}
+	}
+	
+	public void HandleLossyDataRequest(Endpoint ep, Regime regime, DateTime start, DateTime end)
+	{
+		boolean current_requested = end==null;
+		//need to flag for future updates if this is true
+		
+		IO_Log log = logs.get(regime);
+		
+		Vector<Integer> epoch_counts = log.CountInRange(start, end);
+		Integer total_raw_points = 0;
+		for(Integer i:epoch_counts)
+		{
+			total_raw_points+=i;
+		}
+		boolean binning = total_raw_points>x_bins;
+		Vector<IO_Value> values = this.GetNestedValues();
+		Integer datum_size = Long.BYTES+Float.BYTES*values.size();
+		Integer dataset_size;
+		Integer set_count=0;
+		Integer data_size;
+		byte flags=0;
+		
+		if(binning)
+		{
+			dataset_size = datum_size*x_bins;
+			flags = (byte) (LossyDataTypeFlags.Max.toFlag() | LossyDataTypeFlags.Min.toFlag());
+		}
+		else
+		{
+			dataset_size = datum_size*total_raw_points;
+			flags = LossyDataTypeFlags.Raw.toFlag();
+		}
+		
+		for(LossyDataTypeFlags thisflag:LossyDataTypeFlags.values())
+		{
+			if(thisflag.checkForFlag(flags))
+			{
+				set_count++;
+			}
+		}
+		
+		data_size=dataset_size*set_count;
+		
+		int message_length = 0;
+		message_length += Short.BYTES;
+		message_length += Byte.BYTES;
+		message_length += Integer.BYTES*(1+epoch_counts.size());
+		message_length += data_size;
+		ByteBuffer message = ByteBuffer.allocate(message_length);
+		message.order(ByteOrder.LITTLE_ENDIAN);
+		message.putShort(system_index);
+		message.put(flags);
+		message.putInt(epoch_counts.size());
+		for(int n=0;n<epoch_counts.size();n++)
+		{
+			message.putInt(epoch_counts.get(n));
+		}
+		for(LossyDataTypeFlags thisflag:LossyDataTypeFlags.values())
+		{
+			if(thisflag.checkForFlag(flags))
+			{
+				//write this into buffer
+			}
+		}
+		
 	}
 	
 	public void PassthroughInitialization(Endpoint ep, Integer regime, Long last_time)
