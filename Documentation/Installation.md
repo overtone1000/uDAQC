@@ -1,4 +1,32 @@
-# Semi-automated Installation
+# TimescaleDB Installation
+Install PostgreSQL (preferably via apt) per instructions on their website.
+Install TimescaleDB (preferably via apt) per instructions on their website.
+
+To establish an alternative storage location:
+```
+mkdir /alt/postgres/datadirectory
+chown postgres /alt/postgres/datadirectory
+chgrp postgres /alt/postgres/datadirectory
+chmod 700 /alt/postgres/datadirectory
+```
+
+Start an sql session:
+`sudo -u postgres psql`
+
+Create a dedicated uDAQC database user:
+`create user uDAQC with password 'uDAQC';`
+
+Create a tablespace and database with the following sql commands
+```
+create tablespace uDAQC_tablespace location '/alt/postgres/datadirectory';
+create database uDAQC_database with tablespace = uDAQC_tablespace;
+grant all privileges on database uDAQC_database to uDAQC;
+
+```
+
+
+
+# Semi-automated uDAQC Installation
 
 To configure a Linux computer such as a Raspberry Pi as a uDAQC Center, start by navigating to a location in your file system where the software and database will reside. For example, if you have a large external hard drive mounted for your Raspberry Pi, this is an excellent location for the database.
 

@@ -3,6 +3,14 @@ package main;
 
 import java.net.InetSocketAddress;
 import java.nio.file.Paths;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.Properties;
+
+import org.apache.commons.dbcp2.BasicDataSource;
 
 import network.http.HTTPS_Server;
 import security.PasswordManager;
@@ -19,7 +27,22 @@ public class Testing
 	}
 	public static void database()
 	{
+		System.out.println("Testing database.");
 		
+		String url = "jdbc:postgresql://localhost/test";
+		Properties props = new Properties();
+		props.setProperty("user","udaqc");
+		props.setProperty("password","udaqc");
+		props.setProperty("ssl","false");
+		try
+		{
+			Connection conn = DriverManager.getConnection(url, props);
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		System.out.println("Database testing done.");
 	}
 	public static void TLS()
 	{
