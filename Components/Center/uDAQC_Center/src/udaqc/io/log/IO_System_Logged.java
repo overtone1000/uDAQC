@@ -187,6 +187,7 @@ public class IO_System_Logged extends IO_System
 	
 	public void HandleLossyDataRequest(Endpoint ep, Regime regime, DateTime start, DateTime end)
 	{
+		/*
 		boolean current_requested = end==null;
 		//need to flag for future updates if this is true
 		
@@ -248,7 +249,7 @@ public class IO_System_Logged extends IO_System
 				//write this into buffer
 			}
 		}
-		
+		*/
 	}
 	
 	public void PassthroughInitialization(Endpoint ep, Integer regime, Long last_time)

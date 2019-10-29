@@ -603,8 +603,8 @@ public class IO_Log
 				for(int n=0;n<bin_count;n++)
 				{
 					double along = n/one;
-					DateTime this_time = start.getMillis()*(one-along)+stop.getMillis()*along
-					times.set(n, element)
+					DateTime this_time = new DateTime(start.getMillis()*(one-along)+stop.getMillis()*along);
+					times.set(n, this_time);
 				}
 			}
 			else
