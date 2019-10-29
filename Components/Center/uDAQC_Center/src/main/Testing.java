@@ -14,7 +14,12 @@ public class Testing
 	public static void main(String[] args) 
 	{
 		//TLS();
-		WebServer();
+		//WebServer();
+		database();
+	}
+	public static void database()
+	{
+		
 	}
 	public static void TLS()
 	{
