@@ -3,12 +3,15 @@ Install PostgreSQL (preferably via apt) per instructions on their website.
 Install TimescaleDB (preferably via apt) per instructions on their website.
 
 Create the uDAQC user:
-
 ```
 sudo adduser udaqc
 ```
+Make the password udaqc.
 
-Make the password udaqc
+Unless you enable remote connections by changing `postgresql.conf`, this user will only be able to connect via localhost, and no external network connections will be accepted. If you do enable network access to this database, be sure to exclude the udaqc user from this access in `pg_hba.conf` to avoid a security vulnerability. For example, the following line (if placed before any other lines specifying the "host" type) would reject connections from the udaqc user:
+```
+host   all  udaqc   all reject
+```
 
 To establish an alternative storage location:
 ```
@@ -19,24 +22,22 @@ sudo chmod 700 /alt/postgres/datadirectory
 ```
 
 Start an sql session:
-`sudo -u postgres psql`
-
-Create a dedicated uDAQC database user:
-`create user udaqc with password 'udaqc';`
-
-Create a tablespace and database with the following sql commands
 ```
+sudo -u postgres psql
+```
+
+The following commands create a dedicated uDAQC database user, create a dedicated tablespace, and createa database.
+```
+create user udaqc with password 'udaqc';
 create tablespace uDAQC_tablespace location '/alt/postgres/datadirectory';
 create database uDAQC_database with tablespace = uDAQC_tablespace;
 grant all privileges on database uDAQC_database to udaqc;
-
 ```
 
-Check that you can enter this database with
-`sudo -u udaqc psql udaqc_database`
-
-The uDAQC Center should now be able to access this database.
-
+This can be checked be entering the database with
+```
+sudo -u udaqc psql udaqc_database
+````
 
 
 # Semi-automated uDAQC Installation
