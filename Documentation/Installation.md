@@ -1,51 +1,11 @@
-# TimescaleDB Installation
-Install PostgreSQL (preferably via apt) per instructions on their website.
-Install TimescaleDB (preferably via apt) per instructions on their website.
-
-Create the uDAQC user:
-```
-sudo adduser udaqc
-```
-Make the password udaqc.
-
-Unless you enable remote connections by changing `postgresql.conf`, this user will only be able to connect via localhost, and no external network connections will be accepted. If you do enable network access to this database, be sure to exclude the udaqc user from this access in `pg_hba.conf` to avoid a security vulnerability. For example, the following line (if placed before any other lines specifying the "host" type) would reject connections from the udaqc user:
-```
-host   all  udaqc   all reject
-```
-
-To establish an alternative storage location:
-```
-sudo mkdir /alt/postgres/datadirectory
-sudo chown postgres /alt/postgres/datadirectory
-sudo chgrp postgres /alt/postgres/datadirectory
-sudo chmod 700 /alt/postgres/datadirectory
-```
-
-Start an sql session:
-```
-sudo -u postgres psql
-```
-
-The following commands create a dedicated uDAQC database user, create a dedicated tablespace, and createa database.
-```
-create user udaqc with password 'udaqc';
-create tablespace uDAQC_tablespace location '/alt/postgres/datadirectory';
-create database uDAQC_database with tablespace = uDAQC_tablespace;
-grant all privileges on database uDAQC_database to udaqc;
-```
-
-This can be checked be entering the database with
-```
-sudo -u udaqc psql udaqc_database
-````
-
-
 # Semi-automated uDAQC Installation
 
-To configure a Linux computer such as a Raspberry Pi as a uDAQC Center, start by navigating to a location in your file system where the software and database will reside. For example, if you have a large external hard drive mounted for your Raspberry Pi, this is an excellent location for the database.
+To configure a Linux computer such as a Raspberry Pi as a uDAQC Center, start by navigating to a location in your file system where the software will reside.
 
-If you have a different version of the software installed in this location, remove it. Warning - this will also remove the database as the data structure is not guaranteed to be compatible between versions! If your database is important, you may instead wish to export your data first.
-`rm -d -r uDAQC_Center`
+If you have a different version of the software installed in this location, remove it.
+```
+rm -d -r uDAQC_Center
+```
 
 Create a fresh directory and navigate to it.
 ```
@@ -63,16 +23,54 @@ If you'd like the deployment zip from the master branch, just put the branch nam
 wget https://github.com/overtone1000/uDAQC/raw/master/Components/Center/uDAQC_Center/deploy/deploy.zip
 ```
 
-Unzip the contents of the deployment zip, remove the zip, and run the configuration script.
+Unzip the contents of the deployment zip and then delete the zip file.
 ```
 unzip deploy.zip
 rm deploy.zip
-bash configure.bash
 ```
 
-The bash script performs the following operations:
-1. Checks your Java version and offers to install using apt if java is not found.
-2. Creates and starts a systemd service that executes the runnable jar.
+## Java Installation
+Check that the java installation is adequate with the bash:
+```
+sudo bash check_java.bash
+```
+
+If an adequate java version is not found on the path, the script will attempt an installation.
+
+## TimescaleDB Installation
+Install PostgreSQL (preferably via apt) per instructions on their website.
+
+Install TimescaleDB (preferably via apt) per instructions on their website.
+
+Run the database configuration bash:
+```
+sudo bash configure_database.bash
+```
+
+First this will create a user named udaqc with the password udaqc. 
+
+Unless you enable remote connections by changing `postgresql.conf`, this user will only be able to connect via localhost, and no external network connections will be accepted. If you do enable network access to this database, be sure to exclude the udaqc user from this access in `pg_hba.conf` to avoid a security vulnerability. For example, the following line (if placed before any other lines specifying the "host" type) would reject connections from the udaqc user:
+```
+host   all  udaqc   all reject
+```
+
+Next, this script creates a dedicated directory for the database. Be sure this directory is in a partition of the file system that is large enough.
+
+Finally, the script will switch to the PostgreSQL superuser postgres and it will create a dedicated database role corresponding to the previously created udaqc user, create a dedicated udaqc tablespace in the directory defined above, and create a udaqc database in that tablespace
+
+Check that the database was created successfully by entering a connection:
+```
+sudo -u udaqc psql udaqc_database
+````
+
+## Service Configuration
+
+Run the service configuration bash:
+```
+sudo bash configure_service.bash
+```
+
+The bash script creates and starts a systemd service that executes the runnable jar.
 
 Once the service is running, you can observe the output from the program using journalctl. For example, to see the last 100 lines of output, use the following command:
 ```

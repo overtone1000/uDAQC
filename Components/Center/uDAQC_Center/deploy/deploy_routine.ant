@@ -51,7 +51,9 @@
     		</fileset>
     	</copy>
 
-    	<copy file="${dir.buildfile}/configure.bash" todir="${dir.deploy}"/>
+    	<copy file="${dir.buildfile}/check_java.bash" todir="${dir.deploy}"/>
+    	<copy file="${dir.buildfile}/configure_database.bash" todir="${dir.deploy}"/>
+    	<copy file="${dir.buildfile}/configure_service.bash" todir="${dir.deploy}"/>
     	<copy file="${dir.buildfile}/uDAQC_Center.service" todir="${dir.deploy}"/>
 
     	<zip basedir="${dir.deploy}" destfile="deploy.zip">
