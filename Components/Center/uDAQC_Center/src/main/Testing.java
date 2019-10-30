@@ -29,7 +29,7 @@ public class Testing
 	{
 		System.out.println("Testing database.");
 		
-		String url = "jdbc:postgresql://localhost/test";
+		String url = "jdbc:postgresql://localhost/udaqc_database";
 		Properties props = new Properties();
 		props.setProperty("user","udaqc");
 		props.setProperty("password","udaqc");

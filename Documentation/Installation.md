@@ -2,27 +2,40 @@
 Install PostgreSQL (preferably via apt) per instructions on their website.
 Install TimescaleDB (preferably via apt) per instructions on their website.
 
+Create the uDAQC user:
+
+```
+sudo adduser udaqc
+```
+
+Make the password udaqc
+
 To establish an alternative storage location:
 ```
-mkdir /alt/postgres/datadirectory
-chown postgres /alt/postgres/datadirectory
-chgrp postgres /alt/postgres/datadirectory
-chmod 700 /alt/postgres/datadirectory
+sudo mkdir /alt/postgres/datadirectory
+sudo chown postgres /alt/postgres/datadirectory
+sudo chgrp postgres /alt/postgres/datadirectory
+sudo chmod 700 /alt/postgres/datadirectory
 ```
 
 Start an sql session:
 `sudo -u postgres psql`
 
 Create a dedicated uDAQC database user:
-`create user uDAQC with password 'uDAQC';`
+`create user udaqc with password 'udaqc';`
 
 Create a tablespace and database with the following sql commands
 ```
 create tablespace uDAQC_tablespace location '/alt/postgres/datadirectory';
 create database uDAQC_database with tablespace = uDAQC_tablespace;
-grant all privileges on database uDAQC_database to uDAQC;
+grant all privileges on database uDAQC_database to udaqc;
 
 ```
+
+Check that you can enter this database with
+`sudo -u udaqc psql udaqc_database`
+
+The uDAQC Center should now be able to access this database.
 
 
 
