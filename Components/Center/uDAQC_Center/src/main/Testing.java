@@ -4,10 +4,12 @@ package main;
 import java.net.InetSocketAddress;
 import java.nio.file.Paths;
 import java.sql.Connection;
+import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Timestamp;
 import java.util.Properties;
 
 import org.apache.commons.dbcp2.BasicDataSource;
@@ -34,12 +36,73 @@ public class Testing
 		props.setProperty("user","udaqc");
 		props.setProperty("password","udaqc");
 		props.setProperty("ssl","false");
+		
+		Connection conn=null;
+		Statement s=null;
+		String command;
+		String test_table_name = "test_table";
 		try
 		{
-			Connection conn = DriverManager.getConnection(url, props);
+			conn = DriverManager.getConnection(url, props);
+			DatabaseMetaData meta = conn.getMetaData();
+			ResultSet meta_res = meta.getTables(null, null, test_table_name,new String[] {"TABLE"});
+			System.out.println("Checking for tables with name " + test_table_name);
+			if(meta_res.next()) 
+			{
+				System.out.println("Found table with name " + test_table_name);
+			}
+			else
+			{
+				System.out.println("Table " + test_table_name + " doesn't exist, creating.");
+				
+				s = conn.createStatement();
+				command = "create table " + test_table_name + "( ";
+				command += "time TIMESTAMPTZ NOT NULL,";
+				command += "temperature DOUBLE PRECISION NOT NULL";
+				command += ");";
+				s.executeUpdate(command);
+				s.close();
+				
+				s = conn.createStatement();
+				command = "select create_hypertable('" + test_table_name + "', 'time');";
+				s.execute(command);
+				s.close();
+			}
+			
+			s = conn.createStatement();
+			Double temp = Math.random();
+			command = "insert into " + test_table_name + "(time,temperature) values (NoW(), " + temp.toString() + ");";
+			s.executeUpdate(command);
+			s.close();
+			
+			s = conn.createStatement();
+			command = "select * from " + test_table_name + " order by time";
+			s.execute(command);
+			ResultSet res = s.getResultSet();
+			while(res.next())
+			{
+				Timestamp time = res.getTimestamp(1, java.util.Calendar.getInstance(java.util.TimeZone.getDefault()));
+				Double temperature = res.getDouble(2);
+				System.out.println(time.toString() + ", " + temperature);
+			}
+			
 		} catch (SQLException e)
 		{
 			e.printStackTrace();
+		}
+		finally
+		{
+			try
+			{
+				if(conn!=null)
+				{
+					conn.close();
+				}
+			} catch (SQLException e)
+			{
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
 		System.out.println("Database testing done.");

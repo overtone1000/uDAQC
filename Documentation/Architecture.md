@@ -86,6 +86,9 @@ The raw data message contains this raw timestamp. When the server receives the m
 
 There is currently a timing discrepancy. The raw tiemstamp is in microseconds since but, but Java converts to milliseconds since Unix epoch. This is simply due Java's limited compatibility with microsecond times. Use of microseconds would be alright from a type perspective even in Javascript, as 2,147,483,647,000,000 microseconds per epoch is still less than the safe integer value for Javascript.
 
+Furthermore, the PostgreSQL has an alternative long definition of the time. This is abstracted away by the Java Timestamp class. For reference, from the PostgreSQL docs (https://www.postgresql.org/docs/9.1/datatype-datetime.html):
+>Note: When timestamp values are stored as eight-byte integers (currently the default), microsecond precision is available over the full range of values. When timestamp values are stored as double precision floating-point numbers instead (a deprecated compile-time option), the effective limit of precision might be less than 6. timestamp values are stored as seconds before or after midnight 2000-01-01. When timestamp values are implemented using floating-point numbers, microsecond precision is achieved for dates within a few years of 2000-01-01, but the precision degrades for dates further away. Note that using floating-point datetimes allows a larger range of timestamp values to be represented than shown above: from 4713 BC up to 5874897 AD. The same compile-time option also determines whether time and interval values are stored as floating-point numbers or eight-byte integers. In the floating-point case, large interval values degrade in precision as the size of the interval increases.
+
 # Lossy Data
 ## Lossy Data Request Structure
 The web client submits requests for data from the server depending on the graphing requirements. The request contains:
