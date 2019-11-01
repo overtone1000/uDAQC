@@ -3,11 +3,14 @@ package udaqc.jdbc;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.util.Properties;
+
+import org.joda.time.DateTime;
 
 public class Database_uDAQC
 {
@@ -72,8 +75,8 @@ public class Database_uDAQC
 		return value.Name() + " " + type + " NOT NULL";
 	}
 	
-	static final String timecolumn = "time TIMESTAMPTZ NOT NULL";
-	public void CreateHypertable(String new_table_name)
+	static final String timecolumn = "time TIMESTAMPTZ PRIMARY KEY";
+	public void CreateHypertableTest(String new_table_name)
 	{
 		Statement s;
 		String command;
@@ -106,28 +109,81 @@ public class Database_uDAQC
 			}
 		} catch (SQLException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	public void CreateHypertable(IO_System system)
+	{
+		Statement s;
+		String command;
+		DatabaseMetaData meta;
+		String new_table_name = system.
+		try
+		{
+			meta = conn.getMetaData();
+			ResultSet meta_res = meta.getTables(null, null, new_table_name,new String[] {"TABLE"});
+			System.out.println("Checking for tables with name " + new_table_name);
+			if(meta_res.next()) 
+			{
+				System.out.println("Found table with name " + new_table_name);
+			}
+			else
+			{
+				System.out.println("Table " + new_table_name + " doesn't exist, creating.");
+				
+				s = conn.createStatement();
+				command = "create table " + new_table_name + "( ";
+				command += timecolumn + ",";
+				command += "temperature DOUBLE PRECISION NOT NULL";
+				command += ");";
+				s.executeUpdate(command);
+				s.close();
+				
+				s = conn.createStatement();
+				command = "select create_hypertable('" + new_table_name + "', 'time');";
+				s.execute(command);
+				s.close();
+			}
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+	}
+	
+	public void DropTable(String tablename)
+	{
+		Statement s;
+		try
+		{
+			s = conn.createStatement();
+			s.executeUpdate("drop table " + tablename + ";");
+			s.close();
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+
 	}
 		
 	public void test()
 	{
 		
-		Statement s=null;
 		String command;
 		String new_table_name = "test_table";
 		try
 		{
-			CreateHypertable(new_table_name);
+			CreateHypertableTest(new_table_name);
 			
-			s = conn.createStatement();
 			Double temp = Math.random();
-			command = "insert into " + new_table_name + "(time,temperature) values (NoW(), " + temp.toString() + ");";
-			s.executeUpdate(command);
-			s.close();
+			Timestamp ts = new Timestamp(DateTime.now().getMillis());
 			
-			s = conn.createStatement();
+			command = "insert into " + new_table_name + "(time,temperature) values (?, " + temp.toString() + ");";
+			PreparedStatement ps = conn.prepareStatement(command);
+			ps.setTimestamp(1, ts);
+			ps.execute();
+			ps.close();
+			
+			Statement s = conn.createStatement();
 			command = "select * from " + new_table_name + " order by time";
 			s.execute(command);
 			ResultSet res = s.getResultSet();
