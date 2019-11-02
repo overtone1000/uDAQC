@@ -34,8 +34,7 @@ public class Testing
 		
 		Database_uDAQC db_manager = new Database_uDAQC();
 		//db_manager.DropTable("test_table");
-		db_manager.test();
-		
+				
 		System.out.println("Database testing done.");
 	}
 	public static void TLS()
