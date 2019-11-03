@@ -8,6 +8,11 @@ public class IO_Value extends IO_Node
 	protected String units;
 	protected short format_type;
 
+	public short getDataType()
+	{
+		return format_type;
+	}
+	
 	protected Object value;
 
 	public String Units()

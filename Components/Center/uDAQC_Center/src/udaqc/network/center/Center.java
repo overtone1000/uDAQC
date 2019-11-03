@@ -132,12 +132,16 @@ public class Center extends TCP_Server
 				System.out.println("Center received a group description. Interpreting as a device.");
 				
 				IO_Device_Connected new_device = IO_Device_Connected.getDirectDevice(data, (NioSession)session);
+				//System.out.println("Putting device in list.");
 				devices.put(session.getId(), new_device);
+				//System.out.println("Adding synchronizer to list.");
 				udp_ts.addSynchronizer(new_device.getTimeSynchronizer());
 				if (handler != null)
 				{
 					handler.ClientListUpdate();
 				}
+				
+				//System.out.println("Device interpretation completed.");
 				break;
 			}
 		  case Command_IDs.emptynode_description:
@@ -183,6 +187,11 @@ public class Center extends TCP_Server
 		Command c = new Command(Command_IDs.handshake);
 		System.out.println("Sending manual handshake.");
 		session.write(c);
+		
+		if(session.getIdleCount(IdleStatus.READER_IDLE)>3)
+		{
+			session.closeNow();
+		}
 	}
 
 	@Override

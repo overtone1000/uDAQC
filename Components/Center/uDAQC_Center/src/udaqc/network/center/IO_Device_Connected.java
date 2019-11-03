@@ -37,7 +37,9 @@ public class IO_Device_Connected extends IO_Device_Synchronized
 	}
 	public static IO_Device_Connected getDirectDevice(ByteBuffer data)
 	{
+		//System.out.println("Creating IO_Device_Connected.");
 		IO_Device_Connected retval = new IO_Device_Connected(data);
+		//System.out.println("IO_Device_Connected created.");
 		
 		try
 		{
@@ -48,21 +50,31 @@ public class IO_Device_Connected extends IO_Device_Synchronized
 			return null;
 		}
 		
-
-		for(IO_Device_Connected d:devices)
+		boolean new_device=true;
+		//System.out.println("Looking for matching device.");
+		for(int n=0;n<devices.size();n++)
 		{
-			if(d.isEqual(retval))
+			//System.out.println("n is " + n);
+			IO_Device_Connected comp = devices.get(n);
+			//System.out.println("Comparing to device.");
+			if(retval.isEqual(comp))
 			{
-				return d;
+				devices.set(n, retval);
+				new_device=false;
+				break;
 			}
 		}
 		
-		System.out.println("Unknown device. Saving.");
-		Center.database.insertDevice(retval);
+		if(new_device)
+		{
+			System.out.println("Unknown device. Saving.");
+			Center.database.insertDevice(retval);
+			
+			System.out.println("Adding device to device list.");
+			retval.device_index=(short) devices.size();
+			devices.add(retval);
+		}
 		
-		System.out.println("Adding device to device list.");
-		retval.device_index=(short) devices.size();
-		devices.add(retval);
 		device_list_mutex.release();
 		
 		return retval;
@@ -183,10 +195,10 @@ public class IO_Device_Connected extends IO_Device_Synchronized
 	{
 		Short system_index = data.getShort();
 		IO_System system = System(system_index);
+		System.out.println("Received data for " + system.FullName());
 		if(system != null)
 		{				
 			system.ReceiveData(data);
-			System.out.println("Processed data from " + Name() + ":" + system.Name());
 			Center.database.insertSystemTable(this, system_index);
 		}
 		else

@@ -9,6 +9,8 @@ The new strategy is to send data of varying temporal resolution to the web clien
 * Convert to saving only hashed password once ESP8266 Arduino library v2.6.0 is released
 * Fix Device web interface (broken by changes allowing multiple systems on one device, see Network.cpp:299).
 * Check PlatformIO library availability and add to installation instructions.
+* Device is running out of memory when trying to accept a second client.
+* Might be nice to shorten file system names.
 
 ## Center
 * Get rid of the "Point" class and just use a Float or a Double

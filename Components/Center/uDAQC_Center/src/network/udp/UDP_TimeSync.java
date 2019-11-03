@@ -104,6 +104,7 @@ public class UDP_TimeSync implements Runnable
 	{
 		if(!syncs_to_perform.contains(target))
 		{
+			//System.out.println("Synchronizer is new. Adding.");
 			syncs_to_perform.add(target);
 		}
 	}

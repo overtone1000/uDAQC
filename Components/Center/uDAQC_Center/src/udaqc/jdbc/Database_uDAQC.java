@@ -1,6 +1,7 @@
 package udaqc.jdbc;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -45,7 +46,7 @@ public class Database_uDAQC
 	private String IOValueToColumn(udaqc.io.IO_Value value)
 	{
 		String type;
-		switch(value.IO_Type())
+		switch(value.getDataType())
 		{
 		case udaqc.io.IO_Constants.DataTypes.bool:
 			type="bool";
@@ -79,7 +80,9 @@ public class Database_uDAQC
 			type="INT";
 			break;
 		}
-		return "\"" + value.Name() + "\"" + " " + type + " NOT NULL";
+		String retval = "\"" + value.Name() + "\"" + " " + type + " NOT NULL"; 
+		System.out.println(retval);
+		return retval;
 	}
 	
 	/*
@@ -116,6 +119,8 @@ public class Database_uDAQC
 	}
 	*/
 	
+	static final String systems_schema = "io_systems";
+	
 	static final String flagcolumn_name = "end_of_epoch";
 	static final String flagcolumn = flagcolumn_name + " boolean NOT NULL";
 	static final String timecolumn_name = "time";
@@ -126,27 +131,28 @@ public class Database_uDAQC
 	{
 		Statement s;
 		String command;
-		DatabaseMetaData meta;
+		
 		try
 		{
-			meta = conn.getMetaData();
-			ResultSet meta_res = meta.getTables(null, null, devicetablename,new String[] {"TABLE"});
-			System.out.println("Checking for tables with name " + devicetablename);
-			if(meta_res.next()) 
-			{
-				System.out.println("Found table with name " + devicetablename);
-			}
-			else
-			{
-				System.out.println("Table " + devicetablename + " doesn't exist, creating.");
-				
-				s = conn.createStatement();
-				command = "create table " + devicetablename + "( ";
-				command += "description bytea PRIMARY KEY";
-				command += ");";
-				s.executeUpdate(command);
-				s.close();
-			}
+			//meta = conn.getMetaData();
+			//ResultSet meta_res = meta.getTables(null, null, devicetablename,new String[] {"TABLE"});
+			//System.out.println("Checking for tables with name " + devicetablename);
+			//if(meta_res.next()) 
+			//{
+			//	System.out.println("Found table with name " + devicetablename);
+			//}
+			s = conn.createStatement();
+			command = "create table if not exists " + devicetablename + " ( ";
+			command += "description bytea PRIMARY KEY";
+			command += ");";
+			s.executeUpdate(command);
+			s.close();
+			
+			s = conn.createStatement();
+			command = "create schema if not exists " + systems_schema + ";";
+			s.executeUpdate(command);
+			s.close();
+			
 		} catch (SQLException e)
 		{
 			e.printStackTrace();
@@ -159,14 +165,31 @@ public class Database_uDAQC
 		PreparedStatement ps;
 		try
 		{
-			command = "insert into " + devicetablename + " values (?);";
+			command = "insert into " + devicetablename + " values (?) on conflict do nothing;";
 			ps = conn.prepareStatement(command);
 			ps.setBytes(1, device.Description());
 			ps.executeUpdate();
 			ps.close();
+				
+			/*
+			Statement s = conn.createStatement();
+			String command2 = "select * from " + devicetablename + ";";
+			s.execute(command2);
+			ResultSet res = s.getResultSet();
+			res.next();
+			byte[] bs = res.getBytes(1);
 			
-			System.out.println("Inserted device with the following command:");
-			System.out.println(ps.toString());
+			System.out.println("Description of length " + device.Description().length);
+			System.out.println("Returned description is of length " + bs.length);
+			if(device.Description().length==bs.length) 
+			{
+				for(int n=0;n<bs.length;n++)
+				{
+					System.out.println(Integer.toHexString((int)device.Description()[n]) + ":" + Integer.toHexString((int)bs[n]));
+				}
+				
+			}
+			*/
 		} catch (SQLException e)
 		{
 			e.printStackTrace();
@@ -177,12 +200,14 @@ public class Database_uDAQC
 			initSystemTable(sys);
 		}
 	}
+	private String getEscapedSystemTableName(IO_System system)
+	{
+		return "\"" + getSystemTableName(system) + "\"";
+	}
 	private String getSystemTableName(IO_System system)
 	{
 		//ESP.getChipId() is always appended to device name, so this is guaranteed to be unique
-		String retval = system.Device().Name() + "_" + system.Index().toString();
-		retval = "\"" + retval + "\"";
-		return retval;
+		return system.Device().Name() + "_" + system.Index().toString();
 	}
 	
 	public void loadDevices()
@@ -191,20 +216,25 @@ public class Database_uDAQC
 		Statement s;
 		try
 		{
+			System.out.println("Querying for devices.");
 			s = conn.createStatement();
 			String command = "select * from " + devicetablename + ";";
 			s.execute(command);
 			ResultSet res = s.getResultSet();
 			while(res.next())
 			{
-				ByteBuffer bb = ByteBuffer.wrap(res.getBytes(1));
+				System.out.println("Wrapping bytes.");
+				byte[] description = res.getBytes(1);
+				ByteBuffer bb = ByteBuffer.wrap(description);
+				bb.order(ByteOrder.LITTLE_ENDIAN);
+				System.out.println("Creating device.");
 				IO_Device_Connected dev = IO_Device_Connected.getDirectDevice(bb);
-				
 				System.out.println("Device " + dev.FullName() + " loaded from database.");
 				for(IO_System sys:dev.Systems())
 				{
 					System.out.println("Initializing system table for " + sys.FullName());
 					initSystemTable(sys);
+					closeEpoch(sys);
 				}
 			}
 		} catch (SQLException e)
@@ -217,10 +247,10 @@ public class Database_uDAQC
 	public void closeEpoch(IO_System system)
 	{
 		String command;
-		String system_table_name = getSystemTableName(system);
+		String system_table_name = getEscapedSystemTableName(system);
 		try
 		{
-			command = "select " + timecolumn_name + " from " + system_table_name + " order by " + timecolumn_name + "desc limit 1;";  
+			command = "select " + timecolumn_name + " from " + systems_schema + "." + system_table_name + " order by " + timecolumn_name + " desc limit 1;";  
 			Statement s = conn.createStatement();
 			s.execute(command);
 			ResultSet res = s.getResultSet();
@@ -234,8 +264,8 @@ public class Database_uDAQC
 				return;
 			}
 			
-			command = "update " + system_table_name + " set '" + flagcolumn_name + "' = true";
-			command += "where " + timecolumn_name + " = ?;";
+			command = "update " + systems_schema + "." + system_table_name + " set " + flagcolumn_name + " = true";
+			command += " where " + timecolumn_name + " = ?;";
 			PreparedStatement ps = conn.prepareStatement(command);
 			ps.setTimestamp(1, last);
 			ps.execute();
@@ -252,42 +282,50 @@ public class Database_uDAQC
 		Statement s;
 		String command;
 		DatabaseMetaData meta;
-		String new_table_name = getSystemTableName(system);
+		String new_table_name = getEscapedSystemTableName(system);
+		String raw_table_name = getSystemTableName(system);
 		try
 		{
 			meta = conn.getMetaData();
-			ResultSet meta_res = meta.getTables(null, null, new_table_name,new String[] {"TABLE"});
+			ResultSet meta_res = meta.getTables(null, systems_schema, null, new String[] {"TABLE"});
 			System.out.println("Checking for tables with name " + new_table_name);
-			if(meta_res.next()) 
+			
+			while(meta_res.next()) 
 			{
-				System.out.println("Found table with name " + new_table_name);
-			}
-			else
-			{
-				System.out.println("Table " + new_table_name + " doesn't exist, creating.");
-				
-				
-				s = conn.createStatement();
-				command = "create table " + new_table_name + "( ";
-				command += flagcolumn + ",";
-				command += timecolumn + ",";
-				
-				Iterator<IO_Value> i = system.GetNestedValues().iterator();
-				while(i.hasNext())
+				String this_name = meta_res.getString("TABLE_NAME");
+				System.out.print("Found table with name " + this_name);
+				System.out.println(", comparing to " + raw_table_name);
+				if(this_name.equals(raw_table_name))
 				{
-					command += IOValueToColumn(i.next());
-					if(i.hasNext()) {command += ",";}
+					return;
 				}
-				
-				command += ");";
-				s.executeUpdate(command);
-				s.close();
-				
-				s = conn.createStatement();
-				command = "select create_hypertable('" + new_table_name + "', '" + timecolumn_name + "');";
-				s.execute(command);
-				s.close();
 			}
+			
+			System.out.println("Table " + new_table_name + " doesn't exist, creating.");
+			
+			
+			s = conn.createStatement();
+			command = "create table if not exists " + systems_schema + "." + new_table_name + " ( ";
+			command += flagcolumn + ",";
+			command += timecolumn + ",";
+			
+			Iterator<IO_Value> i = system.GetNestedValues().iterator();
+			i.next(); //ditch the IO_Value timestamp
+			
+			while(i.hasNext())
+			{
+				command += IOValueToColumn(i.next());
+				if(i.hasNext()) {command += ",";}
+			}
+			
+			command += ");";
+			s.executeUpdate(command);
+			s.close();
+			
+			s = conn.createStatement();
+			command = "select create_hypertable('" + systems_schema + "." + new_table_name + "', '" + timecolumn_name + "');";
+			s.execute(command);
+			s.close();
 		} catch (SQLException e)
 		{
 			System.err.println("Error during system table initialization.");
@@ -300,13 +338,13 @@ public class Database_uDAQC
 		String command;
 		PreparedStatement ps=null;
 		IO_System system = d.System(system_index);
-		String system_table_name = getSystemTableName(system);
+		String system_table_name = getEscapedSystemTableName(system);
 		try
 		{
 			Timestamp ts = Timestamp.from(Instant.ofEpochMilli(d.GetTimestamp(system.Index()).getMillis()));
 			
 			Iterator<IO_Value> i = system.GetNestedValues().iterator();
-			
+			i.next(); //ditch the IO_Value timestamp
 			
 			String vals = "(false,?,";
 			while(i.hasNext())
@@ -324,7 +362,7 @@ public class Database_uDAQC
 				}
 			}
 			
-			command = "insert into " + system_table_name + " values " + vals + ";";
+			command = "insert into " + systems_schema + "." + system_table_name + " values " + vals + ";";
 			ps = conn.prepareStatement(command);
 			ps.setTimestamp(1, ts);
 			ps.execute();

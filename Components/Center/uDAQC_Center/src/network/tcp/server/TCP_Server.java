@@ -178,7 +178,7 @@ public class TCP_Server extends TCP_Base
 	@Override
 	public void sessionIdle(IoSession session, IdleStatus status)
 	{// throws Exception
-		System.out.println("IDLE " + session.getIdleCount(status));
+		System.out.println(status.toString() + "IDLE " + session.getIdleCount(status));
 	}
 
 	/*

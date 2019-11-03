@@ -89,16 +89,21 @@ namespace UDAQC{ namespace IO
   {
     DEBUG_println("Adding uDAQC Center.");
 
-    DEBUG_println("Checking whether client " + host.toString() + ":" + (String)center_port + "exists.");
+    DEBUG_println("Checking whether client " + host.toString() + ":" + (String)center_port + " exists.");
     for(auto it = tcp_clients.begin();it!=tcp_clients.end();it++)
     {
       DEBUG_println("Comparing to client " + it->remoteIP().toString() + ":" + (String)(it->remotePort()));
-      if(it->remoteIP()==host && it->remotePort() == center_port)
+      if(it->remoteIP()==host)
       {
-        DEBUG_println("Already exists.");
-        return;
+        if(it->remotePort() == center_port)
+        {
+          DEBUG_println("Already exists.");
+          return;
+        }
       }
     }
+
+    DEBUG_println("Client not found. Adding.");
 
     CommandCodec::TCP_Command_Client new_client; //apparently this method of creation is okay although this is within the scope of this function...
     new_client.connect(host,center_port);

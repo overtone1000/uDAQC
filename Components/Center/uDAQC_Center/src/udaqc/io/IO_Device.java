@@ -10,6 +10,8 @@ public abstract class IO_Device extends IO_Group
 	public IO_Device(ByteBuffer data)
 	{
 		super(data);
+		System.out.println("IO_Device created, cloning description.");
+		data.position(0);
 		this.description=data.array().clone();
 	}
 	

@@ -20,12 +20,14 @@ public class IO_Group extends IO_Node
 	public IO_Group(IO_Node basis, ByteBuffer data)
 	{
 		super(basis);
+		System.out.println("Constructing group...");
 		Construct(data);
 	}
 
 	public IO_Group(ByteBuffer data)
 	{
 		super(data);
+		System.out.println("Constructing IO_Group");
 		Construct(data);
 	}
 		

@@ -27,11 +27,14 @@ public class IO_Node
 		data_bytecount = data.getInt();
 		short name_length = data.getShort();
 		byte[] name_bytes = new byte[name_length];
+		if(name_length>data.remaining())
+		{
+			System.err.println("Malformed data.");
+			return;
+		}
 		data.get(name_bytes);
 		ByteBuffer name_bb = ByteBuffer.wrap(name_bytes);
-		
 		name = StandardCharsets.UTF_8.decode(name_bb).toString();
-		
 		System.out.println(name + ", size = " + data_bytecount);
 	}
 	
