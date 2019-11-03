@@ -5,12 +5,10 @@ import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.LinkedList;
@@ -27,49 +25,38 @@ import network.http.HTTPS_Server;
 import network.tcp.server.TCP_Server;
 import network.udp.UDP_Funnel;
 import network.udp.UDP_TimeSync;
-import udaqc.io.IO_Constants;
 import udaqc.io.IO_Constants.Command_IDs;
-import udaqc.io.log.IO_System_Logged.Regime;
 import udaqc.network.Constants.Addresses;
 import udaqc.network.center.command.Command;
 import udaqc.network.interfaces.CenterHandler;
-import udaqc.network.interfaces.HistoryUpdateHandler;
-import udaqc.network.passthrough.Secondary_Server;
 import udaqc.network.passthrough.command.PT_Command;
+import udaqc.jdbc.Database_uDAQC;
 
-public class Center extends TCP_Server implements HistoryUpdateHandler
+public class Center extends TCP_Server
 {
-	protected Secondary_Server passthrough_server = null;
-
+	public static final Database_uDAQC database = new Database_uDAQC();
 	public CenterHandler handler = null;
 
 	private Logger log;
 	//private Loghandler_File loghandler; // only record warning level output
 
-	private TreeMap<Long,DirectDevice> devices = new TreeMap<Long,DirectDevice>();
+	private TreeMap<Long,IO_Device_Connected> devices = new TreeMap<Long,IO_Device_Connected>();
 	
 	private HTTPS_Server webserver;
 
-	private Path history_path;
-	private String program_root;
 	private String master_device_cred_list;
 	
 	private UDP_Funnel udp;
 	private UDP_TimeSync udp_ts = new UDP_TimeSync();
 
-	public Center(String Threadname, String program_root, Path history_path, CenterHandler handler)
+	public Center(String Threadname, String program_root, CenterHandler handler)
 	{
 		super(Threadname, true, false);
 		
 		this.handler = handler;
-		this.history_path = history_path;
-		this.program_root = program_root;
 		this.master_device_cred_list = program_root + "/security/device_credential_list.txt";
 		
-		passthrough_server = new Secondary_Server(Threadname, this);
-
-		// super(Threadname, IO_Constants.Constants.tcp_id_port);
-		DirectDevice.LoadSavedDevices(history_path,this);
+		database.loadDevices();
 		
 		handler.ClientListUpdate();
 
@@ -96,9 +83,7 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 	public void messageReceived(IoSession session, Object message)
 	{
 		Command c = (Command) message;
-		
-		Passthrough_to_Secondaries(session, c);
-		
+				
 		ByteBuffer data = c.getmessage();
 
 		switch (c.Header().command_id)
@@ -146,9 +131,9 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 				
 				System.out.println("Center received a group description. Interpreting as a device.");
 				
-				DirectDevice new_device = DirectDevice.getDirectDevice(history_path, data, this, (NioSession)session);
+				IO_Device_Connected new_device = IO_Device_Connected.getDirectDevice(data, (NioSession)session);
 				devices.put(session.getId(), new_device);
-				udp_ts.addSynchronizer(new_device);
+				udp_ts.addSynchronizer(new_device.getTimeSynchronizer());
 				if (handler != null)
 				{
 					handler.ClientListUpdate();
@@ -166,15 +151,15 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 			break;
 		  case Command_IDs.data:
 		  {
-			DirectDevice device = devices.get(session.getId());
+			IO_Device_Connected device = devices.get(session.getId());
 			if(device==null) 
 			{
-				System.out.println("Device not recognized.");
+				System.out.println("IO_Device_Synchronized not recognized.");
 				return;
 			}
-			else if(!device.Synced())
+			else if(!device.getTimeSynchronizer().Synced())
 			{
-				System.out.println("Device not yet time synced. Discarding data.");
+				System.out.println("IO_Device_Synchronized not yet time synced. Discarding data.");
 				return;
 			}
 			else
@@ -205,7 +190,7 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 	{
 		super.sessionClosed(session);
 		System.out.println("Session " + session.toString() + " closed.");
-		DirectDevice dev = devices.get(session.getId());
+		IO_Device_Connected dev = devices.get(session.getId());
 		if(dev!=null)
 		{
 			dev.ClientDisconnected();
@@ -241,7 +226,7 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 		log.severe(ExceptionUtils.getStackTrace(cause));
 	}
 	
-	public void Passthrough_to_Webserver(DirectDevice device, Command c)
+	public void Passthrough_to_Webserver(IO_Device_Connected device, Command c)
 	{
 		PT_Command ptc = new PT_Command(device.DeviceIndex(),c);
 		if(webserver!=null)
@@ -249,44 +234,11 @@ public class Center extends TCP_Server implements HistoryUpdateHandler
 			webserver.Broadcast(ptc);
 		}
 	}
-	
-	public void Passthrough_to_Secondaries(DirectDevice device, Command c)
-	{
-		PT_Command ptc = new PT_Command(device.DeviceIndex(),c);
-		if(passthrough_server!=null)
-		{
-			passthrough_server.broadcast(ptc);
-		}
-	}
-
-	public void Passthrough_to_Secondaries(IoSession session, Command c)
-	{
-		DirectDevice dd = devices.get(session.getId());
-		if(dd!=null)
-		{
-			Passthrough_to_Secondaries(dd,c);
-		}
-	}
-	
+		
 	public void Passthrough_from_Secondary(PT_Command ptc)
 	{
 		Command c = ptc.containedCommand();
-		DirectDevice.getDirectDevice(ptc.device_index).Send_Command(c);
-	}
-
-	@Override
-	public void HistoryUpdated(DirectDevice device, short system_index, Regime r, Long first_timestamp, ByteBuffer bb)
-	{
-		
-		ByteBuffer message = ByteBuffer.allocate(Short.BYTES + Integer.BYTES + Long.BYTES + bb.capacity());
-		message.order(ByteOrder.LITTLE_ENDIAN);
-		message.putShort(system_index);
-		message.putInt(r.ordinal());
-		message.putLong(first_timestamp);
-		message.put(bb.array());
-		
-		Command c=new Command(IO_Constants.Command_IDs.history_addendum,message.array());
-		Passthrough_to_Webserver(device,c);
+		IO_Device_Connected.getDirectDevice(ptc.device_index).Send_Command(c);
 	}
 	
 	public boolean changeDeviceCredentials(String new_login, String realm, String pw)

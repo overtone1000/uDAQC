@@ -1,32 +1,16 @@
 package udaqc.io;
 
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Vector;
 
-import udaqc.io.log.IO_System_Logged;
-import udaqc.network.Device;
-import udaqc.network.center.DirectDevice;
-import udaqc.network.interfaces.HistoryUpdateHandler;
+import udaqc.network.center.Center;
 
-public class IO_Device extends IO_Group
+public abstract class IO_Device extends IO_Group
 {
-	private HistoryUpdateHandler his_update_handler;
-	private DirectDevice device;
-	
-	public Path DevicePath() {return Paths.get(device.StoragePath().toString() + Device.filesep + this.Name());}
-	public HistoryUpdateHandler HistoryHandler() {return his_update_handler;}
-	public DirectDevice DirectDev() {return device;}
-	public IO_Device(ByteBuffer data, HistoryUpdateHandler his_update_handler, DirectDevice device)
+	public IO_Device(ByteBuffer data)
 	{
 		super(data);
-		this.his_update_handler=his_update_handler;
-		this.device=device;
-		for(IO_System_Logged sys:Systems())
-		{
-			sys.InitLogs();
-		}
+		this.description=data.array().clone();
 	}
 	
 	@Override
@@ -42,7 +26,7 @@ public class IO_Device extends IO_Group
 			switch (new_item.command_description)
 			{
 			case IO_Constants.Command_IDs.system_description:
-				IO_System_Logged new_sys= new IO_System_Logged(new_item, data, this, n);
+				IO_System new_sys= new IO_System(new_item, data, this, n);
 				members.add(new_sys);
 				System.out.println("Added " + new_sys.Name());
 				break;
@@ -54,14 +38,26 @@ public class IO_Device extends IO_Group
 		System.out.println("Construction complete.");
 	}
 	
-	public IO_System_Logged System(Short s) {return (IO_System_Logged)GetMembers().get(s);}
-	public Vector<IO_System_Logged> Systems() 
+	public IO_System System(Short s) {return (IO_System)GetMembers().get(s);}
+	public Vector<IO_System> Systems() 
 	{
-		Vector<IO_System_Logged> retval = new Vector<IO_System_Logged>();
+		Vector<IO_System> retval = new Vector<IO_System>();
 		for(IO_Node n:GetMembers())
 		{
-			retval.add((IO_System_Logged)n);
+			retval.add((IO_System)n);
 		}
 		return retval;
 	}
+
+
+	public byte[] Description() {return description.clone();}
+	
+	protected byte[] description;
+	
+	public boolean isEqual(Object o)
+	{
+		return o instanceof IO_Device && //this works
+				java.util.Arrays.equals(description,((IO_Device) o).description);
+				//storage_path.equals(((IO_Device_Connected) o).storage_path); //this works
+	}	
 }

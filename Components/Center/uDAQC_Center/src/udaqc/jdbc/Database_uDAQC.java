@@ -1,5 +1,6 @@
 package udaqc.jdbc;
 
+import java.nio.ByteBuffer;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -8,15 +9,14 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Iterator;
 import java.util.Properties;
-import java.util.Vector;
-
-import org.joda.time.DateTime;
-
 import udaqc.io.IO_Value;
 import udaqc.io.IO_System;
 import udaqc.io.IO_Device;
+import udaqc.network.IO_Device_Synchronized;
+import udaqc.network.center.IO_Device_Connected;
 
 public class Database_uDAQC
 {
@@ -79,13 +79,49 @@ public class Database_uDAQC
 			type="INT";
 			break;
 		}
-		return value.Name() + " " + type + " NOT NULL";
+		return "\"" + value.Name() + "\"" + " " + type + " NOT NULL";
 	}
 	
+	/*
+	private static class ByteFlag
+	{
+		public static final int length = 1;
+		public static enum EntryFlags
+		{
+			NewEpoch,
+			SplitEpoch;
+		}
+		private byte flags;
+		private static byte FlagByte(EntryFlags flag)
+		{
+			return (byte)(((byte)1)<<flag.ordinal());
+		}
+		public boolean Get(EntryFlags flag)
+		{
+			boolean retval = (flags&FlagByte(flag))!=0;
+			return retval;
+		}
+		public void Set(EntryFlags flag, boolean value)
+		{
+			if(value)
+			{
+				flags |= FlagByte(flag);
+			}
+			else
+			{
+				flags &= (~FlagByte(flag));
+			}
+			
+		}
+	}
+	*/
+	
+	static final String flagcolumn_name = "end_of_epoch";
+	static final String flagcolumn = flagcolumn_name + " boolean NOT NULL";
 	static final String timecolumn_name = "time";
 	static final String timecolumn = timecolumn_name + " TIMESTAMPTZ PRIMARY KEY";
 		
-	static final String devicetablename = "Devices";
+	static final String devicetablename = "devices";
 	private void initDeviceTable()
 	{
 		Statement s;
@@ -106,7 +142,7 @@ public class Database_uDAQC
 				
 				s = conn.createStatement();
 				command = "create table " + devicetablename + "( ";
-				command += "description bytea PRIMARY KEY,";
+				command += "description bytea PRIMARY KEY";
 				command += ");";
 				s.executeUpdate(command);
 				s.close();
@@ -116,26 +152,103 @@ public class Database_uDAQC
 			e.printStackTrace();
 		}
 	}
-	
+	public void insertDevice(IO_Device device)
+	{
+		System.out.println("Inserting device " + device.FullName() + " into database.");
+		String command;
+		PreparedStatement ps;
+		try
+		{
+			command = "insert into " + devicetablename + " values (?);";
+			ps = conn.prepareStatement(command);
+			ps.setBytes(1, device.Description());
+			ps.executeUpdate();
+			ps.close();
+			
+			System.out.println("Inserted device with the following command:");
+			System.out.println(ps.toString());
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		for(IO_System sys:device.Systems())
+		{
+			initSystemTable(sys);
+		}
+	}
 	private String getSystemTableName(IO_System system)
 	{
 		//ESP.getChipId() is always appended to device name, so this is guaranteed to be unique
-		return system.Device().Name() + "_" + system.Index().toString();
-	}
-	
-	public Vector<IO_Device> loadDevices()
-	{
-		Vector<IO_Device> retval = new Vector<IO_Device>();
-		
+		String retval = system.Device().Name() + "_" + system.Index().toString();
+		retval = "\"" + retval + "\"";
 		return retval;
 	}
-	public void processDeviceConnection(IO_Device device)
+	
+	public void loadDevices()
 	{
+		System.out.println("Loading stored devices.");
+		Statement s;
+		try
+		{
+			s = conn.createStatement();
+			String command = "select * from " + devicetablename + ";";
+			s.execute(command);
+			ResultSet res = s.getResultSet();
+			while(res.next())
+			{
+				ByteBuffer bb = ByteBuffer.wrap(res.getBytes(1));
+				IO_Device_Connected dev = IO_Device_Connected.getDirectDevice(bb);
+				
+				System.out.println("Device " + dev.FullName() + " loaded from database.");
+				for(IO_System sys:dev.Systems())
+				{
+					System.out.println("Initializing system table for " + sys.FullName());
+					initSystemTable(sys);
+				}
+			}
+		} catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}	
+	}
 		
+	public void closeEpoch(IO_System system)
+	{
+		String command;
+		String system_table_name = getSystemTableName(system);
+		try
+		{
+			command = "select " + timecolumn_name + " from " + system_table_name + " order by " + timecolumn_name + "desc limit 1;";  
+			Statement s = conn.createStatement();
+			s.execute(command);
+			ResultSet res = s.getResultSet();
+			Timestamp last = null;
+			while(res.next())
+			{
+				last = res.getTimestamp(1, java.util.Calendar.getInstance(java.util.TimeZone.getDefault()));
+			}
+			if(last==null) {
+				System.out.println("Table is empty. No epoch to close.");
+				return;
+			}
+			
+			command = "update " + system_table_name + " set '" + flagcolumn_name + "' = true";
+			command += "where " + timecolumn_name + " = ?;";
+			PreparedStatement ps = conn.prepareStatement(command);
+			ps.setTimestamp(1, last);
+			ps.execute();
+			ps.close();
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
 	}
 	
 	private void initSystemTable(IO_System system)
 	{
+		System.out.println("Initializing system table.");
 		Statement s;
 		String command;
 		DatabaseMetaData meta;
@@ -156,6 +269,7 @@ public class Database_uDAQC
 				
 				s = conn.createStatement();
 				command = "create table " + new_table_name + "( ";
+				command += flagcolumn + ",";
 				command += timecolumn + ",";
 				
 				Iterator<IO_Value> i = system.GetNestedValues().iterator();
@@ -176,20 +290,25 @@ public class Database_uDAQC
 			}
 		} catch (SQLException e)
 		{
+			System.err.println("Error during system table initialization.");
 			e.printStackTrace();
 		}
 	}
-	public void insertSystemTable(IO_System system)
+	
+	public void insertSystemTable(IO_Device_Synchronized d, short system_index)
 	{
 		String command;
+		PreparedStatement ps=null;
+		IO_System system = d.System(system_index);
 		String system_table_name = getSystemTableName(system);
 		try
 		{
-			Timestamp ts = new Timestamp(system.GetTimestamp().getMillis());
+			Timestamp ts = Timestamp.from(Instant.ofEpochMilli(d.GetTimestamp(system.Index()).getMillis()));
 			
 			Iterator<IO_Value> i = system.GetNestedValues().iterator();
 			
-			String vals = "(?,";
+			
+			String vals = "(false,?,";
 			while(i.hasNext())
 			{
 				IO_Value v = i.next();
@@ -205,13 +324,18 @@ public class Database_uDAQC
 				}
 			}
 			
-			command = "insert into " + system_table_name + " values " + vals;
-			PreparedStatement ps = conn.prepareStatement(command);
+			command = "insert into " + system_table_name + " values " + vals + ";";
+			ps = conn.prepareStatement(command);
 			ps.setTimestamp(1, ts);
 			ps.execute();
 			ps.close();
 		} catch (SQLException e)
 		{
+			System.err.println("Error during system table insertion.");
+			if(ps!=null)
+			{
+				System.err.println("Command was " + ps.toString());
+			}
 			e.printStackTrace();
 		}
 	}

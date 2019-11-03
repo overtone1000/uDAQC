@@ -53,9 +53,7 @@ public class Console_Center
 		}
 		
 		String props_file = program_root + "/properties";
-		String history_key = "history";
-		
-		
+				
 		Properties props = new Properties();
 		FileInputStream is=null;
 		try
@@ -81,38 +79,10 @@ public class Console_Center
 			}
 		}
 		
-		FileOutputStream os=null; 
-		if(!props.containsKey(history_key))
-		{
-			props.put(history_key, program_root + "/history");
-			try
-			{
-				os = new FileOutputStream(props_file);
-				props.store(os, null);
-			} catch (IOException e)
-			{
-				e.printStackTrace();
-			}
-		}
-		if(os!=null)
-		{
-			try
-			{
-				os.close();
-			} catch (IOException e)
-			{
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-				
-		String path_str = props.getProperty(history_key);
-		Path history_path = Paths.get(path_str);
-		
 		DummyHandler h = new DummyHandler();
 		
 		@SuppressWarnings("unused")
-		Center id_serv = new Center("IO_Center", program_root, history_path, h);
+		Center id_serv = new Center("IO_Center", program_root, h);
 		
 		//String Threadname = "GNDM_Server";
 		//InetSocketAddress[] hosts=new InetSocketAddress[1];

@@ -1,11 +1,7 @@
 package udaqc.io;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-import org.apache.mina.core.buffer.IoBuffer;
-import org.joda.time.DateTime;
-
-import udaqc.network.center.command.Command;
+import udaqc.network.center.Center;
 
 public class IO_System extends IO_Group
 {		
@@ -29,31 +25,16 @@ public class IO_System extends IO_Group
 		this.iodev=iodev;
 		this.system_index=index;
 	}
-
-	public DateTime GetTimestamp()
-	{
-		DateTime retval=null;
-		if(members!=null)
-		{
-			long us = (long)(((IO_Value)members.firstElement()).value)+iodev.DirectDev().timeZeroMicros();
-			retval = new DateTime(us/1000);
-		}
-		return retval;
-	}
 	
 	public void ReceiveData(ByteBuffer data)
 	{
-		//Rather than interpreting the data, pass it to the logger.
-		//The logger and any other future functions and classes should call InterpretData function (in parent IO_Group object)
-		//As needed
-		
 		//If this function is not overridden, just interpret the data.
 		super.InterpretData(data);
 	}
 		
 	//Use this function to create an IO_System from file (gets its description)
 	/*
-	public static IO_System fromFile(Path p, DirectDevice device)
+	public static IO_System fromFile(Path p, IO_Device_Connected device)
 	{
 		IO_System retval=null;
 		
@@ -82,6 +63,7 @@ public class IO_System extends IO_Group
 	}
 	*/
 	
+	/*
 	public void ModifyValue(short index, byte[] value)
 	{
 		if(iodev.DirectDev()==null) {return;}
@@ -94,9 +76,16 @@ public class IO_System extends IO_Group
 		
 		iodev.DirectDev().Send_Command(c);
 	}
+	*/
 	
 	public IO_Device Device()
 	{
 		return iodev;
 	}
+	
+	public void ClientDisconnected()
+	{
+		Center.database.closeEpoch(this);
+	}
+	
 }

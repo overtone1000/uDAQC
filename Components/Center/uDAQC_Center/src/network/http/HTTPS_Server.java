@@ -10,16 +10,13 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Vector;
 import java.util.concurrent.Semaphore;
 
 import network.http.websocket.Servlet_uD;
 import network.SecurityBundle;
 import udaqc.io.IO_Constants;
-import udaqc.io.log.IO_System_Logged;
-import udaqc.io.log.IO_System_Logged.Regime;
 import udaqc.network.center.Center;
-import udaqc.network.center.DirectDevice;
+import udaqc.network.center.IO_Device_Connected;
 import udaqc.network.center.command.Command;
 import udaqc.network.passthrough.command.PT_Command;
 import udaqc.network.passthrough.endpoints.WS_Endpoint;
@@ -49,7 +46,6 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.security.Constraint;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
-import org.joda.time.DateTime;
 import org.eclipse.jetty.util.security.Credential;
 
 public class HTTPS_Server
@@ -332,7 +328,7 @@ public class HTTPS_Server
 		
 	public void SessionOpened(Session new_session)
 	{
-		DirectDevice.PassthroughInitialization(new WS_Endpoint(new_session));
+		IO_Device_Connected.PassthroughInitialization(new WS_Endpoint(new_session));
 		try
 		{
 			session_mutex.acquire();
@@ -411,37 +407,7 @@ public class HTTPS_Server
     	case IO_Constants.Command_IDs.passthrough:
     		PT_Command ptc = new PT_Command(command);
     		parent.Passthrough_from_Secondary(ptc);
-    		break;
-    	case IO_Constants.Command_IDs.history_request:
-    	{
-    		ByteBuffer mes = command.getmessage();
-    		Short device_index = mes.getShort();
-    		Short system_index = mes.getShort();
-    		Integer regime = mes.getInt();
-    		Long last_time = mes.getLong();
-    		System.out.println("History request for regime " + regime + " after " + last_time);
-    		
-    		DirectDevice.getDirectDevice(device_index).GetSystem(system_index).PassthroughInitialization(new WS_Endpoint(session), regime, last_time);
-    	}
-    	break;
-    	case IO_Constants.Command_IDs.lossy_data_request:
-    	{
-    		ByteBuffer mes = command.getmessage();
-    		Integer regime = mes.getInt();
-    		Long start_time = mes.getLong();
-    		Long end_time = mes.getLong();
-
-    		DateTime start = new DateTime(start_time);
-    		DateTime end = null;
-    		if(end_time>=0)
-    		{
-    			end = new DateTime(end_time);
-    		}
-    		
-    		
-    		DirectDevice.HandleLossyDataRequest(new WS_Endpoint(session), Regime.values()[regime], start, end);
-    	}
-    	break;
+		break;
     	default:
     		System.out.println("Unknown command received from web client.");
     	}

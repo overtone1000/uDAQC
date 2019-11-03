@@ -165,7 +165,7 @@ public class UDP_TimeSync implements Runnable
 		points.clear();
 
 		syncs_to_perform.remove(current_sync);
-		if(current_sync.KeepSynchronized())
+		if(current_sync.getExternal().KeepSynchronized())
 		{
 			System.out.println(current_sync + " requests continued synchronization. Moving to end of list.");
 			syncs_to_perform.add(current_sync);
@@ -185,7 +185,7 @@ public class UDP_TimeSync implements Runnable
 		
 		request = new Command(IO_Constants.Command_IDs.timesync_request,response_message.array());
 		
-		InetSocketAddress add = current_sync.TimeSyncAddress();
+		InetSocketAddress add = current_sync.getExternal().TimeSyncAddress();
 		if(add!=null)
 		{
 			//System.out.println("Sending timesync request to " + add.toString());
@@ -279,7 +279,7 @@ public class UDP_TimeSync implements Runnable
 				{
 					case IO_Constants.Command_IDs.timesync_response:
 					{
-						InetAddress expected = current_sync.TimeSyncAddress().getAddress();
+						InetAddress expected = current_sync.getExternal().TimeSyncAddress().getAddress();
 						if(packet.getAddress().equals(expected)) //only handle the response if this packet is from the expected source. Don't want to mix up time syncs. This is also a security issue.
 						{
 							handleResponse(c);

@@ -1,24 +1,11 @@
 package main;
 
 
-import java.net.InetSocketAddress;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.DatabaseMetaData;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
-import java.sql.Statement;
-import java.sql.Timestamp;
-import java.util.Properties;
-
-import org.apache.commons.dbcp2.BasicDataSource;
-
 import network.http.HTTPS_Server;
 import security.PasswordManager;
 import udaqc.jdbc.Database_uDAQC;
 import udaqc.network.Constants.Addresses;
-import udaqc.network.passthrough.Secondary_Center;
 
 public class Testing 
 {
@@ -39,9 +26,9 @@ public class Testing
 	}
 	public static void TLS()
 	{
-		InetSocketAddress host = new InetSocketAddress("127.0.0.1",udaqc.network.passthrough.Secondary_Constants.Ports.passthrough_server);
-		@SuppressWarnings("unused")
-		Secondary_Center cl = new Secondary_Center("Testing client",Paths.get("passthrough_history"),host,null);
+		//InetSocketAddress host = new InetSocketAddress("127.0.0.1",udaqc.network.passthrough.Secondary_Constants.Ports.passthrough_server);
+		//@SuppressWarnings("unused")
+		//Secondary_Center cl = new Secondary_Center("Testing client",Paths.get("passthrough_history"),host,null);
 	}
 	public static void Password()
 	{
