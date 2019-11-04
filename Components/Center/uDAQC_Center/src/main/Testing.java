@@ -20,7 +20,9 @@ public class Testing
 		System.out.println("Testing database.");
 		
 		Database_uDAQC db_manager = new Database_uDAQC();
-		//db_manager.DropTable("test_table");
+		db_manager.insert_test_data();
+		
+		
 				
 		System.out.println("Database testing done.");
 	}

@@ -48,45 +48,77 @@ public class Database_uDAQC
 		}
 	}
 	
-	private String IOValueToColumn(udaqc.io.IO_Value value)
+	private static String IOValueTypeToSQLType(udaqc.io.IO_Value value)
 	{
-		String type;
 		switch(value.getDataType())
 		{
 		case udaqc.io.IO_Constants.DataTypes.bool:
-			type="bool";
-			break;
+			return "bool";
 		case udaqc.io.IO_Constants.DataTypes.floating_point:
 			switch(value.Size())
 			{
-			case 2:type="float(24)";
-				break;
-			case 4:type="float(24)";
-				break;
-			case 8:type="float(53)";
-				break;
-			default:type="float(53)";
+			case 2:return "float(24)";
+			case 4:return "float(24)";
+			case 8:return "float(53)";
+			default:return "float(53)";
 			}
-			break;
+			
 		case udaqc.io.IO_Constants.DataTypes.signed_integer:
 		case udaqc.io.IO_Constants.DataTypes.unsigned_integer:
 			switch(value.Size())
 			{
-			case 2:type="SMALLINT";
-				break;
-			case 4:type="INT";
-				break;
-			case 8:type="BIGINT";
-				break;
-			default:type="INT";
+			case 2:return "SMALLINT";
+			case 4:return "INT";
+			case 8:return "BIGINT";
+			default:return "INT";
 			}
-			break;
 		default:
-			type="INT";
+			return "INT";
+		}
+	}
+	
+	private static String IOValueToEscapedColumnName(udaqc.io.IO_Value value)
+	{
+		return "\"" + value.Name() + "\"";
+	}
+	private String IOValueToColumnDeclareLine(udaqc.io.IO_Value value)
+	{
+		String type = IOValueTypeToSQLType(value);
+		String retval = IOValueToEscapedColumnName(value) + " " + type + " NOT NULL"; 
+		return retval;
+	}
+	
+	public static enum AggregateEntities
+	{
+		Average,
+		Maximum,
+		Minimum;
+		private String columnName(udaqc.io.IO_Value value)
+		{
+			return "\"" + value.Name() + "_" + this.toString() + "\"";
+		}
+	}
+	
+	private String IOValueToAggregateLine(udaqc.io.IO_Value value)
+	{
+		String valcol = IOValueToEscapedColumnName(value);
+		String retval = "";
+		switch(value.getDataType())
+		{
+		case udaqc.io.IO_Constants.DataTypes.bool:
+			System.err.println("Booleans not working for aggregate yet. Will probably require some advanced logic and a type change.");
+			//Example possible function might start with "count(*) filter (where " + valcol + ")"
+			//This would best be served by creating a function for it.
+			break;
+		case udaqc.io.IO_Constants.DataTypes.floating_point:
+		case udaqc.io.IO_Constants.DataTypes.signed_integer:
+		case udaqc.io.IO_Constants.DataTypes.unsigned_integer:
+		default:
+			retval = "avg(" + valcol + ") as " + AggregateEntities.Average.columnName(value) + ", ";
+			retval += "max(" + valcol + ") as " + AggregateEntities.Maximum.columnName(value) + ", ";
+			retval += "min(" + valcol + ") as " + AggregateEntities.Minimum.columnName(value);
 			break;
 		}
-		String retval = "\"" + value.Name() + "\"" + " " + type + " NOT NULL"; 
-		System.out.println(retval);
 		return retval;
 	}
 	
@@ -139,9 +171,9 @@ public class Database_uDAQC
 			switch(this)
 			{
 			case raw:
-				return "2 weeks";
-			case minute:
 				return "2 months";
+			case minute:
+				return "4 months";
 			case hour:
 				return "6 months";
 			case day:
@@ -155,13 +187,13 @@ public class Database_uDAQC
 			switch(this)
 			{
 			case minute:
-				return "1 minutes";
+				return "1 minute";
 			case hour:
-				return "1 hours";
+				return "1 hour";
 			case day:
-				return "1 days";
+				return "1 day";
 			default:
-				return "0 seconds";
+				return "0 second";
 			}
 		}
 	}
@@ -326,6 +358,37 @@ public class Database_uDAQC
 		}
 	}
 	
+	public void insert_test_data()
+	{
+		String system_table_name = "\"uDAQC Template Device(2418134)_0\"";
+		String command = "insert into " + Regime.raw.schema() + "." + system_table_name + " values ";
+		command += "(false,?,?,0,1,2,3);";
+		
+		System.out.println("Starting test data insertion.");
+		int points = 100000;
+		int milli_step = 10000;
+		Instant start_time = Instant.now().minusMillis(milli_step*points);
+		Timestamp ts;
+		PreparedStatement ps;
+		try
+		{
+		ps = conn.prepareStatement(command);
+		for(int n=0;n<points;n++)
+		{
+			ts = Timestamp.from(start_time.plusMillis(milli_step*n));
+			ps.setTimestamp(1, ts);
+			ps.setFloat(2, (float)Math.random());
+			ps.addBatch();
+		}
+		ps.executeBatch();
+		} catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		System.out.println("Ending test data insertion");
+	}
+	
 	private void initSystemTable(IO_System system)
 	{
 		System.out.println("Initializing system table.");
@@ -349,6 +412,7 @@ public class Database_uDAQC
 				if(this_name.equals(raw_table_name))
 				{
 					return;
+					//dropTable(Regime.raw.schema() + "." + new_table_name);
 				}
 			}
 			
@@ -365,7 +429,7 @@ public class Database_uDAQC
 			
 			while(i.hasNext())
 			{
-				command += IOValueToColumn(i.next());
+				command += IOValueToColumnDeclareLine(i.next());
 				if(i.hasNext()) {command += ",";}
 			}
 			
@@ -379,14 +443,27 @@ public class Database_uDAQC
 			s.close();
 			
 			//Now create regime continuous aggregates
+			String timebucketcolumn_name = timecolumn_name+"bucket";
 			for(Regime r:Regime.values())
 			{
 				if(r!=Regime.raw)
 				{
-					command = "create view " + new_table_name;
+					command = "create view " + r.schema() + "." + new_table_name;
 					command += " with (timescaledb.continuous) as select";
-					command += " time_bucket '" + r.length() + "', " + timecolumn_name;
-					command += ""
+					command += " time_bucket('" + r.length() + "', " + timecolumn_name + ") as " + timebucketcolumn_name + ", ";
+					
+					i = system.GetNestedValues().iterator();
+					i.next(); //ditch the IO_Value timestamp
+					while(i.hasNext())
+					{
+						command += IOValueToAggregateLine(i.next());
+						if(i.hasNext()) {command += ", ";}
+					}
+					command += " from " + Regime.raw.schema() + "." + new_table_name;
+					command += " group by " + timebucketcolumn_name;
+					
+					System.out.println(command);
+					
 					/*
 					CREATE VIEW device_summary
 					WITH (timescaledb.continuous) --This flag is what makes the view continuous
@@ -400,6 +477,10 @@ public class Database_uDAQC
 					  device_readings
 					GROUP BY bucket, device_id; --We have to group by the bucket column, but can also add other group-by columns
 					*/
+					
+					s = conn.createStatement();
+					s.execute(command);
+					s.close();
 				}
 			}
 		} catch (SQLException e)
@@ -483,7 +564,7 @@ public class Database_uDAQC
 		try
 		{
 			s = conn.createStatement();
-			s.executeUpdate("drop table " + tablename + ";");
+			s.executeUpdate("drop table " + tablename + " cascade;");
 			s.close();
 		} catch (SQLException e)
 		{
@@ -512,19 +593,21 @@ public class Database_uDAQC
 				try
 				{
 					meta = conn.getMetaData();
-					for(Regime r:Regime.values())
+					//for(Regime r:Regime.values())
+					//{
+					Regime r = Regime.raw; //for now, can't manage retention in continous aggregates separately.
+					ResultSet meta_res = meta.getTables(null, r.schema(), null, new String[] {"TABLE"});
+					while(meta_res.next()) 
 					{
-						ResultSet meta_res = meta.getTables(null, r.schema(), null, new String[] {"TABLE"});
-						while(meta_res.next()) 
-						{
-							String this_name = meta_res.getString("TABLE_NAME");
-							s = conn.createStatement();
-							command = "SELECT drop_chunks(older_than => interval '" + r.retention() + "' , schema_name => '" + r.schema() + "', table_name => '" + this_name + "');";
-							System.out.println(command);
-							s.execute(command);
-							s.close();
-						}	
+						String this_name = meta_res.getString("TABLE_NAME");
+						s = conn.createStatement();
+						command = "SELECT drop_chunks(older_than => interval '" + r.retention() + "' , schema_name => '" + r.schema() + "', table_name => '" + this_name;
+						command +=  "', cascade_to_materializations => true);"; //currently have to do this if there are continuous aggregates. TimescaleDB may improve this in the future.
+						System.out.println(command);
+						s.execute(command);
+						s.close();
 					}	
+					//}	
 					
 				} catch (SQLException e)
 				{

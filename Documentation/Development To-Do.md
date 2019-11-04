@@ -1,9 +1,6 @@
 # **Development Tasks**
-* Working on server creating the new Lossy Data structure. Work is ongoing primarily in the IO_Log and IO_System_Logged classes.
 
 ## In Progress Notes
-### Decimation
-The new strategy is to send data of varying temporal resolution to the web client on demand for chart rendering. This is detailed in changes to "Architecture.md"
 
 ## Device
 * Convert to saving only hashed password once ESP8266 Arduino library v2.6.0 is released
@@ -14,7 +11,7 @@ The new strategy is to send data of varying temporal resolution to the web clien
 
 ## Center
 * Get rid of the "Point" class and just use a Float or a Double
-* Would be wonderful if organization of IO_Log data in memory matched requirements for LossyDataStructure
+* Consider compression of TimescaleDB older chunks. This may be a workaround for the fact that continuous aggregates can't have different data retention than their source tables.
 
 ## Web Interface
 * Profile performance. There is probably need for decimation to allow charting large quantities of data.
