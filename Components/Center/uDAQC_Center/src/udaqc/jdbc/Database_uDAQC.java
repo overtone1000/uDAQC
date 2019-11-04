@@ -124,7 +124,49 @@ public class Database_uDAQC
 	}
 	*/
 	
-	static final String systems_schema = "io_systems";
+	public static enum Regime
+	{
+		raw,
+		minute,
+		hour,
+		day;
+		private String schema()
+		{
+			return "iodata" + this.toString();
+		}
+		private String retention()
+		{
+			switch(this)
+			{
+			case raw:
+				return "2 weeks";
+			case minute:
+				return "2 months";
+			case hour:
+				return "6 months";
+			case day:
+				return "12 months";
+			default:
+				return "1 seconds";
+			}
+		}
+		private String length()
+		{
+			switch(this)
+			{
+			case minute:
+				return "1 minutes";
+			case hour:
+				return "1 hours";
+			case day:
+				return "1 days";
+			default:
+				return "0 seconds";
+			}
+		}
+	}
+	
+	
 	
 	static final String flagcolumn_name = "end_of_epoch";
 	static final String flagcolumn = flagcolumn_name + " boolean NOT NULL";
@@ -153,10 +195,13 @@ public class Database_uDAQC
 			s.executeUpdate(command);
 			s.close();
 			
-			s = conn.createStatement();
-			command = "create schema if not exists " + systems_schema + ";";
-			s.executeUpdate(command);
-			s.close();
+			for(Regime r:Regime.values())
+			{
+				s = conn.createStatement();
+				command = "create schema if not exists " + r.schema() + ";";
+				s.executeUpdate(command);
+				s.close();
+			}
 			
 		} catch (SQLException e)
 		{
@@ -255,7 +300,7 @@ public class Database_uDAQC
 		String system_table_name = getEscapedSystemTableName(system);
 		try
 		{
-			command = "select " + timecolumn_name + " from " + systems_schema + "." + system_table_name + " order by " + timecolumn_name + " desc limit 1;";  
+			command = "select " + timecolumn_name + " from " + Regime.raw.schema() + "." + system_table_name + " order by " + timecolumn_name + " desc limit 1;";  
 			Statement s = conn.createStatement();
 			s.execute(command);
 			ResultSet res = s.getResultSet();
@@ -269,7 +314,7 @@ public class Database_uDAQC
 				return;
 			}
 			
-			command = "update " + systems_schema + "." + system_table_name + " set " + flagcolumn_name + " = true";
+			command = "update " + Regime.raw.schema() + "." + system_table_name + " set " + flagcolumn_name + " = true";
 			command += " where " + timecolumn_name + " = ?;";
 			PreparedStatement ps = conn.prepareStatement(command);
 			ps.setTimestamp(1, last);
@@ -292,7 +337,8 @@ public class Database_uDAQC
 		try
 		{
 			meta = conn.getMetaData();
-			ResultSet meta_res = meta.getTables(null, systems_schema, null, new String[] {"TABLE"});
+			
+			ResultSet meta_res = meta.getTables(null, Regime.raw.schema(), null, new String[] {"TABLE"});
 			System.out.println("Checking for tables with name " + new_table_name);
 			
 			while(meta_res.next()) 
@@ -310,7 +356,7 @@ public class Database_uDAQC
 			
 			
 			s = conn.createStatement();
-			command = "create table if not exists " + systems_schema + "." + new_table_name + " ( ";
+			command = "create table if not exists " + Regime.raw.schema() + "." + new_table_name + " ( ";
 			command += flagcolumn + ",";
 			command += timecolumn + ",";
 			
@@ -328,9 +374,34 @@ public class Database_uDAQC
 			s.close();
 			
 			s = conn.createStatement();
-			command = "select create_hypertable('" + systems_schema + "." + new_table_name + "', '" + timecolumn_name + "');";
+			command = "select create_hypertable('" + Regime.raw.schema() + "." + new_table_name + "', '" + timecolumn_name + "');";
 			s.execute(command);
 			s.close();
+			
+			//Now create regime continuous aggregates
+			for(Regime r:Regime.values())
+			{
+				if(r!=Regime.raw)
+				{
+					command = "create view " + new_table_name;
+					command += " with (timescaledb.continuous) as select";
+					command += " time_bucket '" + r.length() + "', " + timecolumn_name;
+					command += ""
+					/*
+					CREATE VIEW device_summary
+					WITH (timescaledb.continuous) --This flag is what makes the view continuous
+					AS
+					SELECT
+					  time_bucket('1 hour', observation_time) as bucket, --time_bucket is required
+					  device_id,
+					  avg(metric) as metric_avg, --We can use any parallelizable aggregate
+					  max(metric)-min(metric) as metric_spread --We can also use expressions on aggregates and constants
+					FROM
+					  device_readings
+					GROUP BY bucket, device_id; --We have to group by the bucket column, but can also add other group-by columns
+					*/
+				}
+			}
 		} catch (SQLException e)
 		{
 			System.err.println("Error during system table initialization.");
@@ -367,7 +438,7 @@ public class Database_uDAQC
 				}
 			}
 			
-			command = "insert into " + systems_schema + "." + system_table_name + " values " + vals + ";";
+			command = "insert into " + Regime.raw.schema() + "." + system_table_name + " values " + vals + ";";
 			ps = conn.prepareStatement(command);
 			ps.setTimestamp(1, ts);
 			ps.execute();
@@ -441,16 +512,19 @@ public class Database_uDAQC
 				try
 				{
 					meta = conn.getMetaData();
-					ResultSet meta_res = meta.getTables(null, systems_schema, null, new String[] {"TABLE"});
-					while(meta_res.next()) 
+					for(Regime r:Regime.values())
 					{
-						String this_name = meta_res.getString("TABLE_NAME");
-						s = conn.createStatement();
-						command = "SELECT drop_chunks(older_than => interval '3 seconds', schema_name => '" + systems_schema + "', table_name => '" + this_name + "');";
-						System.out.println(command);
-						s.execute(command);
-						s.close();
-					}			
+						ResultSet meta_res = meta.getTables(null, r.schema(), null, new String[] {"TABLE"});
+						while(meta_res.next()) 
+						{
+							String this_name = meta_res.getString("TABLE_NAME");
+							s = conn.createStatement();
+							command = "SELECT drop_chunks(older_than => interval '" + r.retention() + "' , schema_name => '" + r.schema() + "', table_name => '" + this_name + "');";
+							System.out.println(command);
+							s.execute(command);
+							s.close();
+						}	
+					}	
 					
 				} catch (SQLException e)
 				{
