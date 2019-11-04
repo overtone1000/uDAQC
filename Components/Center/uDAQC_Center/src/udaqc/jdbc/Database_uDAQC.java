@@ -13,6 +13,8 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.Properties;
+
+import threading.ThreadWorker;
 import udaqc.io.IO_Value;
 import udaqc.io.IO_System;
 import udaqc.io.IO_Device;
@@ -21,6 +23,7 @@ import udaqc.network.center.IO_Device_Connected;
 
 public class Database_uDAQC
 {
+	
 	private static final String url = "jdbc:postgresql://localhost/udaqc_database";
 	private static Properties props = new Properties();
 	{
@@ -30,13 +33,15 @@ public class Database_uDAQC
 	}
 	
 	Connection conn=null;
-	
+		
+	private BackgroundManager background = new BackgroundManager();
 	public Database_uDAQC()
 	{
 		try
 		{
 			conn = DriverManager.getConnection(url, props);
 			initDeviceTable();
+			background.start();
 		} catch (SQLException e)
 		{
 			e.printStackTrace();
@@ -414,5 +419,55 @@ public class Database_uDAQC
 			e.printStackTrace();
 		}
 
+	}
+
+	
+	private class BackgroundManager extends ThreadWorker
+	{
+		public BackgroundManager()
+		{
+			super("Database Manager");
+		}
+		private static final int hour = 1000*60*60;
+		@Override
+		public void run()
+		{
+			while(this.continueRunning())
+			{
+				System.out.println("Dropping old chunks.");
+				Statement s;
+				String command;
+				DatabaseMetaData meta;
+				try
+				{
+					meta = conn.getMetaData();
+					ResultSet meta_res = meta.getTables(null, systems_schema, null, new String[] {"TABLE"});
+					while(meta_res.next()) 
+					{
+						String this_name = meta_res.getString("TABLE_NAME");
+						s = conn.createStatement();
+						command = "SELECT drop_chunks(older_than => interval '3 seconds', schema_name => '" + systems_schema + "', table_name => '" + this_name + "');";
+						System.out.println(command);
+						s.execute(command);
+						s.close();
+					}			
+					
+				} catch (SQLException e)
+				{
+					System.err.println("Error during background operations.");
+					e.printStackTrace();
+				}
+				
+
+				try
+				{
+					Thread.sleep(hour);
+				} catch (InterruptedException e)
+				{
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 }
