@@ -197,9 +197,7 @@ public class Database_uDAQC
 			}
 		}
 	}
-	
-	
-	
+		
 	static final String flagcolumn_name = "end_of_epoch";
 	static final String flagcolumn = flagcolumn_name + " boolean NOT NULL";
 	static final String timecolumn_name = "time";
@@ -290,6 +288,11 @@ public class Database_uDAQC
 	{
 		//ESP.getChipId() is always appended to device name, so this is guaranteed to be unique
 		return system.Device().Name() + "_" + system.Index().toString();
+	}
+	
+	private String getFullSystemTableName(IO_System system, Regime r)
+	{
+		return r.schema() + "." + getEscapedSystemTableName(system);
 	}
 	
 	public void loadDevices()
@@ -490,12 +493,44 @@ public class Database_uDAQC
 		}
 	}
 	
+	public void count(IO_System system, Regime r, Instant start, Instant end)
+	{
+		String full_table_name = getFullSystemTableName(system,r);
+		PreparedStatement ps=null;
+		Timestamp start_ts = Timestamp.from(start);
+		Timestamp end_ts = Timestamp.from(end);
+		try
+		{
+			String command = "select count(" + timecolumn_name + ") from " + full_table_name;
+			command += " where " + timecolumn_name + " >= ?";
+			command += " and " + timecolumn_name + " <= ?";
+			ps = conn.prepareStatement(command);
+			ps.setTimestamp(1, start_ts);
+			ps.setTimestamp(2, end_ts);
+			ps.execute();
+			ResultSet res = ps.getResultSet();
+			while(res.next())
+			{
+				int count = res.getInt(1);
+				System.out.println(full_table_name + " has " + count + " rows between " + start.toString() + " and " + end.toString());
+			}
+		} catch (SQLException e)
+		{
+			System.out.println("Error during counting.");
+			if(ps!=null)
+			{
+				System.err.println("Command was " + ps.toString());
+			}
+			e.printStackTrace();
+		}
+	}
+	
 	public void insertSystemTable(IO_Device_Synchronized d, short system_index)
 	{
 		String command;
 		PreparedStatement ps=null;
 		IO_System system = d.System(system_index);
-		String system_table_name = getEscapedSystemTableName(system);
+		String full_table_name = getFullSystemTableName(system, Regime.raw);
 		try
 		{
 			Timestamp ts = Timestamp.from(Instant.ofEpochMilli(d.GetTimestamp(system.Index()).getMillis()));
@@ -519,7 +554,7 @@ public class Database_uDAQC
 				}
 			}
 			
-			command = "insert into " + Regime.raw.schema() + "." + system_table_name + " values " + vals + ";";
+			command = "insert into " + full_table_name + " values " + vals + ";";
 			ps = conn.prepareStatement(command);
 			ps.setTimestamp(1, ts);
 			ps.execute();
@@ -536,12 +571,12 @@ public class Database_uDAQC
 	}
 	public void printSystemTable(IO_System system)
 	{
-		String system_table_name = getSystemTableName(system);
+		String full_table_name = getFullSystemTableName(system, Regime.raw);
 		Statement s;
 		try
 		{
 			s = conn.createStatement();
-			String command = "select * from " + system_table_name + " order by " + timecolumn_name;
+			String command = "select * from " + full_table_name + " order by " + timecolumn_name;
 			s.execute(command);
 			ResultSet res = s.getResultSet();
 			while(res.next())

@@ -1,11 +1,18 @@
 package main;
 
 
+import java.nio.ByteBuffer;
 import java.nio.file.Paths;
+import java.time.Instant;
+
 import network.http.HTTPS_Server;
 import security.PasswordManager;
+import udaqc.io.IO_Device;
+import udaqc.io.IO_System;
 import udaqc.jdbc.Database_uDAQC;
+import udaqc.jdbc.Database_uDAQC.Regime;
 import udaqc.network.Constants.Addresses;
+import udaqc.network.center.IO_Device_Connected;
 
 public class Testing 
 {
@@ -18,12 +25,15 @@ public class Testing
 	public static void database()
 	{
 		System.out.println("Testing database.");
+		Database_uDAQC database = new Database_uDAQC();
+		database.loadDevices();
 		
-		Database_uDAQC db_manager = new Database_uDAQC();
-		db_manager.insert_test_data();
-		
-		
-				
+		//Testing...
+		IO_System sys=IO_Device_Connected.getDirectDevice((short)0).GetSystem((short)0);
+		Instant start = Instant.ofEpochMilli(0);
+		Instant end = Instant.now();
+		database.count(sys, Regime.raw, start, end);
+		System.out.println("Counted.");
 		System.out.println("Database testing done.");
 	}
 	public static void TLS()

@@ -12,6 +12,7 @@
 ## Center
 * Get rid of the "Point" class and just use a Float or a Double
 * Consider compression of TimescaleDB older chunks. This may be a workaround for the fact that continuous aggregates can't have different data retention than their source tables.
+* Should drop tables of systems that lose all their data to expiration.
 
 ## Web Interface
 * Profile performance. There is probably need for decimation to allow charting large quantities of data.

@@ -92,6 +92,7 @@ public class Console_Center
 		//@SuppressWarnings("unused")
 		//GNDM_Server s=new GNDM_Server(Threadname,hosts);
 		
+		
 	}
 
 	
