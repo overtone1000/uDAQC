@@ -70,13 +70,6 @@ Each IO Object has a function that will send its description. The contents of th
 1. The description for an IO_Group comes first (see above)
 2. int_16 containing the index for this system. This will be included in subsequent data messages to identify which system on the device the data is for.
 
-# Data Message Structure
-When a data message for an IO_System is sent from a Device to a Center, the message first contains:
-1. The int_16 index of that IO_System
-2. An entry for each IO_Node in that system in the order that each IO_Node is found in the description for that IO_System.  
-
-The size of each entry is equal to the data byte count found in the description for that IO_Node. In practice, the byte count will only be non-zero for IO_Value objects and any classes that inherit from IO_Value, although custom IO_Node objects not derived from IO_Value objects could conceivably be created that might be included in the data message for an IO_System.
-
 # Time
 When a Center connects to a Device, it will perform a time synchronization over UDP before accepting data messages. Any data messages received before this synchronization will be discarded. The result is that the time of the Device boot (the time at which the micros64() function would have been zero) is stored by the Center.
 
@@ -89,61 +82,45 @@ There is currently a timing discrepancy. The raw tiemstamp is in microseconds si
 Furthermore, the PostgreSQL has an alternative long definition of the time. This is abstracted away by the Java Timestamp class. For reference, from the PostgreSQL docs (https://www.postgresql.org/docs/9.1/datatype-datetime.html):
 >Note: When timestamp values are stored as eight-byte integers (currently the default), microsecond precision is available over the full range of values. When timestamp values are stored as double precision floating-point numbers instead (a deprecated compile-time option), the effective limit of precision might be less than 6. timestamp values are stored as seconds before or after midnight 2000-01-01. When timestamp values are implemented using floating-point numbers, microsecond precision is achieved for dates within a few years of 2000-01-01, but the precision degrades for dates further away. Note that using floating-point datetimes allows a larger range of timestamp values to be represented than shown above: from 4713 BC up to 5874897 AD. The same compile-time option also determines whether time and interval values are stored as floating-point numbers or eight-byte integers. In the floating-point case, large interval values degrade in precision as the size of the interval increases.
 
-# Lossy Data
-## Lossy Data Request Structure
-The web client submits requests for data from the server depending on the graphing requirements. The request contains:
-1. int_32 indicating the temporal regime
-2. int_64 containing the timestamp of the start time
-3. int_64 containing the timestamp of the end time; if the most current data is requested, a negative value will be sent
+# Live Data 
+## DataMessage Structure
+When a data message for an IO_System is sent from a Device to a Center, the message first contains:
+1. The int_16 index of that IO_System
+2. An entry for each IO_Node in that system in the order that each IO_Node is found in the description for that IO_System.  
 
-## Lossy Data Structure
-The server supplies data in response to a data request. The response contains a passthrough command. After the initial passthrough information, the message contains:
-1. int_16 inidicated the IO_System index
-2. uint_8 containing flags for the nature of the data included
-  * 0 bit: raw value
-  * 1 bit: max value
-  * 2 bit: min value
-  For now, only these three bits will be used. The server will either send raw data (if the number of data for the pertinent temporal range is less than a given cutoff value like 1024) or min and max data (if greater than the cutoff). This will keep rendering times and transmission volumes reasonable.
-3. int_32 containing the number of epochs in each data set.
-4. int_32[n], each containing the number of data contained by epoch[n]
-5. The remainder of the message will be one data set for each of the flags marked in #2 above.
+The size of each entry is equal to the data byte count found in the description for that IO_Node. In practice, the byte count will only be non-zero for IO_Value objects and any classes that inherit from IO_Value, although custom IO_Node objects not derived from IO_Value objects could conceivably be created that might be included in the data message for an IO_System.
 
-## Lossy Data Addendum
-If the web client requested current data in its request, the server will send addenda as additional passthrough commands. After the passthrough header, the message contains:
-1. int_16 inidicated the IO_System index
-2. The message will have one datum for each of the flags marked in the most recent lossy data structure received.
-Of note, the client must be able to handle this addendum as either an update to an existing bin of data with the same timestamp or as a new timestamp.
-
-# History (deprecated)
-## History Request Structure (deprecated)
-This message is a command that contains a request from a web client to the Center to send historical data. Its structure is as follows:
-1. int_16 indicating the IO_Device index for the device about which data is being requested
-2. int_16 indicating the IO_System index for the system about which data is being requested
-3. int_32 indicating the temporal regime
-4. int_64 containing the timestamp of the last datum the Center already has for this regime. If it has none, this value will be left at zero.
-
-## History Structure (deprecated)
-This message contains the logged data for a single regime. It's a passthrough command. After the passthrough command header, the message contains:
-1. int_16 indicating the IO_System index for this IO_Device
-2. int_32 indicating the temporal regime (0 for live, 1 for minute, 2 for hour, 3 for day). This might be improved by instead sending the number of microseconds or milliseconds over which this time series has been averaged or otherwise consolidated.
-3. int_64 indicating the maximum size of the following byte array (NOT necessarily the number provided in this message). Although javascript does not handle 64-bit integers well, this is likely large enough for practical purposes.
-4. byte[] containing the log file
-
-The log file itself is composed of a series of entries with the following structure:
-1. byte containing flag bits with the following flags:
-  1. New epoch - signals discontinuity of this entry from the prior entry
-  2. Split epoch - signals that this entry is actually continuous with the first entry in the file
-2. int_64 containing timestamp (ms since last Java epoch). Although javascript does not handle 64-bit integers well, the max safe value is 9,007,199,254,740,991 while an epoch only contains 2,147,483,647,000 milliseconds (more than 3 orders of magnitude)
-3. float_32 for each IO_Value in this system (in the same order as that found in a data message)
-
-## History Addendum structure (deprecated)
-This message contains an additional datum for a single regime. Its structure is as follows:
-1. int_32 indicating the temporal regime.
-2. int_64 indicating the timestamp of the first datum in the archive. If a datum is older, it is expired and should be deleted.
-3. byte[] containing the log file with the same structure as in the above but containing only a single datum
-
-# Modifying Values
 ## Value Modification Structure
 IO_ModifiableValue modification message is a command whose message has the following structure:
 1. int_16 containing the index for the ModifiableValue (see above)
 2. byte[] containing the value to which the ModifiableValue should be changed. The array is equal to the length of the data for this object (inherited from IO_Node).
+
+# Historical Data
+The Center can serve historical data stored in the TimescaleDB/PostgreSQL database to web clients for display.
+
+## History Request Structure
+This message is a command that contains a request from a web client to the Center to send historical data. Its structure is as follows:
+1. int_16 indicating the IO_Device index for the device about which data is being requested
+2. int_16 indicating the IO_System index for the system about which data is being requested
+3. int_64 containing the timestamp of the start time of the displayed interval. If the earliest available data is requested, this value will be negative.
+4. int_64 containing the timestamp of the end time of the displayed interval. If the last available data is requested, this value will be negative.
+
+## History Structure
+This message contains a response to the History Request comand. Its structure is as follows:
+1. int_16 indicating the IO_Device index for the device about which data is being requested
+2. int_16 indicating the IO_System index for the system about which data is being requested
+3. int_8 containing only a single flag in the smallest bit indicating whether this is raw data or an aggregate
+4. An array containing the data
+
+Raw data will have the same structure as item #2 in the Data Message structure above.
+Aggregated data will have a similar structure to raw data. However, instead of a single value for each IO_Value, it will have 3 values in the following order:
+1. Average
+2. Minimum
+3. Maximum
+
+Each of these values will have the same type and size as that of the IO_Value with the exception of the boolean type, which will be converted to a 32-bit float and have values ranging between 0.0f (false) and 1.0f (true).
+
+## History Update Structure
+This message contains an update to the existing History possessed by the client. It can either update the last datum or provide a single new datum. Its structure is similar to a History Structure (as above) with the following changes:
+3. int_8 containing only a single flag in the second smallest bit indicating whether this is an update to the last datum or is a new datum.
+4. The array contains information for only a single timestamp.

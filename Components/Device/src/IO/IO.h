@@ -30,19 +30,16 @@ namespace IO
     extern const int16_t data;
     extern const int16_t handshake;
     extern const int16_t auth_request;
-    extern const int16_t auth_provision;;
+    extern const int16_t auth_provision;
     extern const int16_t modifiablevalue_modification;
     extern const int16_t request_subscription;
     extern const int16_t history;
     extern const int16_t passthrough;
     extern const int16_t new_device_avaialable;
-    extern const int16_t history_addendum;
+    extern const int16_t history_update;
     extern const int16_t timesync_request;
     extern const int16_t timesync_response;
     extern const int16_t history_request;
-    extern const int16_t lossy_data_request;
-		extern const int16_t lossy_data;
-		extern const int16_t lossy_data_addendum;
   };
 
   namespace DataTypes

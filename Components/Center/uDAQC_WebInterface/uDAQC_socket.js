@@ -72,7 +72,7 @@ function handlePassthroughCommand(ptcom)
     case IO_Constants.history:
       handleHistory(ptcom);
       break;
-    case IO_Constants.history_addendum:
+    case IO_Constants.history_update:
       handleHistoryAddendum(ptcom);
       break;
     default:
