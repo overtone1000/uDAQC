@@ -41,6 +41,16 @@ public class Database_uDAQC
 		{
 			conn = DriverManager.getConnection(url, props);
 			initDeviceTable();
+			DatabaseMetaData meta = conn.getMetaData();
+			boolean supports_isolation = meta.supportsTransactionIsolationLevel(java.sql.Connection.TRANSACTION_SERIALIZABLE);
+			if(supports_isolation)
+			{
+				conn.setTransactionIsolation(java.sql.Connection.TRANSACTION_SERIALIZABLE);
+			}
+			else
+			{
+				System.err.println("Transaction isolation is not supported by this database. This will result in allocation errors.");
+			}
 			background.start();
 		} catch (SQLException e)
 		{
@@ -521,6 +531,75 @@ public class Database_uDAQC
 			{
 				System.err.println("Command was " + ps.toString());
 			}
+			e.printStackTrace();
+		}
+	}
+	private class CountedQuery
+	{
+		public Integer count=null;
+		public ResultSet result=null;
+		public CountedQuery(IO_System system, Regime r, Instant start, Instant end)
+		{
+			String full_table_name = getFullSystemTableName(system,r);
+			PreparedStatement ps=null;
+			Timestamp start_ts = Timestamp.from(start);
+			Timestamp end_ts = Timestamp.from(end);
+			try
+			{
+				ps.clos
+				
+				String command = "select count(" + timecolumn_name + ") from " + full_table_name;
+				command += " where " + timecolumn_name + " >= ?";
+				command += " and " + timecolumn_name + " <= ?";
+				ps = conn.prepareStatement(command);
+				ps.setTimestamp(1, start_ts);
+				ps.setTimestamp(2, end_ts);
+				ps.execute();
+				ResultSet res = ps.getResultSet();
+				while(res.next())
+				{
+					this.count = res.getInt(1);
+					System.out.println(full_table_name + " has " + this.count + " rows between " + start.toString() + " and " + end.toString());
+				}
+				
+				command = "select * from " + full_table_name;
+				command += " where " + timecolumn_name + " >= ?";
+				command += " and " + timecolumn_name + " <= ?";
+				command += " order by " + timecolumn_name;
+				ps = conn.prepareStatement(command);
+				ps.setTimestamp(1, start_ts);
+				ps.setTimestamp(2, end_ts);
+				ps.execute();
+				this.result = ps.getResultSet();
+				
+				ps.close();
+			} catch (SQLException e)
+			{
+				System.out.println("Error during counting.");
+				if(ps!=null)
+				{
+					System.err.println("Command was " + ps.toString());
+				}
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public static void ResultToComm(IO_System system, ResultSet res, Regime regime)
+	{
+		int entry_size=system.HistoryEntrySize(regime);
+		
+		try
+		{
+			while(res.next())
+			{
+				Timestamp time = res.getTimestamp(1, java.util.Calendar.getInstance(java.util.TimeZone.getDefault()));
+				Double temperature = res.getDouble(2);
+				System.out.println(time.toString() + ", " + temperature);
+			}
+		} catch (SQLException e)
+		{
+			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
