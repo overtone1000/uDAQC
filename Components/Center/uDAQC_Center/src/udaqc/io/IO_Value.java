@@ -3,6 +3,8 @@ package udaqc.io;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 
+import udaqc.io.IO_Constants.DataTypes;
+
 public class IO_Value extends IO_Node
 {
 	protected String units;
@@ -93,6 +95,94 @@ public class IO_Value extends IO_Node
 			DefaultInterpret(data);
 		}
 		// System.out.println("Data received = " + value);
+	}
+	
+	public void InterpretAggregateData(ByteBuffer data)
+	{
+		//For testing purposes.
+		switch(getDataType())
+		{
+		case DataTypes.bool:
+		{
+			for(int n=0;n<IO_System.aggregates_per_value;n++)
+			{
+				float f = data.getFloat();
+				System.out.print(f);
+				System.out.print("|");
+			}
+		}
+			break;
+		case DataTypes.floating_point:
+			switch(Size())
+			{
+			case 4:
+			{
+				for(int n=0;n<IO_System.aggregates_per_value;n++)
+				{
+					float f = data.getFloat();
+					System.out.print(f);
+					System.out.print("|");
+				}
+			}
+				break;
+			case 8:
+			{
+				for(int n=0;n<IO_System.aggregates_per_value;n++)
+				{
+					double d = data.getDouble();
+					System.out.print(d);
+					System.out.print("|");
+				}
+			}
+				break;
+			default:
+				System.out.print("Unanticipated size...");
+				DefaultInterpret(data);
+			}
+			break;
+		case DataTypes.signed_integer:
+		case DataTypes.unsigned_integer:
+			switch(Size())
+			{
+			case 2:
+			{
+				for(int n=0;n<IO_System.aggregates_per_value;n++)
+				{
+					short s = data.getShort();
+					System.out.print(s);
+					System.out.print("|");
+				}
+			}
+				break;
+			case 4:
+			{
+				for(int n=0;n<IO_System.aggregates_per_value;n++)
+				{
+					int in = data.getInt();
+					System.out.print(in);
+					System.out.print("|");
+				}
+			}
+				break;
+			case 8:
+			{
+				for(int n=0;n<IO_System.aggregates_per_value;n++)
+				{
+					long l = data.getLong();
+					System.out.print(l);
+					System.out.print("|");
+				}
+			}
+				break;
+			default:
+				System.out.print("Unanticipated size...");
+				DefaultInterpret(data);
+			}
+			break;
+		default:
+			System.out.println("Unanticipated type...");
+			DefaultInterpret(data);
+		}
 	}
 
 	private void DefaultInterpret(ByteBuffer data)

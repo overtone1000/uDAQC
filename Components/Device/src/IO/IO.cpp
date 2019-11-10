@@ -15,24 +15,24 @@ namespace IO
 
   namespace NetworkCommands //Use sign 16 bit integer. Java doesn't support unsigned shorts.
   {
-    const int16_t system_description=17;
-    const int16_t group_description=1;
-    const int16_t emptynode_description=2;
-    const int16_t value_description=3;
-    const int16_t modifiablevalue_description=4;
-    const int16_t data=5;
-    const int16_t handshake=6;
-    const int16_t auth_request=7;
-    const int16_t auth_provision=8;
-    const int16_t modifiablevalue_modification=9;
-    const int16_t request_subscription=10;
-    const int16_t history=11;
-    const int16_t passthrough=12;
-    const int16_t new_device_avaialable=13;
-    const int16_t history_update=14;
-    const int16_t timesync_request=15;
-    const int16_t timesync_response=16;
-    const int16_t history_request=17;
+    const int16_t system_description=1;
+    const int16_t group_description=2;
+    const int16_t emptynode_description=3;
+    const int16_t value_description=4;
+    const int16_t modifiablevalue_description=5;
+    const int16_t data=6;
+    const int16_t handshake=7;
+    const int16_t auth_request=8;
+    const int16_t auth_provision=9;
+    const int16_t modifiablevalue_modification=10;
+    const int16_t request_subscription=11;
+    const int16_t history=12;
+    const int16_t passthrough=13;
+    const int16_t new_device_avaialable=14;
+    const int16_t history_update=15;
+    const int16_t timesync_request=16;
+    const int16_t timesync_response=17;
+    const int16_t history_request=18;
   };
   namespace DataTypes
   {

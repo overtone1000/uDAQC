@@ -4,22 +4,24 @@ const max_uint32 = Math.pow(2,32);
 
 const IO_Constants =
 {
-    system_description: 17,
-    group_description: 1,
-		emptynode_description: 2,
-		value_description: 3,
-		modifiablevalue_description: 4,
-		data_package: 5,
-		handshake: 6,
-		modifiablevalue_modification: 9,
-		request_subscription: 10,
-		history: 11,
-    passthrough: 12,
-    new_device_available: 13,
-    history_update: 14,
-    timesync_request: 15,
-    timesync_response: 16,
-    history_request: 17
+    system_description: 1,
+    group_description: 2,
+		emptynode_description: 3,
+		value_description: 4,
+		modifiablevalue_description: 5,
+		data_package: 6,
+    handshake: 7,
+    auth_request: 8,
+    auth_provision: 9,
+		modifiablevalue_modification: 10,
+		request_subscription: 11,
+		history: 12,
+    passthrough: 13,
+    new_device_available: 14,
+    history_update: 15,
+    timesync_request: 16,
+    timesync_response: 17,
+    history_request: 18
 };
 
 const DataTypes =
@@ -29,25 +31,6 @@ const DataTypes =
   unsigned_integer: 2,
   floating_point: 3,
   bool: 4
-};
-
-const Regimes =
-{
-  live: 0,
-  minute: 1,
-  hour: 2,
-  day: 3
-};
-const RegimesIterable = [
-  Regimes.live,
-  Regimes.minute,
-  Regimes.hour,
-  Regimes.day
-];
-
-let Globals =
-{
-  current_regime: Regimes.live
 };
 
 class DataViewWriter{
@@ -702,13 +685,9 @@ class IO_System extends IO_Group
     return retval;
   }
 
-  getEpochs(regime_index)
+  getEpochs()
   {
-    if(!this.epochs.has(regime_index))
-    {
-      this.epochs.set(regime_index,new Epochs(this));
-    }
-    return this.epochs.get(regime_index);
+    return this.epochs;
   }
 
   updateChartXAxis(min_frac,max_frac)
@@ -780,11 +759,10 @@ class IO_System extends IO_Group
     }
   }
 
-  setChartRegime(regime_index)
+  setChart()
   {
-    //console.log("Setting system regime to " + regime_index);
     let values = this.getIOValues();
-    let epochs = this.getEpochs(regime_index);
+    let epochs = this.getEpochs();
 
     //console.debug("Epoch:");
     //console.debug(epochs);
@@ -966,7 +944,17 @@ class IO_ModifiableValue extends IO_Value
   }
 }
 
-class Epochs{
+//This class contains  aggregate historical data after a history command from the connected Center
+//Epoch separation is performed based on time between data
+class AggregateHistory
+{
+
+}
+
+//This class contains the historical data after a history command from the connected Center
+//Epoch separation is performed using the included flag
+class RawHistory
+{
   constructor(system)
   {
     this.current_epoch_index = 0;
@@ -978,6 +966,7 @@ class Epochs{
     }
     //this.startNewEpoch();
   }
+  
   startNewEpoch()
   {
     //console.debug("Starting new epoch.");
@@ -992,37 +981,8 @@ class Epochs{
     }
   }
 
-  mergeLastAndFirst()
-  {
-    //console.log("Merging first and last.");
-
-    if(this.current_epoch_index<=0 || this.current_epoch_index>=this.times.length-1)
-    {
-      return;
-    }
-
-    Epochs.reorder(this.times,this.current_epoch_index);
-    for(let n = 0; n<this.values.length;n++)
-    {
-      Epochs.reorder(this.times[n],this.current_epoch_index);
-    }
-    this.current_epoch_index=this.times.length;
-  }
-
-  static reorder(array, index)
-  {
-    let first = array.slice(0,index);
-    let last = array.slice(index);
-    array = last.concat(first);
-  }
-
   static getTime(millis)
   {
-    //let seconds=millis/1000;
-    //let millis_remainder=millis%1000;
-    //let time=moment.unix(seconds);
-    //time.milliseconds(millis_remainder);
-
     let time=moment(millis);
     return time;
   }
@@ -1030,7 +990,6 @@ class Epochs{
   processEntry(message, addendum)
   {
     const new_epoch_flag = Math.pow(2,0);
-    const split_epoch_flag = Math.pow(2,1);
 
     let flag = message.getInt8();
 
@@ -1042,35 +1001,13 @@ class Epochs{
         this.startNewEpoch();
     }
 
-    if(flag&split_epoch_flag && !addendum){
-      //Merge with first epoch
-      //console.debug("Split flag.");
-      this.mergeLastAndFirst();
-    }
-
-
     this.times.push(Epochs.getTime(message.getInt64()));
 
     for(let n=0;n<this.values.length;n++)
     {
-      let val = message.getFloat32();
+      //let val = message.getFloat32(); This won't work anymore...
+      console.error("Need to implement parsing function...");
       this.values[n].push(val);
-    }
-  }
-
-  trim(first_timestamp)
-  {
-    let first_time=Epochs.getTime(first_timestamp);
-    let first_index=0;
-    while(first_time.isAfter(this.times[first_index]) && first_index<this.times.length)
-    {
-        first_index++;
-    }
-    //console.debug("Trimming " + first_index + " of " + this.times.length);
-    this.times.splice(0,first_index);
-    for(let n = 0; n<this.values.length;n++)
-    {
-      this.values[n].splice(0,first_index);
     }
   }
 

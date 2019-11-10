@@ -18,10 +18,12 @@ import java.util.Vector;
 import threading.ThreadWorker;
 import udaqc.io.IO_Value;
 import udaqc.io.IO_System;
+import udaqc.io.IO_Constants.Command_IDs;
 import udaqc.io.IO_Constants.DataTypes;
 import udaqc.io.IO_Device;
-import udaqc.network.IO_Device_Synchronized;
 import udaqc.network.center.IO_Device_Connected;
+import udaqc.network.center.IO_Device_Synchronized;
+import udaqc.network.center.command.Command;
 
 public class Database_uDAQC
 {
@@ -547,10 +549,10 @@ public class Database_uDAQC
 		}
 		return -1;
 	}
-	public ByteBuffer getHistory(IO_System system, Regime r, Timestamp start, Timestamp end) 
+	public Command getHistory(IO_System system, Regime r, Timestamp start, Timestamp end) 
 	{
 		String full_table_name = getFullSystemTableName(system,r);
-		ByteBuffer retval=null;
+		ByteBuffer message=null;
 		PreparedStatement ps=null;
 		
 		String time_column;
@@ -568,17 +570,17 @@ public class Database_uDAQC
 			conn.setAutoCommit(false);
 			
 			int count = count(system,r,start,end);
-			retval = ByteBuffer.allocate(count*system.HistoryEntrySize(r) + Short.BYTES*2 + Byte.BYTES);
-			retval.order(ByteOrder.LITTLE_ENDIAN);
-			retval.putShort(system.Device().DeviceIndex());
-			retval.putShort(system.Index());
+			message = ByteBuffer.allocate(count*system.HistoryEntrySize(r) + Short.BYTES*2 + Byte.BYTES);
+			message.order(ByteOrder.LITTLE_ENDIAN);
+			message.putShort(system.Device().DeviceIndex());
+			message.putShort(system.Index());
 			if(r==Regime.raw)
 			{
-				retval.put((byte)0);
+				message.put((byte)0);
 			}
 			else
 			{
-				retval.put((byte)1);
+				message.put((byte)1);
 			}
 			
 			String command = "select * from " + full_table_name;
@@ -594,19 +596,19 @@ public class Database_uDAQC
 			Iterator<IO_Value> i;
 			while(res.next())
 			{
-				System.out.println("At position " + retval.position() + " (entry size is " + system.HistoryEntrySize(r) + ", total size is " + retval.capacity() + ")");
+				System.out.println("At position " + message.position() + " (entry size is " + system.HistoryEntrySize(r) + ", total size is " + message.capacity() + ")");
 				if(r==Regime.raw)
 				{
 					boolean end_of_epoch = res.getBoolean(1); //end of epoch
 					if(end_of_epoch)
 					{
-						retval.put((byte)1); 
+						message.put((byte)1); 
 					}
 					else
 					{
-						retval.put((byte)0);
+						message.put((byte)0);
 					}
-					retval.putLong(res.getTimestamp(2).getTime()); //timestamp
+					message.putLong(res.getTimestamp(2).getTime()); //timestamp
 					int index = 3;
 					i=values.iterator();
 					i.next(); //skip the timestamp
@@ -620,11 +622,11 @@ public class Database_uDAQC
 							boolean b = res.getBoolean(index);
 							if(b)
 							{
-								retval.put((byte)1);
+								message.put((byte)1);
 							}
 							else
 							{
-								retval.put((byte)0);
+								message.put((byte)0);
 							}
 						}
 							break;
@@ -633,12 +635,12 @@ public class Database_uDAQC
 							{
 							case 4:
 							{
-								retval.putFloat(res.getFloat(index));
+								message.putFloat(res.getFloat(index));
 							}
 								break;
 							case 8:
 							{
-								retval.putDouble(res.getDouble(index));
+								message.putDouble(res.getDouble(index));
 							}
 								break;
 							default:
@@ -651,17 +653,17 @@ public class Database_uDAQC
 							{
 							case 2:
 							{
-								retval.putShort(res.getShort(index));
+								message.putShort(res.getShort(index));
 							}
 								break;
 							case 4:
 							{
-								retval.putInt(res.getInt(index));
+								message.putInt(res.getInt(index));
 							}
 								break;
 							case 8:
 							{
-								retval.putLong(res.getLong(index));
+								message.putLong(res.getLong(index));
 							}
 								break;
 							default:
@@ -674,7 +676,7 @@ public class Database_uDAQC
 				}
 				else
 				{
-					retval.putLong(res.getTimestamp(1).getTime()); //timestamp
+					message.putLong(res.getTimestamp(1).getTime()); //timestamp
 					int index=2;
 					i=values.iterator();
 					i.next(); //skip the timestamp
@@ -688,7 +690,7 @@ public class Database_uDAQC
 							//Converted to float between 0 and 1 for aggregates....
 							for(int n=0;n<IO_System.aggregates_per_value;n++)
 							{
-								retval.putFloat(res.getFloat(index));
+								message.putFloat(res.getFloat(index));
 								index++;
 							}
 						}
@@ -700,7 +702,7 @@ public class Database_uDAQC
 							{
 								for(int n=0;n<IO_System.aggregates_per_value;n++)
 								{
-									retval.putFloat(res.getFloat(index));
+									message.putFloat(res.getFloat(index));
 									index++;
 								}
 							}
@@ -709,7 +711,7 @@ public class Database_uDAQC
 							{
 								for(int n=0;n<IO_System.aggregates_per_value;n++)
 								{
-									retval.putDouble(res.getDouble(index));
+									message.putDouble(res.getDouble(index));
 									index++;
 								}
 							}
@@ -726,7 +728,7 @@ public class Database_uDAQC
 							{
 								for(int n=0;n<IO_System.aggregates_per_value;n++)
 								{
-									retval.putShort(res.getShort(index));
+									message.putShort(res.getShort(index));
 									index++;
 								}
 							}
@@ -735,7 +737,7 @@ public class Database_uDAQC
 							{
 								for(int n=0;n<IO_System.aggregates_per_value;n++)
 								{
-									retval.putInt(res.getInt(index));
+									message.putInt(res.getInt(index));
 									index++;
 								}
 							}
@@ -744,7 +746,7 @@ public class Database_uDAQC
 							{
 								for(int n=0;n<IO_System.aggregates_per_value;n++)
 								{
-									retval.putLong(res.getLong(index));
+									message.putLong(res.getLong(index));
 									index++;
 								}
 							}
@@ -758,7 +760,7 @@ public class Database_uDAQC
 					index++;
 				}
 			}
-			System.out.println("At position " + retval.position() + " (entry size is " + system.HistoryEntrySize(r) + ")");
+			System.out.println("At position " + message.position() + " (entry size is " + system.HistoryEntrySize(r) + ")");
 			ps.close();
 			conn.commit();
 		} catch (SQLException e)
@@ -779,7 +781,7 @@ public class Database_uDAQC
 			e.printStackTrace();
 		}
 		
-		return retval;
+		return new Command(Command_IDs.history,message.array());
 	}
 	 
 	public static void PrintHistory(IO_System system, ByteBuffer buf)
@@ -835,84 +837,7 @@ public class Database_uDAQC
 				{
 					IO_Value v = i.next();
 					
-					switch(v.getDataType())
-					{
-					case DataTypes.bool:
-					{
-						for(int n=0;n<IO_System.aggregates_per_value;n++)
-						{
-							float f = buf.getFloat();
-							System.out.print(f);
-							System.out.print("|");
-						}
-					}
-						break;
-					case DataTypes.floating_point:
-						switch(v.Size())
-						{
-						case 4:
-						{
-							for(int n=0;n<IO_System.aggregates_per_value;n++)
-							{
-								float f = buf.getFloat();
-								System.out.print(f);
-								System.out.print("|");
-							}
-						}
-							break;
-						case 8:
-						{
-							for(int n=0;n<IO_System.aggregates_per_value;n++)
-							{
-								double d = buf.getDouble();
-								System.out.print(d);
-								System.out.print("|");
-							}
-						}
-							break;
-						default:
-							System.out.print("Unanticipated size...");
-						}
-						break;
-					case DataTypes.signed_integer:
-					case DataTypes.unsigned_integer:
-						switch(v.Size())
-						{
-						case 2:
-						{
-							for(int n=0;n<IO_System.aggregates_per_value;n++)
-							{
-								short s = buf.getShort();
-								System.out.print(s);
-								System.out.print("|");
-							}
-						}
-							break;
-						case 4:
-						{
-							for(int n=0;n<IO_System.aggregates_per_value;n++)
-							{
-								int in = buf.getInt();
-								System.out.print(in);
-								System.out.print("|");
-							}
-						}
-							break;
-						case 8:
-						{
-							for(int n=0;n<IO_System.aggregates_per_value;n++)
-							{
-								long l = buf.getLong();
-								System.out.print(l);
-								System.out.print("|");
-							}
-						}
-							break;
-						default:
-							System.out.print("Unanticipated size...");
-						}
-						break;
-					}
+					v.InterpretAggregateData(buf);
 					
 					if(i.hasNext())
 					{

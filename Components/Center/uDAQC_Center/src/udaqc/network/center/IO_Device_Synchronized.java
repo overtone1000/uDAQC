@@ -1,4 +1,4 @@
-package udaqc.network;
+package udaqc.network.center;
 
 import java.nio.ByteBuffer;
 
@@ -8,7 +8,6 @@ import network.udp.TimeSyncExternals;
 import network.udp.TimeSynchronizer;
 import udaqc.io.IO_Device;
 import udaqc.io.IO_Value;
-import udaqc.network.center.Center;
 
 public abstract class IO_Device_Synchronized extends IO_Device implements TimeSyncExternals
 {

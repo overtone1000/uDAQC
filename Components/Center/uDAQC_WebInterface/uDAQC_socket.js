@@ -48,12 +48,8 @@ function handlePassthroughCommand(ptcom)
       console.debug("Received description for device " + ptcom.source_ID);
       let new_device = new IO_Device(ptcom.message,ptcom.source_ID);
       update_devices();
-      //new_device.index contains the device's index
-      //new_device.member_count should contain the number of systems
-      //.system_index will contain the index for a given system
-      //new_device.members[] returns systems
-      //new_device.members[n].system_index should give the index for each system
-      const history_request_size = 2+2+4+8;
+      
+      const history_request_size = 2+2+8+8;
       for(let sys_index = 0; sys_index<new_device.member_count; sys_index++)
       {
         for(const regime of RegimesIterable)
@@ -81,69 +77,18 @@ function handlePassthroughCommand(ptcom)
   }
 }
 
-function handleHistory(ptcom)
+function handleHistory(com)
 {
-  let system_index = ptcom.message.getInt16();
-  let regime = ptcom.message.getInt32();
-  let max_size = ptcom.message.getInt64();
-
-  //console.log("History received for regime " + regime);
+  let device_index = com.message.getInt16();
+  let system_index = com.message.getInt16();
+  let flags = com.message.getInt8();
 
   let device = IO.devices.get(ptcom.source_ID);
   console.log(device);
-  let entry_size = 1 + 8 + device.members[system_index].ioValueCount * 4;
 
-  let epochs = device.members[system_index].getEpochs(regime);
-
-  let test_count=0;
-  while(ptcom.message.remaining()>=entry_size)
+  while(com.message.remaining()>=0)
   {
-    //console.log("Processing entry.");
-    epochs.processEntry(ptcom.message, false);
-  }
 
-  //console.log(epochs);
-
-  if(Globals.current_regime===regime)
-  {
-    //If this histroy contains data for the currently displayed regime, update the chart like so...
-    device.members[system_index].setChartRegime(Globals.current_regime);
-  }
-}
-
-function handleHistoryAddendum(ptcom)
-{
-  let system_index = ptcom.message.getInt16();
-  let regime = ptcom.message.getInt32();
-  let first_timestamp = ptcom.message.getInt64();
-
-  console.debug("History addendum received for system " + system_index + " regime " + regime);
-  console.debug("Oldest = " + first_timestamp);
-  console.debug(IO.devices);
-  let device = IO.devices.get(ptcom.source_ID);
-  let entry_size = 1 + 8 + device.members[system_index].ioValueCount * 4;
-
-  let epochs = device.members[system_index].getEpochs(regime);
-
-  //console.debug("remaining: " + ptcom.message.remaining());
-  //console.debug("Size: " + entry_size);
-  let test_count=0;
-  while(ptcom.message.remaining()>=entry_size)
-  {
-    //console.debug("Processing addendum entry.");
-    epochs.processEntry(ptcom.message, true);
-  }
-
-  epochs.trim(first_timestamp);
-
-  //console.log(epochs);
-
-  if(Globals.current_regime===regime)
-  {
-    //console.log("...");
-    //If this histroy contains data for the currently displayed regime, update the chart like so...
-    console.log(device.members);
-    device.members[system_index].setChartRegime(Globals.current_regime);
   }
 }
 
@@ -151,7 +96,6 @@ function onMessage(evt)
 {
   let c = Command.interpret(evt.data);
 
-  //All commands should be passthrough as of now
   switch(c.command_ID)
   {
     case IO_Constants.passthrough:
@@ -159,6 +103,12 @@ function onMessage(evt)
         let ptcom = PTCommand.interpret(c);
         //console.log("Passthrough command received. Nested command is " + ptcom.internal_command_ID + ".");
         handlePassthroughCommand(ptcom);
+      }
+      break;
+    case IO_Constants.history:
+      {
+        let com = Command.interpret(c);
+        handleHistory(c);
       }
       break;
     default:
