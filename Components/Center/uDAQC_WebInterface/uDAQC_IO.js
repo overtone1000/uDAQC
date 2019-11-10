@@ -607,7 +607,7 @@ class IO_Group extends IO_Node
     return retval;
   }
 
-  countIOValues()
+  countNestedIOValues()
   {
     //count total IO_Values in the system
     let retval = 0;
@@ -616,7 +616,7 @@ class IO_Group extends IO_Node
         switch(this.members[i].command_description)
         {
           case IO_Constants.group_description:
-            retval+=this.members[i].countIOValues();
+            retval+=this.members[i].countNestedIOValues();
           break;
           case IO_Constants.emptynode_description:
           break;
@@ -629,7 +629,7 @@ class IO_Group extends IO_Node
     return retval;
   }
 
-  getIOValues()
+  getNestedIOValues()
   {
     let retval = [];
     for(let i=0;i<this.member_count;i++)
@@ -637,7 +637,7 @@ class IO_Group extends IO_Node
         switch(this.members[i].command_description)
         {
           case IO_Constants.group_description:
-            retval=retval.concat(this.members[i].getIOValues());
+            retval=retval.concat(this.members[i].getNestedIOValues());
           break;
           case IO_Constants.emptynode_description:
           break;
@@ -656,8 +656,9 @@ class IO_System extends IO_Group
   constructor(bytebuffer, indices, index){
     super(bytebuffer, indices);
     this.system_index = index;
-    //this.ioValueCount = this.countIOValues()-1; //subtract one for the Timestamp
-    this.ioValueCount = this.countIOValues(); //timestamp is still coming across as a float32. This should be fixed.
+    //this.ioValueCount = this.countNestedIOValues()-1; //subtract one for the Timestamp
+    this.ioValueCount = this.countNestedIOValues(); //timestamp is still coming across as a float32. This should be fixed.
+    this.nestedIOValues = this.getNestedIOValues();
     //console.log("System has " + this.ioValueCount + " values.");
 
     this.epochs = new Map();
@@ -692,7 +693,7 @@ class IO_System extends IO_Group
 
   updateChartXAxis(min_frac,max_frac)
   {
-    let values = this.getIOValues();
+    let values = this.getNestedIOValues();
 
     if(max_frac<1)
     {
@@ -726,7 +727,7 @@ class IO_System extends IO_Group
 
   trimChartXAxis()
   {
-    let values = this.getIOValues();
+    let values = this.getNestedIOValues();
 
     for(let i=0;i<values.length;i++)
     {
@@ -743,7 +744,7 @@ class IO_System extends IO_Group
 
   resetChartXAxis()
   {
-    let values = this.getIOValues();
+    let values = this.getNestedIOValues();
 
     this.chart_stream=true;
 
@@ -761,7 +762,7 @@ class IO_System extends IO_Group
 
   setChart()
   {
-    let values = this.getIOValues();
+    let values = this.getNestedIOValues();
     let epochs = this.getEpochs();
 
     //console.debug("Epoch:");
@@ -946,19 +947,18 @@ class IO_ModifiableValue extends IO_Value
 
 //This class contains  aggregate historical data after a history command from the connected Center
 //Epoch separation is performed based on time between data
-class AggregateHistory
+class AggregateHistory extends History
 {
 
 }
 
 //This class contains the historical data after a history command from the connected Center
 //Epoch separation is performed using the included flag
-class RawHistory
+class RawHistory extends History
 {
   constructor(system)
   {
-    this.current_epoch_index = 0;
-    this.times = [];
+    super(system);
     this.values = new Array(system.ioValueCount);
     for(let n = 0; n<this.values.length;n++)
     {
@@ -981,13 +981,7 @@ class RawHistory
     }
   }
 
-  static getTime(millis)
-  {
-    let time=moment(millis);
-    return time;
-  }
-
-  processEntry(message, addendum)
+  processEntries(message)
   {
     const new_epoch_flag = Math.pow(2,0);
 
@@ -1003,12 +997,84 @@ class RawHistory
 
     this.times.push(Epochs.getTime(message.getInt64()));
 
-    for(let n=0;n<this.values.length;n++)
+    let iovs = this.system.getNestedIOValues();
+    while(message.remaining()>=0)
     {
-      //let val = message.getFloat32(); This won't work anymore...
-      console.error("Need to implement parsing function...");
-      this.values[n].push(val);
+      for(let n=0;n<this.values.length;n++)
+      {
+        //let val = message.getFloat32(); This won't work anymore...
+        
+        let value = null;
+        switch (iovs[n].data_type)
+        {
+        case DataTypes.floating_point:
+          switch (iovs[n].byte_count)
+          {
+          case 4:
+            value = data.getFloat();
+            break;
+          case 8:
+            value = data.getDouble();
+            break;
+          default:
+            console.error("Unanticipated data.");
+            break;
+          }
+          break;
+        case DataTypes.signed_integer:
+        case DataTypes.unsigned_integer:
+          switch (iovs[n].byte_count)
+          {
+          case 4:
+            value = data.getInt();
+            break;
+          case 8:
+            value = data.getLong();
+            break;
+          default:
+              console.error("Unanticipated data.");
+            break;
+          }
+          break;
+        case DataTypes.bool:
+          if(iovs[n].byte_count!=1)
+          {
+            console.error("Unexpected byte length for boolean type.");
+          }
+          let b = data.get();
+          if (b == 0)
+          {
+            value = false;
+          } else
+          {
+            value = true;
+          }
+          break;
+        case DataTypes.undefined:
+        default:
+          DefaultInterpret(data);
+        }
+
+        this.values[n].push(value);
+      }
     }
+  }
+}
+
+class History
+{
+  constructor(system)
+  {
+    this.system=system;
+    this.current_epoch_index = 0;
+    this.times = [];
+  }
+
+
+  static getTime(millis)
+  {
+    let time=moment(millis);
+    return time;
   }
 
   earliestTime()

@@ -83,12 +83,15 @@ function handleHistory(com)
   let system_index = com.message.getInt16();
   let flags = com.message.getInt8();
 
-  let device = IO.devices.get(ptcom.source_ID);
-  console.log(device);
+  let device = IO.devices.get(device_index);
+  let system = device.members[system_index];
+
+  console.log("Handling history for system:");
+  console.log(system);
 
   while(com.message.remaining()>=0)
   {
-
+    
   }
 }
 
