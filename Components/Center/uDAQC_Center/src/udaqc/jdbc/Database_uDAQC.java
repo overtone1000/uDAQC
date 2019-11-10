@@ -548,6 +548,7 @@ public class Database_uDAQC
 			
 			int count = count(system,r,start,end);
 			retval = ByteBuffer.allocate(count*system.HistoryEntrySize(r) + Short.BYTES*2 + Byte.BYTES);
+			retval.order(ByteOrder.LITTLE_ENDIAN);
 			retval.putShort(system.Device().DeviceIndex());
 			retval.putShort(system.Index());
 			if(r==Regime.raw)
@@ -617,6 +618,39 @@ public class Database_uDAQC
 		}
 		
 		return retval;
+	}
+	
+	public void PrintHistory(IO_System system, ByteBuffer buf)
+	{
+		buf.position(0);
+		
+		System.out.println("Printing retrieved history for device " + buf.getShort() + ", system " + buf.getShort());
+		
+		byte structure_byte = buf.get();
+		boolean raw = structure_byte==0;
+		
+		Vector<IO_Value> values = system.GetNestedValues();
+		
+		if(raw)
+		{
+			System.out.println("Raw data.");
+			
+			while(buf.hasRemaining())
+			{
+				System.out.print(buf.get()); //End of epoch
+				System.out.print("|");
+				
+			}
+		}
+		else
+		{
+			System.out.println("Aggregated data.");
+			
+			while(buf.hasRemaining())
+			{
+				
+			}
+		}
 	}
 	
 	public void insertSystemTable(IO_Device_Synchronized d, short system_index)
