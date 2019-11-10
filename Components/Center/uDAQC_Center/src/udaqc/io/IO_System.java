@@ -4,10 +4,11 @@ import java.nio.ByteBuffer;
 
 import udaqc.jdbc.Database_uDAQC.Regime;
 import udaqc.network.center.Center;
+import udaqc.network.center.IO_Device_Connected;
 
 public class IO_System extends IO_Group
 {		
-	protected IO_Device iodev;
+	protected IO_Device_Connected iodev;
 	protected short system_index=-1;
 	
 	private int raw_history_entry_size=-1;
@@ -51,14 +52,14 @@ public class IO_System extends IO_Group
 		return system_index;
 	}
 	
-	public IO_System(ByteBuffer data, IO_Device iodev, Short index) {
+	public IO_System(ByteBuffer data, IO_Device_Connected iodev, Short index) {
 		super(data);
 		this.iodev=iodev;
 		this.system_index=index;
 		this.CalcEntrySizes();
 	}
 	
-	public IO_System(IO_Node basis, ByteBuffer data, IO_Device iodev, Short index)
+	public IO_System(IO_Node basis, ByteBuffer data, IO_Device_Connected iodev, Short index)
 	{
 		super(basis,data);
 		this.iodev=iodev;
@@ -118,7 +119,7 @@ public class IO_System extends IO_Group
 	}
 	*/
 	
-	public IO_Device Device()
+	public IO_Device_Connected Device()
 	{
 		return iodev;
 	}

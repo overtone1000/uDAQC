@@ -3,6 +3,7 @@ package main;
 
 import java.nio.ByteBuffer;
 import java.nio.file.Paths;
+import java.sql.Timestamp;
 import java.time.Instant;
 
 import network.http.HTTPS_Server;
@@ -32,7 +33,9 @@ public class Testing
 		IO_System sys=IO_Device_Connected.getDirectDevice((short)0).GetSystem((short)0);
 		Instant start = Instant.ofEpochMilli(0);
 		Instant end = Instant.now();
-		database.count(sys, Regime.raw, start, end);
+		Timestamp start_ts = Timestamp.from(start);
+		Timestamp end_ts = Timestamp.from(end);
+		database.count(sys, Regime.raw, start_ts, end_ts);
 		System.out.println("Counted.");
 		System.out.println("Database testing done.");
 	}

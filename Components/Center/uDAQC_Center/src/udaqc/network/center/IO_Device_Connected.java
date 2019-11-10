@@ -7,6 +7,8 @@ import java.util.Vector;
 import java.util.concurrent.Semaphore;
 import org.apache.mina.transport.socket.nio.NioSession;
 import udaqc.io.IO_Constants.Command_IDs;
+import udaqc.io.IO_Constants;
+import udaqc.io.IO_Node;
 import udaqc.io.IO_System;
 import udaqc.network.Constants;
 import udaqc.network.IO_Device_Synchronized;
@@ -176,6 +178,33 @@ public class IO_Device_Connected extends IO_Device_Synchronized
 		}
 	}
 
+
+	@Override
+	protected void Construct(ByteBuffer data)
+	{
+		System.out.println("Constructing IO_Device from description.");
+		short member_count = data.getShort();
+		System.out.println(member_count + " members expected.");
+		members.clear();
+		for (short n = 0; n < member_count; n++)
+		{
+			IO_Node new_item = new IO_Node(this, data);
+			switch (new_item.IO_Type())
+			{
+			case IO_Constants.Command_IDs.system_description:
+				IO_System new_sys= new IO_System(new_item, data, this, n);
+				members.add(new_sys);
+				System.out.println("Added " + new_sys.Name());
+				break;
+			default:
+				System.err.println("Unanticipated node command description in IO_Device. Description interpretation likely erronious.");
+				break;
+			}
+		}
+		System.out.println("Construction complete.");
+	}
+	
+	
 	@Override
 	public InetSocketAddress TimeSyncAddress()
 	{

@@ -13,6 +13,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.Iterator;
 import java.util.Properties;
+import java.util.Vector;
 
 import threading.ThreadWorker;
 import udaqc.io.IO_Value;
@@ -40,6 +41,7 @@ public class Database_uDAQC
 		try
 		{
 			conn = DriverManager.getConnection(url, props);
+			conn.setAutoCommit(true);
 			initDeviceTable();
 			DatabaseMetaData meta = conn.getMetaData();
 			boolean supports_isolation = meta.supportsTransactionIsolationLevel(java.sql.Connection.TRANSACTION_SERIALIZABLE);
@@ -502,27 +504,27 @@ public class Database_uDAQC
 			e.printStackTrace();
 		}
 	}
-	
-	public void count(IO_System system, Regime r, Instant start, Instant end)
+		
+	public int count(IO_System system, Regime r, Timestamp start, Timestamp end)
 	{
 		String full_table_name = getFullSystemTableName(system,r);
 		PreparedStatement ps=null;
-		Timestamp start_ts = Timestamp.from(start);
-		Timestamp end_ts = Timestamp.from(end);
+		
 		try
 		{
 			String command = "select count(" + timecolumn_name + ") from " + full_table_name;
 			command += " where " + timecolumn_name + " >= ?";
 			command += " and " + timecolumn_name + " <= ?";
 			ps = conn.prepareStatement(command);
-			ps.setTimestamp(1, start_ts);
-			ps.setTimestamp(2, end_ts);
+			ps.setTimestamp(1, start);
+			ps.setTimestamp(2, end);
 			ps.execute();
 			ResultSet res = ps.getResultSet();
 			while(res.next())
 			{
 				int count = res.getInt(1);
 				System.out.println(full_table_name + " has " + count + " rows between " + start.toString() + " and " + end.toString());
+				return count;
 			}
 		} catch (SQLException e)
 		{
@@ -533,75 +535,88 @@ public class Database_uDAQC
 			}
 			e.printStackTrace();
 		}
+		return -1;
 	}
-	private class CountedQuery
+	public ByteBuffer getHistory(IO_System system, Regime r, Timestamp start, Timestamp end) 
 	{
-		public Integer count=null;
-		public ResultSet result=null;
-		public CountedQuery(IO_System system, Regime r, Instant start, Instant end)
+		String full_table_name = getFullSystemTableName(system,r);
+		ByteBuffer retval=null;
+		PreparedStatement ps=null;
+		try
 		{
-			String full_table_name = getFullSystemTableName(system,r);
-			PreparedStatement ps=null;
-			Timestamp start_ts = Timestamp.from(start);
-			Timestamp end_ts = Timestamp.from(end);
-			try
+			conn.setAutoCommit(false);
+			
+			int count = count(system,r,start,end);
+			retval = ByteBuffer.allocate(count*system.HistoryEntrySize(r) + Short.BYTES*2 + Byte.BYTES);
+			retval.putShort(system.Device().DeviceIndex());
+			retval.putShort(system.Index());
+			if(r==Regime.raw)
 			{
-				ps.clos
-				
-				String command = "select count(" + timecolumn_name + ") from " + full_table_name;
-				command += " where " + timecolumn_name + " >= ?";
-				command += " and " + timecolumn_name + " <= ?";
-				ps = conn.prepareStatement(command);
-				ps.setTimestamp(1, start_ts);
-				ps.setTimestamp(2, end_ts);
-				ps.execute();
-				ResultSet res = ps.getResultSet();
-				while(res.next())
-				{
-					this.count = res.getInt(1);
-					System.out.println(full_table_name + " has " + this.count + " rows between " + start.toString() + " and " + end.toString());
-				}
-				
-				command = "select * from " + full_table_name;
-				command += " where " + timecolumn_name + " >= ?";
-				command += " and " + timecolumn_name + " <= ?";
-				command += " order by " + timecolumn_name;
-				ps = conn.prepareStatement(command);
-				ps.setTimestamp(1, start_ts);
-				ps.setTimestamp(2, end_ts);
-				ps.execute();
-				this.result = ps.getResultSet();
-				
-				ps.close();
-			} catch (SQLException e)
-			{
-				System.out.println("Error during counting.");
-				if(ps!=null)
-				{
-					System.err.println("Command was " + ps.toString());
-				}
-				e.printStackTrace();
+				retval.put((byte)0);
 			}
+			else
+			{
+				retval.put((byte)1);
+			}
+			
+			String command = "select * from " + full_table_name;
+			command += " where " + timecolumn_name + " >= ?";
+			command += " and " + timecolumn_name + " <= ?";
+			command += " order by " + timecolumn_name;
+			ps = conn.prepareStatement(command);
+			ps.setTimestamp(1, start);
+			ps.setTimestamp(2, end);
+			ps.execute();
+			ResultSet res = ps.getResultSet();
+			Vector<IO_Value> values = system.GetNestedValues();
+			while(res.next())
+			{
+				if(r==Regime.raw)
+				{
+					retval.put(res.getByte(1)); //end of epoch
+					retval.putLong(res.getTimestamp(2).getTime()); //timestamp
+					int i = 3;
+					for(int n=1;n<values.size();n++) //Start at one to skip the timestamp
+					{
+						retval.put(res.getBytes(i));
+						i++;
+					}
+				}
+				else
+				{
+					retval.putLong(res.getTimestamp(1).getTime()); //timestamp
+					int i = 2;
+					for(int n=1;n<values.size();n++) //Start at one to skip the timestamp
+					{
+						for(int q=0;q<3;q++)
+						{
+							retval.put(res.getBytes(i));
+							i++;
+						}
+					}
+				}
+			}
+			ps.close();
+			conn.commit();
+		} catch (SQLException e)
+		{
+			System.out.println("Error during history retrieval.");
+			if(ps!=null)
+			{
+				System.err.println("Command was " + ps.toString());
+			}
+			e.printStackTrace();
 		}
-	}
-	
-	public static void ResultToComm(IO_System system, ResultSet res, Regime regime)
-	{
-		int entry_size=system.HistoryEntrySize(regime);
 		
 		try
 		{
-			while(res.next())
-			{
-				Timestamp time = res.getTimestamp(1, java.util.Calendar.getInstance(java.util.TimeZone.getDefault()));
-				Double temperature = res.getDouble(2);
-				System.out.println(time.toString() + ", " + temperature);
-			}
+			conn.setAutoCommit(true);
 		} catch (SQLException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+		
+		return retval;
 	}
 	
 	public void insertSystemTable(IO_Device_Synchronized d, short system_index)

@@ -15,31 +15,6 @@ public abstract class IO_Device extends IO_Group
 		this.description=data.array().clone();
 	}
 	
-	@Override
-	protected void Construct(ByteBuffer data)
-	{
-		System.out.println("Constructing IO_Device from description.");
-		short member_count = data.getShort();
-		System.out.println(member_count + " members expected.");
-		members.clear();
-		for (short n = 0; n < member_count; n++)
-		{
-			IO_Node new_item = new IO_Node(this, data);
-			switch (new_item.command_description)
-			{
-			case IO_Constants.Command_IDs.system_description:
-				IO_System new_sys= new IO_System(new_item, data, this, n);
-				members.add(new_sys);
-				System.out.println("Added " + new_sys.Name());
-				break;
-			default:
-				System.err.println("Unanticipated node command description in IO_Device. Description interpretation likely erronious.");
-				break;
-			}
-		}
-		System.out.println("Construction complete.");
-	}
-	
 	public IO_System System(Short s) {return (IO_System)GetMembers().get(s);}
 	public Vector<IO_System> Systems() 
 	{
