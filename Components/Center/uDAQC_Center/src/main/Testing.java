@@ -31,12 +31,14 @@ public class Testing
 		
 		//Testing...
 		IO_System sys=IO_Device_Connected.getDirectDevice((short)0).GetSystem((short)0);
-		Instant start = Instant.ofEpochMilli(0);
-		Instant end = Instant.now();
+		Instant start = Instant.parse("2019-10-20T06:22:05.00Z");
+		Instant end = Instant.parse("2019-10-25T06:22:17.00Z");
 		Timestamp start_ts = Timestamp.from(start);
 		Timestamp end_ts = Timestamp.from(end);
-		database.count(sys, Regime.raw, start_ts, end_ts);
-		System.out.println("Counted.");
+		System.out.println("Counted " + database.count(sys, Regime.hour, start_ts, end_ts));
+		ByteBuffer b = database.getHistory(sys, Regime.hour, start_ts, end_ts);
+		System.out.println("Retrieved history.");
+		Database_uDAQC.PrintHistory(sys, b);
 		System.out.println("Database testing done.");
 	}
 	public static void TLS()

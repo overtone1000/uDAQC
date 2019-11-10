@@ -18,6 +18,7 @@ import java.util.Vector;
 import threading.ThreadWorker;
 import udaqc.io.IO_Value;
 import udaqc.io.IO_System;
+import udaqc.io.IO_Constants.DataTypes;
 import udaqc.io.IO_Device;
 import udaqc.network.IO_Device_Synchronized;
 import udaqc.network.center.IO_Device_Connected;
@@ -214,6 +215,7 @@ public class Database_uDAQC
 	static final String flagcolumn = flagcolumn_name + " boolean NOT NULL";
 	static final String timecolumn_name = "time";
 	static final String timecolumn = timecolumn_name + " TIMESTAMPTZ PRIMARY KEY";
+	static final String timebucketcolumn_name = timecolumn_name+"bucket";
 		
 	static final String devicetablename = "devices";
 	private void initDeviceTable()
@@ -458,7 +460,6 @@ public class Database_uDAQC
 			s.close();
 			
 			//Now create regime continuous aggregates
-			String timebucketcolumn_name = timecolumn_name+"bucket";
 			for(Regime r:Regime.values())
 			{
 				if(r!=Regime.raw)
@@ -510,11 +511,20 @@ public class Database_uDAQC
 		String full_table_name = getFullSystemTableName(system,r);
 		PreparedStatement ps=null;
 		
+		String time_column;
+		if(r==Regime.raw) {
+			time_column = timecolumn_name;
+		}
+		else
+		{
+			time_column=timebucketcolumn_name;
+		}
+		
 		try
 		{
-			String command = "select count(" + timecolumn_name + ") from " + full_table_name;
-			command += " where " + timecolumn_name + " >= ?";
-			command += " and " + timecolumn_name + " <= ?";
+			String command = "select count(" + time_column + ") from " + full_table_name;
+			command += " where " + time_column + " >= ?";
+			command += " and " + time_column + " <= ?";
 			ps = conn.prepareStatement(command);
 			ps.setTimestamp(1, start);
 			ps.setTimestamp(2, end);
@@ -542,6 +552,17 @@ public class Database_uDAQC
 		String full_table_name = getFullSystemTableName(system,r);
 		ByteBuffer retval=null;
 		PreparedStatement ps=null;
+		
+		String time_column;
+		if(r==Regime.raw) {
+			time_column = timecolumn_name;
+		}
+		else
+		{
+			time_column=timebucketcolumn_name;
+		}
+		
+		
 		try
 		{
 			conn.setAutoCommit(false);
@@ -561,42 +582,183 @@ public class Database_uDAQC
 			}
 			
 			String command = "select * from " + full_table_name;
-			command += " where " + timecolumn_name + " >= ?";
-			command += " and " + timecolumn_name + " <= ?";
-			command += " order by " + timecolumn_name;
+			command += " where " + time_column + " >= ?";
+			command += " and " + time_column + " <= ?";
+			command += " order by " + time_column;
 			ps = conn.prepareStatement(command);
 			ps.setTimestamp(1, start);
 			ps.setTimestamp(2, end);
 			ps.execute();
 			ResultSet res = ps.getResultSet();
 			Vector<IO_Value> values = system.GetNestedValues();
+			Iterator<IO_Value> i;
 			while(res.next())
 			{
+				System.out.println("At position " + retval.position() + " (entry size is " + system.HistoryEntrySize(r) + ", total size is " + retval.capacity() + ")");
 				if(r==Regime.raw)
 				{
-					retval.put(res.getByte(1)); //end of epoch
-					retval.putLong(res.getTimestamp(2).getTime()); //timestamp
-					int i = 3;
-					for(int n=1;n<values.size();n++) //Start at one to skip the timestamp
+					boolean end_of_epoch = res.getBoolean(1); //end of epoch
+					if(end_of_epoch)
 					{
-						retval.put(res.getBytes(i));
-						i++;
+						retval.put((byte)1); 
+					}
+					else
+					{
+						retval.put((byte)0);
+					}
+					retval.putLong(res.getTimestamp(2).getTime()); //timestamp
+					int index = 3;
+					i=values.iterator();
+					i.next(); //skip the timestamp
+					while(i.hasNext())
+					{
+						IO_Value v = i.next();
+						switch(v.getDataType())
+						{
+						case DataTypes.bool:
+						{
+							boolean b = res.getBoolean(index);
+							if(b)
+							{
+								retval.put((byte)1);
+							}
+							else
+							{
+								retval.put((byte)0);
+							}
+						}
+							break;
+						case DataTypes.floating_point:
+							switch(v.Size())
+							{
+							case 4:
+							{
+								retval.putFloat(res.getFloat(index));
+							}
+								break;
+							case 8:
+							{
+								retval.putDouble(res.getDouble(index));
+							}
+								break;
+							default:
+								System.out.print("Unanticipated size...");
+							}
+							break;
+						case DataTypes.signed_integer:
+						case DataTypes.unsigned_integer:
+							switch(v.Size())
+							{
+							case 2:
+							{
+								retval.putShort(res.getShort(index));
+							}
+								break;
+							case 4:
+							{
+								retval.putInt(res.getInt(index));
+							}
+								break;
+							case 8:
+							{
+								retval.putLong(res.getLong(index));
+							}
+								break;
+							default:
+								System.out.print("Unanticipated size...");
+							}
+							break;
+						}
+						index++;
 					}
 				}
 				else
 				{
 					retval.putLong(res.getTimestamp(1).getTime()); //timestamp
-					int i = 2;
-					for(int n=1;n<values.size();n++) //Start at one to skip the timestamp
+					int index=2;
+					i=values.iterator();
+					i.next(); //skip the timestamp
+					while(i.hasNext())
 					{
-						for(int q=0;q<3;q++)
+						IO_Value v = i.next();
+						switch(v.getDataType())
 						{
-							retval.put(res.getBytes(i));
-							i++;
+						case DataTypes.bool:
+						{
+							//Converted to float between 0 and 1 for aggregates....
+							for(int n=0;n<IO_System.aggregates_per_value;n++)
+							{
+								retval.putFloat(res.getFloat(index));
+								index++;
+							}
+						}
+							break;
+						case DataTypes.floating_point:
+							switch(v.Size())
+							{
+							case 4:
+							{
+								for(int n=0;n<IO_System.aggregates_per_value;n++)
+								{
+									retval.putFloat(res.getFloat(index));
+									index++;
+								}
+							}
+								break;
+							case 8:
+							{
+								for(int n=0;n<IO_System.aggregates_per_value;n++)
+								{
+									retval.putDouble(res.getDouble(index));
+									index++;
+								}
+							}
+								break;
+							default:
+								System.out.print("Unanticipated size...");
+							}
+							break;
+						case DataTypes.signed_integer:
+						case DataTypes.unsigned_integer:
+							switch(v.Size())
+							{
+							case 2:
+							{
+								for(int n=0;n<IO_System.aggregates_per_value;n++)
+								{
+									retval.putShort(res.getShort(index));
+									index++;
+								}
+							}
+								break;
+							case 4:
+							{
+								for(int n=0;n<IO_System.aggregates_per_value;n++)
+								{
+									retval.putInt(res.getInt(index));
+									index++;
+								}
+							}
+								break;
+							case 8:
+							{
+								for(int n=0;n<IO_System.aggregates_per_value;n++)
+								{
+									retval.putLong(res.getLong(index));
+									index++;
+								}
+							}
+								break;
+							default:
+								System.out.print("Unanticipated size...");
+							}
+							break;
 						}
 					}
+					index++;
 				}
 			}
+			System.out.println("At position " + retval.position() + " (entry size is " + system.HistoryEntrySize(r) + ")");
 			ps.close();
 			conn.commit();
 		} catch (SQLException e)
@@ -619,8 +781,8 @@ public class Database_uDAQC
 		
 		return retval;
 	}
-	
-	public void PrintHistory(IO_System system, ByteBuffer buf)
+	 
+	public static void PrintHistory(IO_System system, ByteBuffer buf)
 	{
 		buf.position(0);
 		
@@ -639,7 +801,24 @@ public class Database_uDAQC
 			{
 				System.out.print(buf.get()); //End of epoch
 				System.out.print("|");
-				
+				System.out.print(Instant.ofEpochMilli(buf.getLong()).toString());
+				System.out.print("|");
+				Iterator<IO_Value> i = values.iterator();
+				i.next(); //burn timestamp
+				while(i.hasNext())
+				{
+					IO_Value v = i.next();
+					v.InterpretData(buf);
+					System.out.print(v.Value().toString());
+					if(i.hasNext())
+					{
+						System.out.print("|");
+					}
+					else
+					{
+						System.out.println();
+					}
+				}
 			}
 		}
 		else
@@ -648,7 +827,102 @@ public class Database_uDAQC
 			
 			while(buf.hasRemaining())
 			{
-				
+				System.out.print(Instant.ofEpochMilli(buf.getLong()).toString());
+				System.out.print("|");
+				Iterator<IO_Value> i = values.iterator();
+				i.next(); //burn timestamp
+				while(i.hasNext())
+				{
+					IO_Value v = i.next();
+					
+					switch(v.getDataType())
+					{
+					case DataTypes.bool:
+					{
+						for(int n=0;n<IO_System.aggregates_per_value;n++)
+						{
+							float f = buf.getFloat();
+							System.out.print(f);
+							System.out.print("|");
+						}
+					}
+						break;
+					case DataTypes.floating_point:
+						switch(v.Size())
+						{
+						case 4:
+						{
+							for(int n=0;n<IO_System.aggregates_per_value;n++)
+							{
+								float f = buf.getFloat();
+								System.out.print(f);
+								System.out.print("|");
+							}
+						}
+							break;
+						case 8:
+						{
+							for(int n=0;n<IO_System.aggregates_per_value;n++)
+							{
+								double d = buf.getDouble();
+								System.out.print(d);
+								System.out.print("|");
+							}
+						}
+							break;
+						default:
+							System.out.print("Unanticipated size...");
+						}
+						break;
+					case DataTypes.signed_integer:
+					case DataTypes.unsigned_integer:
+						switch(v.Size())
+						{
+						case 2:
+						{
+							for(int n=0;n<IO_System.aggregates_per_value;n++)
+							{
+								short s = buf.getShort();
+								System.out.print(s);
+								System.out.print("|");
+							}
+						}
+							break;
+						case 4:
+						{
+							for(int n=0;n<IO_System.aggregates_per_value;n++)
+							{
+								int in = buf.getInt();
+								System.out.print(in);
+								System.out.print("|");
+							}
+						}
+							break;
+						case 8:
+						{
+							for(int n=0;n<IO_System.aggregates_per_value;n++)
+							{
+								long l = buf.getLong();
+								System.out.print(l);
+								System.out.print("|");
+							}
+						}
+							break;
+						default:
+							System.out.print("Unanticipated size...");
+						}
+						break;
+					}
+					
+					if(i.hasNext())
+					{
+						System.out.print("|");
+					}
+					else
+					{
+						System.out.println();
+					}
+				}
 			}
 		}
 	}

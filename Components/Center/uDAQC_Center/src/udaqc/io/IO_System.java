@@ -1,6 +1,7 @@
 package udaqc.io;
 
 import java.nio.ByteBuffer;
+import java.util.Iterator;
 
 import udaqc.jdbc.Database_uDAQC.Regime;
 import udaqc.network.center.Center;
@@ -13,6 +14,7 @@ public class IO_System extends IO_Group
 	
 	private int raw_history_entry_size=-1;
 	private int aggregate_history_entry_size=-1;
+	public static final int aggregates_per_value = 3;
 	public int HistoryEntrySize(Regime reg)
 	{
 		if(reg==Regime.raw)
@@ -27,22 +29,25 @@ public class IO_System extends IO_Group
 	private void CalcEntrySizes()
 	{
 		//long timestamp, either way
-		raw_history_entry_size=8; 
-		aggregate_history_entry_size=8;
+		raw_history_entry_size=Long.BYTES; 
+		aggregate_history_entry_size=Long.BYTES;
 		
 		//end_of_epoch boolean
-		raw_history_entry_size+=1; 
+		raw_history_entry_size+=Byte.BYTES; 
 
-		for(IO_Value v:GetNestedValues())
+		Iterator<IO_Value> i = GetNestedValues().iterator();
+		i.next(); //ditch timestamp
+		while(i.hasNext())
 		{
+			IO_Value v = i.next();
 			raw_history_entry_size+=v.Size();
 			if(v.getDataType()==udaqc.io.IO_Constants.DataTypes.bool)
 			{
-				aggregate_history_entry_size+=4; //Gets converted to a float
+				aggregate_history_entry_size+=Float.BYTES*aggregates_per_value; //Gets converted to a float
 			}
 			else
 			{
-				aggregate_history_entry_size+=v.Size();
+				aggregate_history_entry_size+=v.Size()*aggregates_per_value;
 			}
 		}
 	}
