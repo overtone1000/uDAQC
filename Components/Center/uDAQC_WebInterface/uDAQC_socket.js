@@ -52,24 +52,15 @@ function handlePassthroughCommand(ptcom)
       const history_request_size = 2+2+8+8;
       for(let sys_index = 0; sys_index<new_device.member_count; sys_index++)
       {
-        for(const regime of RegimesIterable)
-        {
-          let message = new DataViewWriter(history_request_size);
-          message.putInt16(new_device.index);
-          message.putInt16(new_device.members[sys_index].system_index);
-          message.putInt32(regime);
-          message.putInt64(0);
-          console.debug("Requesting from device " + new_device.index + " system " + new_device.members[sys_index].system_index + " regime " + regime);
-          let command = new Command(history_request_size,IO_Constants.history_request, message);
-          command.sendto(websocket);
-        }
+        let message = new DataViewWriter(history_request_size);
+        message.putInt16(new_device.index);
+        message.putInt16(new_device.members[sys_index].system_index);
+        message.putInt64(-1);
+        message.putInt64(-1);
+        console.debug("Requesting from device " + new_device.index + " system " + new_device.members[sys_index].system_index);
+        let command = new Command(history_request_size,IO_Constants.history_request, message);
+        command.sendto(websocket);
       }
-      break;
-    case IO_Constants.history:
-      handleHistory(ptcom);
-      break;
-    case IO_Constants.history_update:
-      handleHistoryAddendum(ptcom);
       break;
     default:
     console.debug("Unexpected nested command in passthrough " +  ptcom.internal_command_ID + ".");
@@ -89,10 +80,17 @@ function handleHistory(com)
   console.log("Handling history for system:");
   console.log(system);
 
-  while(com.message.remaining()>=0)
+  const aggregate_flag = Math.pow(2,0);
+  let new_his=null;
+  if(flags&aggregate_flag)
   {
-    
+    new_his=new AggregateHistory(system);
   }
+  else
+  {
+    new_his=new RawHistory(system);
+  }
+  new_his.processEntries(com.message);
 }
 
 function onMessage(evt)
@@ -110,7 +108,6 @@ function onMessage(evt)
       break;
     case IO_Constants.history:
       {
-        let com = Command.interpret(c);
         handleHistory(c);
       }
       break;

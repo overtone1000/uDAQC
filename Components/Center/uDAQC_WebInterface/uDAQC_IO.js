@@ -307,7 +307,7 @@ class DataViewReader {
           //view = new Int32Array(this.bytes,pointer,1);
           break;
           case 8:
-          retval = this.view.getInt64(this.pointer, this.view.isLittleEndian);
+          retval = this.getInt64(this.pointer, this.view.isLittleEndian);
           //view = new Int64Array(this.bytes,pointer,1);
           break;
           default:
@@ -945,122 +945,6 @@ class IO_ModifiableValue extends IO_Value
   }
 }
 
-//This class contains  aggregate historical data after a history command from the connected Center
-//Epoch separation is performed based on time between data
-class AggregateHistory extends History
-{
-
-}
-
-//This class contains the historical data after a history command from the connected Center
-//Epoch separation is performed using the included flag
-class RawHistory extends History
-{
-  constructor(system)
-  {
-    super(system);
-    this.values = new Array(system.ioValueCount);
-    for(let n = 0; n<this.values.length;n++)
-    {
-      this.values[n]=[];
-    }
-    //this.startNewEpoch();
-  }
-  
-  startNewEpoch()
-  {
-    //console.debug("Starting new epoch.");
-    if(this.times.length)
-    {
-      this.current_epoch_index = this.times.length;
-      this.times.push(this.times[this.times.length-1]);
-      for(let n = 0; n<this.values.length;n++)
-      {
-        this.values[n].push(null);
-      }
-    }
-  }
-
-  processEntries(message)
-  {
-    const new_epoch_flag = Math.pow(2,0);
-
-    let flag = message.getInt8();
-
-    //console.log("Flag = " + flag);
-
-    if(flag&new_epoch_flag){
-        //Start a new epoch
-        //console.debug("New epoch flag.");
-        this.startNewEpoch();
-    }
-
-    this.times.push(Epochs.getTime(message.getInt64()));
-
-    let iovs = this.system.getNestedIOValues();
-    while(message.remaining()>=0)
-    {
-      for(let n=0;n<this.values.length;n++)
-      {
-        //let val = message.getFloat32(); This won't work anymore...
-        
-        let value = null;
-        switch (iovs[n].data_type)
-        {
-        case DataTypes.floating_point:
-          switch (iovs[n].byte_count)
-          {
-          case 4:
-            value = data.getFloat();
-            break;
-          case 8:
-            value = data.getDouble();
-            break;
-          default:
-            console.error("Unanticipated data.");
-            break;
-          }
-          break;
-        case DataTypes.signed_integer:
-        case DataTypes.unsigned_integer:
-          switch (iovs[n].byte_count)
-          {
-          case 4:
-            value = data.getInt();
-            break;
-          case 8:
-            value = data.getLong();
-            break;
-          default:
-              console.error("Unanticipated data.");
-            break;
-          }
-          break;
-        case DataTypes.bool:
-          if(iovs[n].byte_count!=1)
-          {
-            console.error("Unexpected byte length for boolean type.");
-          }
-          let b = data.get();
-          if (b == 0)
-          {
-            value = false;
-          } else
-          {
-            value = true;
-          }
-          break;
-        case DataTypes.undefined:
-        default:
-          DefaultInterpret(data);
-        }
-
-        this.values[n].push(value);
-      }
-    }
-  }
-}
-
 class History
 {
   constructor(system)
@@ -1100,5 +984,146 @@ class History
       }
     }
     return retval;
+  }
+}
+
+//This class contains  aggregate historical data after a history command from the connected Center
+//Epoch separation is performed based on time between data
+const aggregates_per_value = 3;
+class AggregateHistory extends History
+{
+  constructor(system)
+  {
+    super(system);
+    this.values = new Array(system.ioValueCount);
+    for(let n = 0; n<this.values.length;n++)
+    {
+      this.values[n]=[];
+      for(let m=0;m<aggregates_per_value;m++)
+      {
+        this.values[n][m]=[];
+      }
+    }
+    //this.startNewEpoch();
+  }
+  
+  startNewEpoch()
+  {
+    //console.debug("Starting new epoch.");
+    if(this.times.length)
+    {
+      this.current_epoch_index = this.times.length;
+      this.times.push(this.times[this.times.length-1]);
+      for(let n = 0; n<this.values.length;n++)
+      {
+        for(let m=0;m<aggregates_per_value;m++)
+        {
+          this.values[n][m].push(null);
+        }
+      }
+    }
+  }
+
+  processEntries(message)
+  {
+    const new_epoch_flag = Math.pow(2,0);
+    let iovs = this.system.getNestedIOValues();
+
+    while(message.remaining()>0)
+    {
+
+    let timestamp = History.getTime(message.getInt64());
+    this.times.push(timestamp);
+      console.log("Remaining = " + message.remaining());
+      for(let n=1;n<this.values.length;n++) //skip timestamp IO_Value
+      {
+        let value = null;
+        switch (iovs[n].data_type)
+        {
+        case DataTypes.floating_point:
+        case DataTypes.signed_integer:
+        case DataTypes.unsigned_integer:
+          for(let m=0;m<aggregates_per_value;m++)
+          {
+            value = message.get(iovs[n].data_type,iovs[n].byte_count);
+            this.values[n].push(value);
+          }
+          break;
+        case DataTypes.bool:
+          for(let m=0;m<aggregates_per_value;m++)
+          {
+            value = message.getFloat32();
+            this.values[n].push(value);
+          }
+          break;
+        case DataTypes.undefined:
+        default:
+          DefaultInterpret(data);
+        }
+      }
+    }
+  }
+}
+
+//This class contains the historical data after a history command from the connected Center
+//Epoch separation is performed using the included flag
+class RawHistory extends History
+{
+  constructor(system)
+  {
+    super(system);
+    this.values = new Array(system.ioValueCount);
+    for(let n = 0; n<this.values.length;n++)
+    {
+      this.values[n]=[];
+    }
+    //this.startNewEpoch();
+  }
+  
+  startNewEpoch()
+  {
+    //console.debug("Starting new epoch.");
+    if(this.times.length)
+    {
+      this.current_epoch_index = this.times.length;
+      this.times.push(this.times[this.times.length-1]);
+      for(let n = 0; n<this.values.length;n++)
+      {
+        this.values[n].push(null);
+      }
+    }
+  }
+
+  processEntries(message)
+  {
+    const new_epoch_flag = Math.pow(2,0);
+    let iovs = this.system.getNestedIOValues();
+    
+    while(message.remaining()>0)
+    {
+      let flags = message.getInt8();
+
+      //console.log("Flag = " + flag);
+
+      let timestamp = History.getTime(message.getInt64());
+      this.times.push(timestamp);
+      console.log("Remaining = " + message.remaining());
+      for(let n=1;n<this.values.length;n++) //skip timestamp IO_Value
+      {
+        //let val = message.getFloat32(); This won't work anymore...
+        
+        let value = message.get(iovs[n].data_type,iovs[n].byte_count);
+        this.values[n].push(value);
+      }
+
+      if(flags&new_epoch_flag)
+      {
+        //Start a new epoch
+        console.debug("End of epoch flag.");
+        this.startNewEpoch();
+      }
+    }
+    console.debug(this.times);
+    console.debug(this.values);
   }
 }

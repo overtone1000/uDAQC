@@ -178,20 +178,6 @@ public class Center extends TCP_Server
 			}
 		  }
 		  break;
-		  case Command_IDs.history_request:
-		  {
-			  short dev_index = data.getShort();
-			  short sys_index = data.getShort();
-			  long start = data.getLong();
-			  long end = data.getLong();
-			  Timestamp start_ts = Timestamp.from(Instant.ofEpochMilli(start));
-			  Timestamp end_ts = Timestamp.from(Instant.ofEpochMilli(start));
-			  
-			  IO_System system = IO_Device_Connected.getDirectDevice(dev_index).GetSystem(sys_index);
-			  Command his = database.getHistory(system, Regime.minute, start_ts, end_ts);
-			  session.write(his);			  
-		  }
-		  break;
 		  default:
 			System.err.println("Unhandled command " + c.Header().command_id + " of lenght " + c.Header().message_length);
 			break;

@@ -596,7 +596,7 @@ public class Database_uDAQC
 			Iterator<IO_Value> i;
 			while(res.next())
 			{
-				System.out.println("At position " + message.position() + " (entry size is " + system.HistoryEntrySize(r) + ", total size is " + message.capacity() + ")");
+				//System.out.println("At position " + message.position() + " (entry size is " + system.HistoryEntrySize(r) + ", total size is " + message.capacity() + ")");
 				if(r==Regime.raw)
 				{
 					boolean end_of_epoch = res.getBoolean(1); //end of epoch
@@ -760,7 +760,7 @@ public class Database_uDAQC
 					index++;
 				}
 			}
-			System.out.println("At position " + message.position() + " (entry size is " + system.HistoryEntrySize(r) + ")");
+			//System.out.println("At position " + message.position() + " (entry size is " + system.HistoryEntrySize(r) + ")");
 			ps.close();
 			conn.commit();
 		} catch (SQLException e)

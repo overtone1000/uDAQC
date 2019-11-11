@@ -120,10 +120,6 @@ let resetX = function(e)
 
 window.onload=function(){
   console.log("Window loaded.");
-  document.getElementById("ul_regime_live").onclick=function(){changeRegime(Regimes.live);};
-  document.getElementById("ul_regime_minute").onclick=function(){changeRegime(Regimes.minute);};
-  document.getElementById("ul_regime_hour").onclick=function(){changeRegime(Regimes.hour);};
-  document.getElementById("ul_regime_day").onclick=function(){changeRegime(Regimes.day);};
   x_adjust = $("#x_adjust_rangeselector").slider().on("slideStop", adjustX).data("slider");
 
   $("#x_trim_button").on("click",trimX);

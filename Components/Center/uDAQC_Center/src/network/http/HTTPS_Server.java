@@ -6,6 +6,8 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -15,12 +17,16 @@ import java.util.concurrent.Semaphore;
 import network.http.websocket.Servlet_uD;
 import network.SecurityBundle;
 import udaqc.io.IO_Constants;
+import udaqc.io.IO_System;
+import udaqc.io.IO_Constants.Command_IDs;
+import udaqc.jdbc.Database_uDAQC.Regime;
 import udaqc.network.center.Center;
 import udaqc.network.center.IO_Device_Connected;
 import udaqc.network.center.command.Command;
 import udaqc.network.passthrough.command.PT_Command;
 import udaqc.network.passthrough.endpoints.WS_Endpoint;
 
+import org.apache.mina.core.session.IoSession;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
@@ -408,6 +414,39 @@ public class HTTPS_Server
     		PT_Command ptc = new PT_Command(command);
     		parent.Passthrough_from_Secondary(ptc);
 		break;
+    	case Command_IDs.history_request:
+		  {
+			  ByteBuffer data = command.getmessage();
+			  short dev_index = data.getShort();
+			  short sys_index = data.getShort();
+			  long start = data.getLong();
+			  long end = data.getLong();
+			  Timestamp start_ts=null;
+			  Timestamp end_ts=null;
+			  if(start>=0)
+			  {
+				  start_ts = Timestamp.from(Instant.ofEpochMilli(start));
+			  }
+			  else
+			  {
+				  //start_ts = Timestamp.from(Instant.ofEpochMilli(0));
+				  start_ts = Timestamp.from(Instant.parse("2019-11-04T06:21:00.00Z"));
+			  }
+			  if(end>=0)
+			  {
+				  end_ts = Timestamp.from(Instant.ofEpochMilli(start));  
+			  }
+			  else
+			  {
+				  //end_ts = Timestamp.from(Instant.parse("9999-12-30T23:59:59.99Z")); //Long after human extinction, and also near the end of supported perior per SQL specs
+				  end_ts = Timestamp.from(Instant.parse("2019-11-04T06:22:00.00Z"));
+			  }
+			  
+			  IO_System system = IO_Device_Connected.getDirectDevice(dev_index).GetSystem(sys_index);
+			  Command his = Center.database.getHistory(system, Regime.raw, start_ts, end_ts);
+			  SendCommand(session,his);
+		  }
+		  break;
     	default:
     		System.out.println("Unknown command received from web client.");
     	}
