@@ -439,7 +439,7 @@ public class HTTPS_Server
 			  else
 			  {
 				  //end_ts = Timestamp.from(Instant.parse("9999-12-30T23:59:59.99Z")); //Long after human extinction, and also near the end of supported perior per SQL specs
-				  end_ts = Timestamp.from(Instant.parse("2019-11-04T06:22:00.00Z"));
+				  end_ts = Timestamp.from(Instant.parse("2019-11-05T06:22:00.00Z"));
 			  }
 			  
 			  IO_System system = IO_Device_Connected.getDirectDevice(dev_index).GetSystem(sys_index);

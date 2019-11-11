@@ -1046,14 +1046,14 @@ class AggregateHistory extends History
           for(let m=0;m<aggregates_per_value;m++)
           {
             value = message.get(iovs[n].data_type,iovs[n].byte_count);
-            this.values[n].push(value);
+            this.values[n-1][m].push(value);
           }
           break;
         case DataTypes.bool:
           for(let m=0;m<aggregates_per_value;m++)
           {
             value = message.getFloat32();
-            this.values[n].push(value);
+            this.values[n-1][m].push(value);
           }
           break;
         case DataTypes.undefined:
@@ -1062,6 +1062,9 @@ class AggregateHistory extends History
         }
       }
     }
+    console.debug(this.times);
+    console.debug(this.values);
+    console.error("Why does array have one too many entry? Populated differently between raw and aggregate.");
   }
 }
 
@@ -1125,5 +1128,6 @@ class RawHistory extends History
     }
     console.debug(this.times);
     console.debug(this.values);
+    console.error("Why does array have one too many entry? Populated differently between raw and aggregate.");
   }
 }
