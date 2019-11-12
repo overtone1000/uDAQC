@@ -659,7 +659,7 @@ class IO_System extends IO_Group
     //this.ioValueCount = this.countNestedIOValues()-1; //subtract one for the Timestamp
     this.ioValueCount = this.countNestedIOValues(); //timestamp is still coming across as a float32. This should be fixed.
     this.nestedIOValues = this.getNestedIOValues();
-    //console.log("System has " + this.ioValueCount + " values.");
+    console.log("System has " + this.ioValueCount + " values.");
 
     this.epochs = new Map();
 
@@ -995,8 +995,8 @@ class AggregateHistory extends History
   constructor(system)
   {
     super(system);
-    this.values = new Array(system.ioValueCount);
-    for(let n = 0; n<this.values.length;n++)
+    this.values = new Array(system.ioValueCount-1);
+    for(let n = 0; n<this.values.length;n++) //skip timestamp IO_Value
     {
       this.values[n]=[];
       for(let m=0;m<aggregates_per_value;m++)
@@ -1014,7 +1014,7 @@ class AggregateHistory extends History
     {
       this.current_epoch_index = this.times.length;
       this.times.push(this.times[this.times.length-1]);
-      for(let n = 0; n<this.values.length;n++)
+      for(let n = 0; n<this.values.length;n++) //skip timestamp IO_Value
       {
         for(let m=0;m<aggregates_per_value;m++)
         {
@@ -1035,7 +1035,7 @@ class AggregateHistory extends History
     let timestamp = History.getTime(message.getInt64());
     this.times.push(timestamp);
       console.log("Remaining = " + message.remaining());
-      for(let n=1;n<this.values.length;n++) //skip timestamp IO_Value
+      for(let n=0;n<this.values.length;n++) //skip timestamp IO_Value
       {
         let value = null;
         switch (iovs[n].data_type)
@@ -1045,15 +1045,15 @@ class AggregateHistory extends History
         case DataTypes.unsigned_integer:
           for(let m=0;m<aggregates_per_value;m++)
           {
-            value = message.get(iovs[n].data_type,iovs[n].byte_count);
-            this.values[n-1][m].push(value);
+            value = message.get(iovs[n+1].data_type,iovs[n+1].byte_count);
+            this.values[n][m].push(value);
           }
           break;
         case DataTypes.bool:
           for(let m=0;m<aggregates_per_value;m++)
           {
             value = message.getFloat32();
-            this.values[n-1][m].push(value);
+            this.values[n][m].push(value);
           }
           break;
         case DataTypes.undefined:
@@ -1064,7 +1064,6 @@ class AggregateHistory extends History
     }
     console.debug(this.times);
     console.debug(this.values);
-    console.error("Why does array have one too many entry? Populated differently between raw and aggregate.");
   }
 }
 
@@ -1075,7 +1074,7 @@ class RawHistory extends History
   constructor(system)
   {
     super(system);
-    this.values = new Array(system.ioValueCount);
+    this.values = new Array(system.ioValueCount-1);
     for(let n = 0; n<this.values.length;n++)
     {
       this.values[n]=[];
@@ -1085,12 +1084,12 @@ class RawHistory extends History
   
   startNewEpoch()
   {
-    //console.debug("Starting new epoch.");
+    console.debug("Starting new epoch.");
     if(this.times.length)
     {
       this.current_epoch_index = this.times.length;
       this.times.push(this.times[this.times.length-1]);
-      for(let n = 0; n<this.values.length;n++)
+      for(let n = 0; n<this.values.length;n++) //skip timestamp IO_Value
       {
         this.values[n].push(null);
       }
@@ -1111,11 +1110,11 @@ class RawHistory extends History
       let timestamp = History.getTime(message.getInt64());
       this.times.push(timestamp);
       console.log("Remaining = " + message.remaining());
-      for(let n=1;n<this.values.length;n++) //skip timestamp IO_Value
+      for(let n=0;n<this.values.length;n++) //skip timestamp IO_Value
       {
         //let val = message.getFloat32(); This won't work anymore...
         
-        let value = message.get(iovs[n].data_type,iovs[n].byte_count);
+        let value = message.get(iovs[n+1].data_type,iovs[n+1].byte_count);
         this.values[n].push(value);
       }
 
@@ -1128,6 +1127,5 @@ class RawHistory extends History
     }
     console.debug(this.times);
     console.debug(this.values);
-    console.error("Why does array have one too many entry? Populated differently between raw and aggregate.");
   }
 }

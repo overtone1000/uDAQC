@@ -443,7 +443,7 @@ public class HTTPS_Server
 			  }
 			  
 			  IO_System system = IO_Device_Connected.getDirectDevice(dev_index).GetSystem(sys_index);
-			  Command his = Center.database.getHistory(system, Regime.raw, start_ts, end_ts);
+			  Command his = Center.database.getHistory(system, Regime.minute, start_ts, end_ts);
 			  SendCommand(session,his);
 		  }
 		  break;
