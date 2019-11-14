@@ -977,18 +977,6 @@ class History
 //This class contains  aggregate historical data after a history command from the connected Center
 //Epoch separation is performed based on time between data
 const aggregates_per_value = 3;
-const aggregate_labels =
-[
-  "Mean",
-  "Max",
-  "Min"
-]
-const aggregate_colors = 
-[
-  "rgb(255, 0, 0, 255)",
-  "rgb(0, 255, 0, 255)",
-  "rgb(0, 0, 255, 255)"
-]
 class AggregateHistory extends History
 {
   constructor(system)
@@ -1066,24 +1054,37 @@ class AggregateHistory extends History
 
   setChartDatasets(i)
   {
+    const col = "rgb(255,0,0)";
     this.system.nestedIOValues[i].chart.data.datasets=new Array(aggregates_per_value);
     for(let m=0;m<aggregates_per_value;m++)
     {
       let dataset = 
       {
-        label: this.system.nestedIOValues[i].name + " " + aggregate_labels[m] + " (" + this.system.nestedIOValues[i].units + ")",
+        label: this.system.nestedIOValues[i].name + " (" + this.system.nestedIOValues[i].units + ")",
         fill: false, //no filling under the curve
         //backgroundColor: "rgb(0,0,0,0)", //transparent (this fills under the curve)
-        borderColor: aggregate_colors[m],
+        borderColor: col,
         data: this.values[i-1][m], //history doesn't contain the timestamp field
         labels: this.times,
-        //pointRadius: 0 //don't render points, but if this is don't you can't hover to get value
+        pointRadius: 0, //don't render points, but if this is set you can't hover to get value
         //pointBackgroundColor: "rgb(0,0,0,0)",
-        pointBorderColor: "rgb(0,0,0,0)", //transparent
+        //pointBorderColor: "rgba(0,0,0,0)", //transparent
         spanGaps: false
       }
       this.system.nestedIOValues[i].chart.data.datasets[m]=dataset;
     }
+
+    const bgcol = "rgba(255,0,0,0.5)";
+    const transparent = "rgba(0,0,0,0)";
+    this.system.nestedIOValues[i].chart.data.datasets[1].fill="-1";
+    this.system.nestedIOValues[i].chart.data.datasets[1].backgroundColor= bgcol;
+    this.system.nestedIOValues[i].chart.data.datasets[1].borderColor=transparent;
+    this.system.nestedIOValues[i].chart.data.datasets[0].fill="+2";
+    this.system.nestedIOValues[i].chart.data.datasets[0].backgroundColor=bgcol;
+    this.system.nestedIOValues[i].chart.data.datasets[2].borderColor=transparent;
+    
+    this.system.nestedIOValues[i].chart.data.datasets[1].label=null;
+    this.system.nestedIOValues[i].chart.data.datasets[2].label=null;
   }
 }
 

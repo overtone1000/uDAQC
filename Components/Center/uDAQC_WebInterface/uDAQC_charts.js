@@ -33,7 +33,14 @@ function createChart(canvas)
         legend:
         {
           display: true,
-          position: "bottom"
+          position: "bottom",
+          labels:
+          {
+            filter: function(item, chart) {
+              // Logic to remove a particular legend item goes here
+              return !(item.text==null);
+          }
+        }
         },
         scales:
         {
