@@ -3,7 +3,7 @@
 ## In Progress Notes
 
 ## Device
-* Convert to saving only hashed password once ESP8266 Arduino library v2.6.0 is released
+* Convert to saving only hashed password (v2.6.0 is out!)
 * Fix Device web interface (broken by changes allowing multiple systems on one device, see Network.cpp:299).
 * Check PlatformIO library availability and add to installation instructions.
 * Device is running out of memory when trying to accept a second client.

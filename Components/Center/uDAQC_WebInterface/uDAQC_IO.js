@@ -74,7 +74,6 @@ class DataViewWriter{
         {
           case 4:
             this.putFloat32(value);
-            console.debug("Writing float " + value);
           break;
           case 8:
             this.putFloat64(value);
@@ -412,8 +411,8 @@ class Command
   sendto(websocket)
   {
     let ptcom = this.createArrayBuffer();
-    console.debug("Sending to Command websocket.");
-    console.debug(new Uint8Array(ptcom));
+    //console.debug("Sending to Command websocket.");
+    //console.debug(new Uint8Array(ptcom));
     websocket.send(ptcom);
   }
 }
@@ -456,8 +455,8 @@ class PTCommand
   sendto(websocket)
   {
     let ptcom = this.createArrayBuffer();
-    console.debug("Sending PTCommand to websocket.");
-    console.debug(new Uint8Array(ptcom));
+    //console.debug("Sending PTCommand to websocket.");
+    //console.debug(new Uint8Array(ptcom));
     websocket.send(ptcom);
   }
 }
@@ -488,7 +487,7 @@ class IO_Node
     return this.device_index + "_" + this.node_index;
   }
 
-  toNode(parent)
+  toTreeNode(parent)
   {
     let new_data = [];
 
@@ -579,17 +578,17 @@ class IO_Group extends IO_Node
     }
   }
 
-  toNode(parent)
+  toTreeNode(parent)
   {
     let new_data = [];
 
-    let group_node_arr = super.toNode(parent);
+    let group_node_arr = super.toTreeNode(parent);
     new_data = new_data.concat(group_node_arr[0]);
 
-    console.debug(this.members);
+    //console.debug(this.members);
     for(let child of this.members)
     {
-      new_data = new_data.concat(child.toNode(group_node_arr[0]));
+      new_data = new_data.concat(child.toTreeNode(group_node_arr[0]));
     }
 
     return new_data;
@@ -655,18 +654,19 @@ class IO_System extends IO_Group
 {
   constructor(bytebuffer, indices, index){
     super(bytebuffer, indices);
+    this.parent_device_index = indices.device_index;
     this.system_index = index;
     //this.ioValueCount = this.countNestedIOValues()-1; //subtract one for the Timestamp
     this.ioValueCount = this._countNestedIOValues(); //timestamp is still coming across as a float32. This should be fixed.
     this.nestedIOValues = this._getNestedIOValues();
-    console.log("System has " + this.ioValueCount + " values.");
+    //console.log("System has " + this.ioValueCount + " values.");
     this.history = new History(this); //set to a dummy to start with, will be replaced
     this.chart_stream = true;
   }
 
-  toNode(parent)
+  toTreeNode(parent)
   {
-    let new_data = super.toNode(parent);
+    let new_data = super.toTreeNode(parent);
 
     //Remove timestamp
     new_data.splice(1,1);
@@ -706,8 +706,8 @@ class IO_System extends IO_Group
       if(!max || isNaN(max)){max=this.nestedIOValues[i].dashstate.chart.absolute_max;}
       let interval=max-min;
 
-      console.log("min = " + min);
-      console.log("max = " + max);
+      //console.log("min = " + min);
+      //console.log("max = " + max);
 
       let new_min=min_frac*interval+min;
       let new_max=max-(1.0-max_frac)*interval;
@@ -719,7 +719,7 @@ class IO_System extends IO_Group
         this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max = moment(new_max);
       }
 
-      this.nestedIOValues[i].chart.update();
+      requestHistory(this,new_min,new_max);
     }
   }
 
@@ -734,8 +734,6 @@ class IO_System extends IO_Group
       {
         this.nestedIOValues[i].dashstate.chart.current_max=moment(this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max);
       }
-
-      this.nestedIOValues[i].chart.update();
     }
   }
 
@@ -745,14 +743,14 @@ class IO_System extends IO_Group
 
     for(let i=1;i<this.nestedIOValues.length;i++) //skip timestamp
     {
-      this.nestedIOValues[i].dashstate.chart.current_min=this.nestedIOValues[i].dashstate.chart.absolute_min;
-      this.nestedIOValues[i].dashstate.chart.current_max=this.nestedIOValues[i].dashstate.chart.absolute_max;
+      this.nestedIOValues[i].dashstate.chart.current_min=null;
+      this.nestedIOValues[i].dashstate.chart.current_max=null;
 
       this.nestedIOValues[i].chart.options.scales.xAxes[0].time.min = null;
       this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max = null;
-
-      this.nestedIOValues[i].chart.update();
     }
+
+    requestHistory(this);
   }
 
   setChart()
@@ -780,8 +778,8 @@ class IO_System extends IO_Group
 
       this.history.setChartDatasets(i);      
 
-      console.debug("Datasets...");
-      console.debug(this.nestedIOValues[i].chart.data.datasets);
+      //console.debug("Datasets...");
+      //console.debug(this.nestedIOValues[i].chart.data.datasets);
 
       this.nestedIOValues[i].chart.update(); //need to force update regardless of whether its enabled;
     }
@@ -977,6 +975,7 @@ class History
 //This class contains  aggregate historical data after a history command from the connected Center
 //Epoch separation is performed based on time between data
 const aggregates_per_value = 3;
+
 class AggregateHistory extends History
 {
   constructor(system)

@@ -62,7 +62,7 @@ let x_adjust;
 let adjustX = function()
 {
   let array = x_adjust.element.dataset.value.split(",").map(Number);
-
+  console.debug(array);
   for(let key of IO.devices.keys())
   {
     let device = IO.devices.get(key);

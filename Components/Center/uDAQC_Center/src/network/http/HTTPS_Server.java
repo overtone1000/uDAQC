@@ -429,21 +429,21 @@ public class HTTPS_Server
 			  }
 			  else
 			  {
-				  //start_ts = Timestamp.from(Instant.ofEpochMilli(0));
-				  start_ts = Timestamp.from(Instant.parse("2019-11-04T06:21:00.00Z"));
+				  start_ts = Timestamp.from(Instant.ofEpochMilli(0));
+				  //start_ts = Timestamp.from(Instant.parse("2019-11-04T06:21:00.00Z"));
 			  }
 			  if(end>=0)
 			  {
-				  end_ts = Timestamp.from(Instant.ofEpochMilli(start));  
+				  end_ts = Timestamp.from(Instant.ofEpochMilli(end));  
 			  }
 			  else
 			  {
-				  //end_ts = Timestamp.from(Instant.parse("9999-12-30T23:59:59.99Z")); //Long after human extinction, and also near the end of supported perior per SQL specs
-				  end_ts = Timestamp.from(Instant.parse("2019-11-05T06:22:00.00Z"));
+				  end_ts = Timestamp.from(Instant.parse("9999-12-30T23:59:59.99Z")); //Long after human extinction, and also near the end of supported perior per SQL specs
+				  //end_ts = Timestamp.from(Instant.parse("2019-11-05T06:22:00.00Z"));
 			  }
 			  
 			  IO_System system = IO_Device_Connected.getDirectDevice(dev_index).GetSystem(sys_index);
-			  Command his = Center.database.getHistory(system, Regime.minute, start_ts, end_ts);
+			  Command his = Center.database.getRefinedHistory(system, start_ts, end_ts, 1024);
 			  SendCommand(session,his);
 		  }
 		  break;

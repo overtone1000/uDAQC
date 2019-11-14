@@ -49,23 +49,32 @@ function handlePassthroughCommand(ptcom)
       let new_device = new IO_Device(ptcom.message,ptcom.source_ID);
       update_devices();
       
-      const history_request_size = 2+2+8+8;
-      for(let sys_index = 0; sys_index<new_device.member_count; sys_index++)
+      
+      for(let n = 0; n<new_device.member_count; n++)
       {
-        let message = new DataViewWriter(history_request_size);
-        message.putInt16(new_device.index);
-        message.putInt16(new_device.members[sys_index].system_index);
-        message.putInt64(-1);
-        message.putInt64(-1);
-        console.debug("Requesting from device " + new_device.index + " system " + new_device.members[sys_index].system_index);
-        let command = new Command(history_request_size,IO_Constants.history_request, message);
-        command.sendto(websocket);
+        requestHistory(new_device.members[n]);
       }
       break;
     default:
     console.debug("Unexpected nested command in passthrough " +  ptcom.internal_command_ID + ".");
     console.debug(ptcom);
   }
+}
+
+function requestHistory(system, start_time=-1, end_time=-1)
+{
+  const history_request_size = 2+2+8+8;
+
+  if(start_time==null){start_time=-1;}
+  if(end_time==null){start_time=-1;}
+
+  let message = new DataViewWriter(history_request_size);
+  message.putInt16(system.parent_device_index);
+  message.putInt16(system.system_index);
+  message.putInt64(start_time);
+  message.putInt64(end_time);
+  let command = new Command(history_request_size,IO_Constants.history_request, message);
+  command.sendto(websocket);
 }
 
 function handleHistory(com)
@@ -77,8 +86,8 @@ function handleHistory(com)
   let device = IO.devices.get(device_index);
   let system = device.members[system_index];
 
-  console.log("Handling history for system:");
-  console.log(system);
+  //console.log("Handling history for system:");
+  //console.log(system);
 
   const aggregate_flag = Math.pow(2,0);
   let new_his=null;
@@ -136,7 +145,7 @@ function update_devices()
     let device = IO.devices.get(key);
 
     //Add this to the jsTree list
-    new_data = new_data.concat(device.toNode());
+    new_data = new_data.concat(device.toTreeNode());
 
     //And create the dashboards
     dashboard.appendChild(device.createDashboard());

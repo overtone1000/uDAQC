@@ -549,6 +549,20 @@ public class Database_uDAQC
 		}
 		return -1;
 	}
+	
+	public Command getRefinedHistory(IO_System system, Timestamp start, Timestamp end, int max_points)
+	{
+		for(int n=0;n<Regime.values().length-1;n++)
+		{
+			Regime r = Regime.values()[n];
+			if(count(system,r,start,end)<=max_points)
+			{
+				return getHistory(system,r,start,end);
+			}
+		}
+		return getHistory(system,Regime.values()[Regime.values().length-1],start,end); //if none is short enough, just return the smallest one
+	}
+	
 	public Command getHistory(IO_System system, Regime r, Timestamp start, Timestamp end) 
 	{
 		String full_table_name = getFullSystemTableName(system,r);
