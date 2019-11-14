@@ -607,7 +607,7 @@ class IO_Group extends IO_Node
     return retval;
   }
 
-  countNestedIOValues()
+  _countNestedIOValues()
   {
     //count total IO_Values in the system
     let retval = 0;
@@ -616,7 +616,7 @@ class IO_Group extends IO_Node
         switch(this.members[i].command_description)
         {
           case IO_Constants.group_description:
-            retval+=this.members[i].countNestedIOValues();
+            retval+=this.members[i]._countNestedIOValues();
           break;
           case IO_Constants.emptynode_description:
           break;
@@ -629,7 +629,7 @@ class IO_Group extends IO_Node
     return retval;
   }
 
-  getNestedIOValues()
+  _getNestedIOValues()
   {
     let retval = [];
     for(let i=0;i<this.member_count;i++)
@@ -637,7 +637,7 @@ class IO_Group extends IO_Node
         switch(this.members[i].command_description)
         {
           case IO_Constants.group_description:
-            retval=retval.concat(this.members[i].getNestedIOValues());
+            retval=retval.concat(this.members[i]._getNestedIOValues());
           break;
           case IO_Constants.emptynode_description:
           break;
@@ -657,12 +657,10 @@ class IO_System extends IO_Group
     super(bytebuffer, indices);
     this.system_index = index;
     //this.ioValueCount = this.countNestedIOValues()-1; //subtract one for the Timestamp
-    this.ioValueCount = this.countNestedIOValues(); //timestamp is still coming across as a float32. This should be fixed.
-    this.nestedIOValues = this.getNestedIOValues();
+    this.ioValueCount = this._countNestedIOValues(); //timestamp is still coming across as a float32. This should be fixed.
+    this.nestedIOValues = this._getNestedIOValues();
     console.log("System has " + this.ioValueCount + " values.");
-
-    this.epochs = new Map();
-
+    this.history = new History(this); //set to a dummy to start with, will be replaced
     this.chart_stream = true;
   }
 
@@ -686,26 +684,26 @@ class IO_System extends IO_Group
     return retval;
   }
 
-  getEpochs()
+  setHistory(history)
   {
-    return this.epochs;
+    this.history=history;
+    this.setChart();
   }
 
   updateChartXAxis(min_frac,max_frac)
   {
-    let values = this.getNestedIOValues();
-
+    
     if(max_frac<1)
     {
       this.chart_stream=false;
     }
 
-    for(let i=0;i<values.length;i++)
+    for(let i=1;i<this.nestedIOValues.length;i++) //skip timestamp
     {
-      let min=values[i].dashstate.chart.current_min;
-      let max=values[i].dashstate.chart.current_max;
-      if(!min || isNaN(min)){min=values[i].dashstate.chart.absolute_min;}
-      if(!max || isNaN(max)){max=values[i].dashstate.chart.absolute_max;}
+      let min=this.nestedIOValues[i].dashstate.chart.current_min;
+      let max=this.nestedIOValues[i].dashstate.chart.current_max;
+      if(!min || isNaN(min)){min=this.nestedIOValues[i].dashstate.chart.absolute_min;}
+      if(!max || isNaN(max)){max=this.nestedIOValues[i].dashstate.chart.absolute_max;}
       let interval=max-min;
 
       console.log("min = " + min);
@@ -714,95 +712,78 @@ class IO_System extends IO_Group
       let new_min=min_frac*interval+min;
       let new_max=max-(1.0-max_frac)*interval;
 
-      values[i].chart.options.scales.xAxes[0].time.min = moment(new_min);
+      this.nestedIOValues[i].chart.options.scales.xAxes[0].time.min = moment(new_min);
 
       if(!this.chart_stream)
       {
-        values[i].chart.options.scales.xAxes[0].time.max = moment(new_max);
+        this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max = moment(new_max);
       }
 
-      values[i].chart.update();
+      this.nestedIOValues[i].chart.update();
     }
   }
 
   trimChartXAxis()
   {
-    let values = this.getNestedIOValues();
-
-    for(let i=0;i<values.length;i++)
+    
+    for(let i=1;i<this.nestedIOValues.length;i++) //skip timestamp
     {
-      values[i].dashstate.chart.current_min=moment(values[i].chart.options.scales.xAxes[0].time.min);
+      this.nestedIOValues[i].dashstate.chart.current_min=moment(this.nestedIOValues[i].chart.options.scales.xAxes[0].time.min);
 
       if(!this.chart_stream)
       {
-        values[i].dashstate.chart.current_max=moment(values[i].chart.options.scales.xAxes[0].time.max);
+        this.nestedIOValues[i].dashstate.chart.current_max=moment(this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max);
       }
 
-      values[i].chart.update();
+      this.nestedIOValues[i].chart.update();
     }
   }
 
   resetChartXAxis()
   {
-    let values = this.getNestedIOValues();
-
     this.chart_stream=true;
 
-    for(let i=0;i<values.length;i++)
+    for(let i=1;i<this.nestedIOValues.length;i++) //skip timestamp
     {
-      values[i].dashstate.chart.current_min=values[i].dashstate.chart.absolute_min;
-      values[i].dashstate.chart.current_max=values[i].dashstate.chart.absolute_max;
+      this.nestedIOValues[i].dashstate.chart.current_min=this.nestedIOValues[i].dashstate.chart.absolute_min;
+      this.nestedIOValues[i].dashstate.chart.current_max=this.nestedIOValues[i].dashstate.chart.absolute_max;
 
-      values[i].chart.options.scales.xAxes[0].time.min = null;
-      values[i].chart.options.scales.xAxes[0].time.max = null;
+      this.nestedIOValues[i].chart.options.scales.xAxes[0].time.min = null;
+      this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max = null;
 
-      values[i].chart.update();
+      this.nestedIOValues[i].chart.update();
     }
   }
 
   setChart()
   {
-    let values = this.getNestedIOValues();
-    let epochs = this.getEpochs();
-
     //console.debug("Epoch:");
     //console.debug(epochs);
 
     //console.debug("Values:");
-    //console.debug(values);
+    //console.debug(this.nestedIOValues);
 
-    for(let i=0;i<values.length;i++)
+    for(let i=1;i<this.nestedIOValues.length;i++) //skip timestamp
     {
       //console.debug("Modifying chart " + i);
-      values[i].chart.data.labels = epochs.times;
+      this.nestedIOValues[i].chart.data.labels = this.history.times;
 
-      values[i].dashstate.chart.absolute_min=epochs.earliestTime();
-      values[i].dashstate.chart.absolute_max=epochs.latestTime();
+      //console.debug(this.history);
+      this.nestedIOValues[i].dashstate.chart.absolute_min=this.history.earliestTime();
+      this.nestedIOValues[i].dashstate.chart.absolute_max=this.history.latestTime();
 
-      //values[i].dashstate.chart.current_min=epochs.earliestTime();
-      //values[i].dashstate.chart.current_max=epochs.latestTime();
+      //this.nestedIOValues[i].dashstate.chart.current_min=this.history.earliestTime();
+      //this.nestedIOValues[i].dashstate.chart.current_max=this.history.latestTime();
 
-      //values[i].chart.options.scales.xAxes[0].time.min = values[i].dashstate.chart.absolute_min;
-      //values[i].chart.options.scales.xAxes[0].time.max = values[i].dashstate.chart.absolute_max;
+      //this.nestedIOValues[i].chart.options.scales.xAxes[0].time.min = this.nestedIOValues[i].dashstate.chart.absolute_min;
+      //this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max = this.nestedIOValues[i].dashstate.chart.absolute_max;
 
+      this.history.setChartDatasets(i);      
 
-      values[i].chart.data.datasets=
-      [
-        {
-          label: values[i].name + " (" + values[i].units + ")",
-          fill: false, //no filling under the curve
-          //backgroundColor: "rgb(0,0,0,0)", //transparent (this fills under the curve)
-          borderColor: "rgb(255, 0, 0, 255)",
-          data: epochs.values[i],
-          labels: epochs.times,
-          //pointRadius: 0 //don't render points, but if this is don't you can't hover to get value
-          //pointBackgroundColor: "rgb(0,0,0,0)",
-          pointBorderColor: "rgb(0,0,0,0)", //transparent
-          spanGaps: false
-        }
-      ];
+      console.debug("Datasets...");
+      console.debug(this.nestedIOValues[i].chart.data.datasets);
 
-      values[i].chart.update(); //need to force update regardless of whether its enabled;
+      this.nestedIOValues[i].chart.update(); //need to force update regardless of whether its enabled;
     }
   }
 }
@@ -952,6 +933,7 @@ class History
     this.system=system;
     this.current_epoch_index = 0;
     this.times = [];
+    this.values = new Array(system.ioValueCount-1);
   }
 
 
@@ -985,22 +967,38 @@ class History
     }
     return retval;
   }
+
+  setChartDatasets(i)
+  {
+    Console.err("Dataset function not overloaded.");
+  }
 }
 
 //This class contains  aggregate historical data after a history command from the connected Center
 //Epoch separation is performed based on time between data
 const aggregates_per_value = 3;
+const aggregate_labels =
+[
+  "Mean",
+  "Max",
+  "Min"
+]
+const aggregate_colors = 
+[
+  "rgb(255, 0, 0, 255)",
+  "rgb(0, 255, 0, 255)",
+  "rgb(0, 0, 255, 255)"
+]
 class AggregateHistory extends History
 {
   constructor(system)
   {
     super(system);
-    this.values = new Array(system.ioValueCount-1);
     for(let n = 0; n<this.values.length;n++) //skip timestamp IO_Value
-    {
+    { 
       this.values[n]=[];
       for(let m=0;m<aggregates_per_value;m++)
-      {
+      {    
         this.values[n][m]=[];
       }
     }
@@ -1015,7 +1013,7 @@ class AggregateHistory extends History
       this.current_epoch_index = this.times.length;
       this.times.push(this.times[this.times.length-1]);
       for(let n = 0; n<this.values.length;n++) //skip timestamp IO_Value
-      {
+      {  
         for(let m=0;m<aggregates_per_value;m++)
         {
           this.values[n][m].push(null);
@@ -1027,14 +1025,14 @@ class AggregateHistory extends History
   processEntries(message)
   {
     const new_epoch_flag = Math.pow(2,0);
-    let iovs = this.system.getNestedIOValues();
+    let iovs = this.system.nestedIOValues;
 
     while(message.remaining()>0)
     {
 
     let timestamp = History.getTime(message.getInt64());
     this.times.push(timestamp);
-      console.log("Remaining = " + message.remaining());
+      //console.log("Remaining = " + message.remaining());
       for(let n=0;n<this.values.length;n++) //skip timestamp IO_Value
       {
         let value = null;
@@ -1058,12 +1056,34 @@ class AggregateHistory extends History
           break;
         case DataTypes.undefined:
         default:
-          DefaultInterpret(data);
+          //DefaultInterpret(data);
         }
       }
     }
-    console.debug(this.times);
-    console.debug(this.values);
+    //console.debug(this.times);
+    //console.debug(this.values);
+  }
+
+  setChartDatasets(i)
+  {
+    this.system.nestedIOValues[i].chart.data.datasets=new Array(aggregates_per_value);
+    for(let m=0;m<aggregates_per_value;m++)
+    {
+      let dataset = 
+      {
+        label: this.system.nestedIOValues[i].name + " " + aggregate_labels[m] + " (" + this.system.nestedIOValues[i].units + ")",
+        fill: false, //no filling under the curve
+        //backgroundColor: "rgb(0,0,0,0)", //transparent (this fills under the curve)
+        borderColor: aggregate_colors[m],
+        data: this.values[i-1][m], //history doesn't contain the timestamp field
+        labels: this.times,
+        //pointRadius: 0 //don't render points, but if this is don't you can't hover to get value
+        //pointBackgroundColor: "rgb(0,0,0,0)",
+        pointBorderColor: "rgb(0,0,0,0)", //transparent
+        spanGaps: false
+      }
+      this.system.nestedIOValues[i].chart.data.datasets[m]=dataset;
+    }
   }
 }
 
@@ -1074,7 +1094,6 @@ class RawHistory extends History
   constructor(system)
   {
     super(system);
-    this.values = new Array(system.ioValueCount-1);
     for(let n = 0; n<this.values.length;n++)
     {
       this.values[n]=[];
@@ -1099,7 +1118,7 @@ class RawHistory extends History
   processEntries(message)
   {
     const new_epoch_flag = Math.pow(2,0);
-    let iovs = this.system.getNestedIOValues();
+    let iovs = this.system.nestedIOValues;
     
     while(message.remaining()>0)
     {
@@ -1109,7 +1128,7 @@ class RawHistory extends History
 
       let timestamp = History.getTime(message.getInt64());
       this.times.push(timestamp);
-      console.log("Remaining = " + message.remaining());
+      //console.log("Remaining = " + message.remaining());
       for(let n=0;n<this.values.length;n++) //skip timestamp IO_Value
       {
         //let val = message.getFloat32(); This won't work anymore...
@@ -1125,7 +1144,25 @@ class RawHistory extends History
         this.startNewEpoch();
       }
     }
-    console.debug(this.times);
-    console.debug(this.values);
+    //console.debug(this.times);
+    //console.debug(this.values);
+  }
+
+  setChartDatasets(i)
+  {
+    let dataset = 
+    {
+      label: this.system.nestedIOValues[i].name + " (" + this.system.nestedIOValues[i].units + ")",
+      fill: false, //no filling under the curve
+      //backgroundColor: "rgb(0,0,0,0)", //transparent (this fills under the curve)
+      borderColor: "rgb(255, 0, 0, 255)",
+      data: this.values[i-1], //history doesn't contain the timestamp field
+      labels: this.times,
+      //pointRadius: 0 //don't render points, but if this is don't you can't hover to get value
+      //pointBackgroundColor: "rgb(0,0,0,0)",
+      pointBorderColor: "rgb(0,0,0,0)", //transparent
+      spanGaps: false
+    }
+    this.system.nestedIOValues[i].chart.data.datasets=[dataset];
   }
 }

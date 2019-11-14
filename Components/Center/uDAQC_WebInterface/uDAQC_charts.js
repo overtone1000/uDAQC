@@ -51,30 +51,6 @@ function createChart(canvas)
   });
 }
 
-function changeRegime(regime)
-{
-  console.log("Changing regime to " + regime);
-  Globals.current_regime=regime;
-  console.log(IO.devices);
-  for(let n=0;n<IO.devices.length;n++)
-  {
-    let device = IO.devices[n];
-    for(let sys of device.members)
-    {
-      sys.setChartRegime(regime);
-    }
-  }
-
-  for(let key of IO.devices.keys())
-  {
-    let device = IO.devices.get(key);
-    for(let sys of device.members)
-    {
-      sys.setChartRegime(regime);
-    }
-  }
-}
-
 let x_adjust;
 let adjustX = function()
 {

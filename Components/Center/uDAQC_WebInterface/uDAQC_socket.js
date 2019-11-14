@@ -91,6 +91,8 @@ function handleHistory(com)
     new_his=new RawHistory(system);
   }
   new_his.processEntries(com.message);
+
+  system.setHistory(new_his);
 }
 
 function onMessage(evt)
