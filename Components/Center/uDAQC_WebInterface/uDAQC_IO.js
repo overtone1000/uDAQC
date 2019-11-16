@@ -120,7 +120,7 @@ class DataViewWriter{
 
     if(Math.abs(value)>Number.MAX_SAFE_INTEGER)
     {
-        console.warn("Unsafe integer size = " + retval);
+        console.warn("Unsafe integer size = " + value);
     }
 
     let little;
@@ -513,7 +513,7 @@ class IO_Node
     return new_data;
   }
 
-  createDashboard()
+  createDashboard(parent_system)
   {
     let retval = document.createElement("div");
     retval.id = IO.getDashboardID(this.id());
@@ -594,13 +594,13 @@ class IO_Group extends IO_Node
     return new_data;
   }
 
-  createDashboard()
+  createDashboard(parent_system)
   {
-    let retval = super.createDashboard(); //get the default IO_Node Dashboard, which is just a div
+    let retval = super.createDashboard(parent_system); //get the default IO_Node Dashboard, which is just a div
 
     for(let child of this.members)
     {
-      retval.appendChild(child.createDashboard());
+      retval.appendChild(child.createDashboard(parent_system));
     }
 
     return retval;
@@ -662,6 +662,12 @@ class IO_System extends IO_Group
     //console.log("System has " + this.ioValueCount + " values.");
     this.history = new History(this); //set to a dummy to start with, will be replaced
     this.chart_stream = true;
+
+    this.chartmeta = 
+    {
+      xabsmin: null,
+      xabsmax: null
+    };
   }
 
   toTreeNode(parent)
@@ -674,9 +680,9 @@ class IO_System extends IO_Group
     return new_data;
   }
 
-  createDashboard()
+  createDashboard(parent_system)
   {
-    let retval = super.createDashboard();
+    let retval = super.createDashboard(this);
 
     //Remove timestamp
     retval.removeChild(retval.children[1]);
@@ -690,50 +696,20 @@ class IO_System extends IO_Group
     this.setChart();
   }
 
-  updateChartXAxis(min_frac,max_frac)
+  updateChartXAxis(min,max)
   {
     
-    if(max_frac<1)
+    if(max<this.chartmeta.xabsmax)
     {
       this.chart_stream=false;
     }
 
     for(let i=1;i<this.nestedIOValues.length;i++) //skip timestamp
     {
-      let min=this.nestedIOValues[i].dashstate.chart.current_min;
-      let max=this.nestedIOValues[i].dashstate.chart.current_max;
-      if(!min || isNaN(min)){min=this.nestedIOValues[i].dashstate.chart.absolute_min;}
-      if(!max || isNaN(max)){max=this.nestedIOValues[i].dashstate.chart.absolute_max;}
-      let interval=max-min;
+      this.nestedIOValues[i].chart.options.scales.xAxes[0].time.min=min;
+      this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max=max;
 
-      //console.log("min = " + min);
-      //console.log("max = " + max);
-
-      let new_min=min_frac*interval+min;
-      let new_max=max-(1.0-max_frac)*interval;
-
-      this.nestedIOValues[i].chart.options.scales.xAxes[0].time.min = moment(new_min);
-
-      if(!this.chart_stream)
-      {
-        this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max = moment(new_max);
-      }
-
-      requestHistory(this,new_min,new_max);
-    }
-  }
-
-  trimChartXAxis()
-  {
-    
-    for(let i=1;i<this.nestedIOValues.length;i++) //skip timestamp
-    {
-      this.nestedIOValues[i].dashstate.chart.current_min=moment(this.nestedIOValues[i].chart.options.scales.xAxes[0].time.min);
-
-      if(!this.chart_stream)
-      {
-        this.nestedIOValues[i].dashstate.chart.current_max=moment(this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max);
-      }
+      requestHistory(this,min,max);
     }
   }
 
@@ -743,11 +719,8 @@ class IO_System extends IO_Group
 
     for(let i=1;i<this.nestedIOValues.length;i++) //skip timestamp
     {
-      this.nestedIOValues[i].dashstate.chart.current_min=null;
-      this.nestedIOValues[i].dashstate.chart.current_max=null;
-
-      this.nestedIOValues[i].chart.options.scales.xAxes[0].time.min = null;
-      this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max = null;
+      this.nestedIOValues[i].chart.options.scales.xAxes[0].time.min = this.chartmeta.xabsmin;
+      this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max = this.chartmeta.xabsmax;
     }
 
     requestHistory(this);
@@ -761,25 +734,18 @@ class IO_System extends IO_Group
     //console.debug("Values:");
     //console.debug(this.nestedIOValues);
 
+    this.chartmeta.xabsmin=this.history.earliestTime();
+    this.chartmeta.xabsmax=this.history.latestTime();
+
     for(let i=1;i<this.nestedIOValues.length;i++) //skip timestamp
     {
       //console.debug("Modifying chart " + i);
       this.nestedIOValues[i].chart.data.labels = this.history.times;
 
-      //console.debug(this.history);
-      this.nestedIOValues[i].dashstate.chart.absolute_min=this.history.earliestTime();
-      this.nestedIOValues[i].dashstate.chart.absolute_max=this.history.latestTime();
-
-      //this.nestedIOValues[i].dashstate.chart.current_min=this.history.earliestTime();
-      //this.nestedIOValues[i].dashstate.chart.current_max=this.history.latestTime();
-
-      //this.nestedIOValues[i].chart.options.scales.xAxes[0].time.min = this.nestedIOValues[i].dashstate.chart.absolute_min;
-      //this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max = this.nestedIOValues[i].dashstate.chart.absolute_max;
+      this.nestedIOValues[i].chart.options.scales.xAxes[0].time.min = this.chartmeta.xabsmin;
+      this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max = this.chartmeta.xabsmax;
 
       this.history.setChartDatasets(i);      
-
-      //console.debug("Datasets...");
-      //console.debug(this.nestedIOValues[i].chart.data.datasets);
 
       this.nestedIOValues[i].chart.update(); //need to force update regardless of whether its enabled;
     }
@@ -852,24 +818,16 @@ class IO_Value extends IO_Node
     this.units = bytebuffer.getString(this.units_length);
     this.data_type = bytebuffer.getInt16();
     this.chart = null;
-    this.dashstate = {
-      chart : {
-        absolute_min:0,
-        absolute_max:0,
-        current_min:0,
-        current_max:0
-      }
-    };
   }
 
-  createDashboard()
+  createDashboard(parent_system)
   {
-    let retval = super.createDashboard(); //get the default IO_Node Dashboard, which is just a div
+    let retval = super.createDashboard(parent_system); //get the default IO_Node Dashboard, which is just a div
 
     let dash = document.createElement("canvas");
     dash.id = IO.getChartID(this.id());
     dash.class="row";
-    this.chart = createChart(dash);
+    this.chart = createChart(dash,parent_system);
     retval.appendChild(dash);
 
     return retval;
@@ -884,9 +842,9 @@ class IO_ModifiableValue extends IO_Value
     this.input_field = null;
     }
 
-  createDashboard()
+  createDashboard(parent_system)
   {
-    let retval = super.createDashboard(); //get the default IO_Node Dashboard, which is just a div
+    let retval = super.createDashboard(parent_system); //get the default IO_Node Dashboard, which is just a div
 
     let chart = retval.childNodes[1]; //chart will be second child
 

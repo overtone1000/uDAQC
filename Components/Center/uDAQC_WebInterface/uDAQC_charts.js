@@ -1,7 +1,9 @@
 "use strict";
-function createChart(canvas)
+
+let chartSystemMap = new Map();
+function createChart(canvas, parent)
 {
-  return new Chart(canvas.getContext("2d"),
+  let retval = new Chart(canvas.getContext("2d"),
     {
       // The type of chart we want to create
       type: "line",
@@ -102,44 +104,34 @@ function createChart(canvas)
               //speed: 0.1,
         
               // Function called while the user is zooming
-              onZoom: function({chart}) { console.log(`I'm zooming!!!`); },
+              onZoom: function({chart}) { 
+                console.log(`I'm zooming!!!`); 
+                //console.debug(chart);
+                //console.debug("min="+chart.options.scales.xAxes[0].time.min);
+                //console.debug("max="+chart.options.scales.xAxes[0].time.max);
+
+                let system=chartSystemMap.get(chart);
+                let min=chart.options.scales.xAxes[0].time.min;
+                let max=chart.options.scales.xAxes[0].time.max;
+                system.updateChartXAxis(min,max);
+              },
+
               // Function called once zooming is completed
-              onZoomComplete: function({chart}) { console.log(`I was zoomed!!!`);console.debug(chart); }
+              //onZoomComplete: function({chart}) 
+              //{ 
+              //  console.log(`I was zoomed!!!`);
+              //  console.debug(chart); 
+              //  console.debug("min="+chart.options.scales.xAxes[0].time.min);
+              //  console.debug("max="+chart.options.scales.xAxes[0].time.max);
+              //}
             }
           }
         }
       }
   });
+  chartSystemMap.set(retval, parent);
+  return retval;
 }
-
-let x_adjust;
-let adjustX = function()
-{
-  let array = x_adjust.element.dataset.value.split(",").map(Number);
-  console.debug(array);
-  for(let key of IO.devices.keys())
-  {
-    let device = IO.devices.get(key);
-    for(let sys of device.members)
-    {
-      sys.updateChartXAxis(array[0],array[1]);
-    }
-  }
-};
-
-let trimX = function(e)
-{
-  console.log("Trim x function called.");
-  for(let key of IO.devices.keys())
-  {
-    let device = IO.devices.get(key);
-    for(let sys of device.members)
-    {
-      sys.trimChartXAxis();
-    }
-  }
-  x_adjust.setValue([0,1]);
-};
 
 let resetX = function(e)
 {
@@ -152,13 +144,9 @@ let resetX = function(e)
       sys.resetChartXAxis();
     }
   }
-  x_adjust.setValue([0,1]);
 };
 
 window.onload=function(){
   console.log("Window loaded.");
-  x_adjust = $("#x_adjust_rangeselector").slider().on("slideStop", adjustX).data("slider");
-
-  $("#x_trim_button").on("click",trimX);
   $("#x_reset_button").on("click",resetX);
 };
