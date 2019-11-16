@@ -15,6 +15,7 @@
 
 ## Web Interface
 * Need to be able to download all data to a file.
+* Need to implement data streaming and history updates.
 
 ## Documentation
 * Improve README.md.
