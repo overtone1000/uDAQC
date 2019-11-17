@@ -354,6 +354,7 @@ public class HTTPS_Server
 			session_mutex.acquire();
 			sessions.remove(closed_session);
 			session_mutex.release();
+			System.err.println("Need to unsubscribe from streaming if subscribed.");
 		} catch (InterruptedException e)
 		{
 			// TODO Auto-generated catch block
@@ -430,16 +431,18 @@ public class HTTPS_Server
 			  else
 			  {
 				  start_ts = Timestamp.from(Instant.ofEpochMilli(0));
-				  //start_ts = Timestamp.from(Instant.parse("2019-11-04T06:21:00.00Z"));
+				  System.out.println("Returning earliest history available.");
 			  }
 			  if(end>=0)
 			  {
-				  end_ts = Timestamp.from(Instant.ofEpochMilli(end));  
+				  end_ts = Timestamp.from(Instant.ofEpochMilli(end));
+				  System.err.println("Need to deregister for stream.");
 			  }
 			  else
 			  {
 				  end_ts = Timestamp.from(Instant.parse("9999-12-30T23:59:59.99Z")); //Long after human extinction, and also near the end of supported perior per SQL specs
-				  //end_ts = Timestamp.from(Instant.parse("2019-11-05T06:22:00.00Z"));
+				  System.out.println("Returning latest history available.");
+				  System.err.println("Need to subscribe for stream.");
 			  }
 			  
 			  IO_System system = IO_Device_Connected.getDirectDevice(dev_index).GetSystem(sys_index);

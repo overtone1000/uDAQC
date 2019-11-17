@@ -703,6 +703,17 @@ class IO_System extends IO_Group
     {
       this.chart_stream=false;
     }
+    
+    //Just set to null so that full history is requested if either boundary is equal to the current extreme
+    //In practice, the zoom tool never accomplishes this.
+    //if(min==this.chartmeta.xabsmin)
+    //{
+    //  min=null;
+    //}
+    //if(max==this.chartmeta.xabsmax)
+    //{
+    //  max=null;
+    //}
 
     for(let i=1;i<this.nestedIOValues.length;i++) //skip timestamp
     {

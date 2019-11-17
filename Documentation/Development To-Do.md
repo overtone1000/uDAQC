@@ -14,8 +14,10 @@
 * Should drop tables of systems that lose all their data to expiration.
 
 ## Web Interface
-* Need to be able to download all data to a file.
+* Need to be able to export all data or a subset of data to a CSV file.
 * Need to implement data streaming and history updates.
+* Need to keep WebSocket connection alive.
+* Can now collapse tree, but transition causes lag due to rendering of chart. Disable rendering before collapse and re-enable after.
 
 ## Documentation
 * Improve README.md.
