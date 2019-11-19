@@ -32,6 +32,9 @@ function createChart(canvas, parent)
       // Configuration options go here
       options:
       {
+        onResize: function(){console.log("Chart resized.");},
+        responsive: false,
+        maintainAspectRatio: false,
         legend:
         {
           display: true,
@@ -149,47 +152,27 @@ let resetX = function(e)
 let toggleTree = function(e)
 {
   console.log("Clicked toggle.")
+  disable_chart_rendering(null);
   $(".collapse").collapse("toggle");
+  //enable_chart_rendering(null);
 };
 
 let disable_chart_rendering = function(e)
 {
-  console.log("Disabling chart rendering. Doesn't work.");
-  for(let key of IO.devices.keys())
-  {
-    let device = IO.devices.get(key);
-    for(let sys of device.members)
-    {
-      for(let val of sys.nestedIOValues)
-      {
-        val.chart.options.responsive=false;
-      }
-    }
-  }
+  
 }
 
 let enable_chart_rendering = function(e)
 {
-  console.log("Enabling chart rendering. Doesn't work.");
-  for(let key of IO.devices.keys())
-  {
-    let device = IO.devices.get(key);
-    for(let sys of device.members)
-    {
-      for(let val of sys.nestedIOValues)
-      {
-        val.chart.options.responsive=true;
-      }
-    }
-  }
+  
 }
 
 window.onload=function(){
   console.log("Window loaded.");
   $("#x_reset_button").on("click",resetX);
   $("#TreeToggle").on("click",toggleTree);
-  $(".collapse").on('show.bs.collapse', disable_chart_rendering);
+  //$(".collapse").on('show.bs.collapse', disable_chart_rendering);
   $(".collapse").on('shown.bs.collapse', enable_chart_rendering);
-  $(".collapse").on('hide.bs.collapse', disable_chart_rendering);
+  //$(".collapse").on('hide.bs.collapse', disable_chart_rendering);
   $(".collapse").on('hidden.bs.collapse', enable_chart_rendering);
 };

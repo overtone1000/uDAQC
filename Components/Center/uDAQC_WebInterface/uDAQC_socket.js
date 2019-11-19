@@ -132,13 +132,12 @@ function update_devices()
   let new_data = [];
   console.log("Updating devices.");
 
-  //Clear the charts
   let dashboard = document.getElementById("chart_space");
+  
   while(dashboard.firstChild)
   {
     dashboard.removeChild(dashboard.firstChild);
   }
-
   //First create jstree
   for(let key of IO.devices.keys())
   {
@@ -147,9 +146,10 @@ function update_devices()
     //Add this to the jsTree list
     new_data = new_data.concat(device.toTreeNode());
 
-    //And create the dashboards
+    //Create the dashboard
     dashboard.appendChild(device.createDashboard());
   }
+
   //console.log("Changing nodes with " + new_data.length + " members.");
   //console.log(new_data);
   changeNodes(new_data);

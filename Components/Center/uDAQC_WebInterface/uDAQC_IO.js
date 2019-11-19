@@ -835,11 +835,17 @@ class IO_Value extends IO_Node
   {
     let retval = super.createDashboard(parent_system); //get the default IO_Node Dashboard, which is just a div
 
+    let canvas_container = document.createElement("div");
+    canvas_container.class="row fillremaining";
+    canvas_container.style="height:40vh";
+
     let dash = document.createElement("canvas");
     dash.id = IO.getChartID(this.id());
     dash.class="row";
     this.chart = createChart(dash,parent_system);
-    retval.appendChild(dash);
+
+    canvas_container.appendChild(dash);
+    retval.appendChild(canvas_container);
 
     return retval;
   }
