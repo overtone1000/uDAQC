@@ -1,5 +1,29 @@
 "use strict";
 
+let udaqc_chartjs_plugin = {
+  rendering_enabled: true,
+  beforeUpdate: function(){
+    //console.log("beforeUpdate hook");
+    return this.rendering_enabled;
+  },
+  afterUpdate: function(){
+    //console.log("afterUpdate hook");
+  },
+  beforeLayout: function(){
+    //console.log("beforeUpdate hook");
+    return this.rendering_enabled;
+  },
+  afterLayout: function(){
+    //console.log("afterLayout hook");
+  },
+  resize: function(){
+    console.log("Chart resized.");
+    console.log(document.getElementById("chart_space").style);
+  }  
+};
+
+Chart.pluginService.register(udaqc_chartjs_plugin);
+
 let chartSystemMap = new Map();
 function createChart(canvas, parent)
 {
@@ -32,8 +56,7 @@ function createChart(canvas, parent)
       // Configuration options go here
       options:
       {
-        onResize: function(){console.log("Chart resized.");},
-        responsive: false,
+        responsive: true,
         maintainAspectRatio: false,
         legend:
         {
@@ -132,6 +155,7 @@ function createChart(canvas, parent)
         }
       }
   });
+  console.log(retval);
   chartSystemMap.set(retval, parent);
   return retval;
 }
@@ -152,27 +176,27 @@ let resetX = function(e)
 let toggleTree = function(e)
 {
   console.log("Clicked toggle.")
-  disable_chart_rendering(null);
+  //disable_chart_rendering(null);
   $(".collapse").collapse("toggle");
   //enable_chart_rendering(null);
 };
 
-let disable_chart_rendering = function(e)
+let collapse_change_started = function(e)
 {
-  
+  console.log("Chart disabled.");
 }
 
-let enable_chart_rendering = function(e)
+let collapse_change_ended = function(e)
 {
-  
+  console.log("Chart enabled.");
 }
 
 window.onload=function(){
   console.log("Window loaded.");
   $("#x_reset_button").on("click",resetX);
   $("#TreeToggle").on("click",toggleTree);
-  //$(".collapse").on('show.bs.collapse', disable_chart_rendering);
-  $(".collapse").on('shown.bs.collapse', enable_chart_rendering);
-  //$(".collapse").on('hide.bs.collapse', disable_chart_rendering);
-  $(".collapse").on('hidden.bs.collapse', enable_chart_rendering);
+  $(".collapse").on('show.bs.collapse', collapse_change_started);
+  $(".collapse").on('shown.bs.collapse', collapse_change_ended);
+  $(".collapse").on('hide.bs.collapse', collapse_change_started);
+  $(".collapse").on('hidden.bs.collapse', collapse_change_ended);
 };
