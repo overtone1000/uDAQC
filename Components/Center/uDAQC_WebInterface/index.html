@@ -10,7 +10,7 @@
     <link rel="stylesheet" type="text/css" href="libs/bootstrap/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="libs/bootstrap-slider/css/bootstrap-slider.min.css">
     <link rel="stylesheet" type="text/css" href="libs/jstree/dist/themes/default/style.min.css">
-    <link rel="stylesheet" type="text/css" href="css/udaqc.css">
+    <link rel="stylesheet" type="text/css" href="css/udaqc.css"> <!-- This should go last to overwrite anything in the third party libs-->
 
     <!-- JS -->
     <script src=
@@ -49,7 +49,7 @@
   <body>
 
     <!-- Main Container -->
-    <div class="container-fluid fixed pl-0 pr-0">
+    <div class="container-fluid fixed pl-0 pr-0" id="body_container">
 
           <!-- Top Row -->
   				<div class="row align-items-center border-bottom border-primary ">
@@ -78,8 +78,8 @@
     			<div class="row fullheight fillremaining no-gutters">
 
             <!-- Tree -->
-            <div class="collapse in" id="jstree_collapse">
-    				<div class="col-md-4 fullheight fillremaining" id="jstree">
+            <div class="collapse in fullheight jstree_container" id="jstree_collapse">
+    				<div class="col" id="jstree">
             </div>
             </div>
 
@@ -87,7 +87,7 @@
   					<div class="border-left border-primary fullheight fillremaining">
 
               <!-- X-Trim -->
-              <div class="row mt-1 pb-1 no-gutters">
+              <div class="row mt-1 pb-1 no-gutters fillremaining">
                 <div class="col d-flex  align-items-center justify-content-end">
                   <div class="ml-md-3"></div>
                   <button id="x_reset_button" type="button" class="btn btn-primary ml-md-1">Reset X-Axis</button>

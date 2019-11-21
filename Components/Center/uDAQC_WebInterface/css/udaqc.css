@@ -23,3 +23,9 @@
 }
 
 .slider.slider-horizontal{width:100%;}
+
+.jstree_container{
+  width: 100%;
+  overflow: auto;
+  display:inline-block;
+}

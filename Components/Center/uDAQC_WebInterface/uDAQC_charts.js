@@ -16,9 +16,22 @@ let udaqc_chartjs_plugin = {
   afterLayout: function(){
     //console.log("afterLayout hook");
   },
+  beforeDraw: function(){
+    //console.log("beforeUpdate hook");
+    return this.rendering_enabled;
+  },
+  afterDraw: function(){
+    //console.log("afterLayout hook");
+  },
+  beforeRender: function(){
+    //console.log("beforeUpdate hook");
+    return this.rendering_enabled;
+  },
+  afterRender: function(){
+    //console.log("afterLayout hook");
+  },
   resize: function(){
-    console.log("Chart resized.");
-    console.log(document.getElementById("chart_space").style);
+    //console.log("Chart resized.");
   }  
 };
 
@@ -177,26 +190,43 @@ let toggleTree = function(e)
 {
   console.log("Clicked toggle.")
   //disable_chart_rendering(null);
-  $(".collapse").collapse("toggle");
+  $("#jstree_collapse").collapse("toggle");
   //enable_chart_rendering(null);
 };
 
 let collapse_change_started = function(e)
 {
-  console.log("Chart disabled.");
+  udaqc_chartjs_plugin.rendering_enabled=false;
 }
-
 let collapse_change_ended = function(e)
 {
-  console.log("Chart enabled.");
+  udaqc_chartjs_plugin.rendering_enabled=true;
+}
+
+let set_chart_widths=function(new_width)
+{
+  let chart_space = document.getElementById("chart_space");
+  //console.log(chart_space);
+  for(let key of IO.devices.keys())
+  {
+    let device = IO.devices.get(key);
+    for(let sys of device.members)
+    {
+      for(let val of sys.nestedIOValues)
+      {
+        val.chart.canvas.parentNode.style.width=new_width;
+        console.log(val.chart.canvas.parentNode);
+      }
+    }
+  }
 }
 
 window.onload=function(){
   console.log("Window loaded.");
   $("#x_reset_button").on("click",resetX);
   $("#TreeToggle").on("click",toggleTree);
-  $(".collapse").on('show.bs.collapse', collapse_change_started);
-  $(".collapse").on('shown.bs.collapse', collapse_change_ended);
-  $(".collapse").on('hide.bs.collapse', collapse_change_started);
-  $(".collapse").on('hidden.bs.collapse', collapse_change_ended);
+  $("#jstree_collapse").on('show.bs.collapse', collapse_change_started);
+  $("#jstree_collapse").on('shown.bs.collapse', collapse_change_ended);
+  $("#jstree_collapse").on('hide.bs.collapse', collapse_change_started);
+  $("#jstree_collapse").on('hidden.bs.collapse', collapse_change_ended);
 };
