@@ -4,27 +4,40 @@ let udaqc_chartjs_plugin = {
   rendering_enabled: true,
   beforeUpdate: function(){
     //console.log("beforeUpdate hook");
+    if(!this.rendering_enabled)
+    {
+      console.log("Cancelling update." + this.rendering_enabled);
+    }
     return this.rendering_enabled;
   },
   afterUpdate: function(){
     //console.log("afterUpdate hook");
   },
   beforeLayout: function(){
-    //console.log("beforeUpdate hook");
+    if(!this.rendering_enabled)
+    {
+      console.log("Cancelling layout.");
+    }
     return this.rendering_enabled;
   },
   afterLayout: function(){
     //console.log("afterLayout hook");
   },
   beforeDraw: function(){
-    //console.log("beforeUpdate hook");
+    if(!this.rendering_enabled)
+    {
+      console.log("Cancelling draw.");
+    }
     return this.rendering_enabled;
   },
   afterDraw: function(){
     //console.log("afterLayout hook");
   },
   beforeRender: function(){
-    //console.log("beforeUpdate hook");
+    if(!this.rendering_enabled)
+    {
+      console.log("Cancelling render.");
+    }
     return this.rendering_enabled;
   },
   afterRender: function(){
@@ -186,19 +199,50 @@ let resetX = function(e)
   }
 };
 
+let jstree_shown=true;
 let toggleTree = function(e)
 {
   console.log("Clicked toggle.")
-  //disable_chart_rendering(null);
-  $("#jstree_collapse").collapse("toggle");
-  //enable_chart_rendering(null);
+  jstree_shown=!jstree_shown;
+  disable_chart_rendering();
+  set_chart_widths("0px");
+  let body_space = document.getElementById("body_container");
+  let dash_space = document.getElementById("dash_container");
+  let chart_space = document.getElementById("chart_space_container");
+  let js_tree_container = document.getElementById("jstree_container");
+  let js_tree = document.getElementById("jstree");
+  
+  if(jstree_shown)
+  {
+    console.log("Showing tree.");
+    js_tree_container.style.display="block";
+    //dash_space.style.width="50%";
+    dash_space.style.width=body_space.clientWidth-js_tree_container.clientWidth + "px";
+    
+    console.log("Body space width is now " + body_space.clientWidth);
+    console.log("JSTreeContainer width is now " + js_tree_container.clientWidth);
+    console.log("Dash space width is now " + dash_space.style.width);
+    
+    //js_tree_container.style.width="50%";
+    //js_tree_container.style.width=js_tree.clientWidth;
+  }
+  else
+  {
+    console.log("Hiding tree.");
+    dash_space.style.width="100%";
+    js_tree_container.style.display="none";
+  }
+  enable_chart_rendering();
+  set_chart_widths(dash_space.clientWidth - 20 + "px");
+  console.log("Dash space:");
+  console.log(dash_space);
 };
 
-let collapse_change_started = function(e)
+let disable_chart_rendering = function(e)
 {
   udaqc_chartjs_plugin.rendering_enabled=false;
 }
-let collapse_change_ended = function(e)
+let enable_chart_rendering = function(e)
 {
   udaqc_chartjs_plugin.rendering_enabled=true;
 }
@@ -215,7 +259,7 @@ let set_chart_widths=function(new_width)
       for(let val of sys.nestedIOValues)
       {
         val.chart.canvas.parentNode.style.width=new_width;
-        console.log(val.chart.canvas.parentNode);
+        //console.log(val.chart.canvas.parentNode);
       }
     }
   }
@@ -225,8 +269,8 @@ window.onload=function(){
   console.log("Window loaded.");
   $("#x_reset_button").on("click",resetX);
   $("#TreeToggle").on("click",toggleTree);
-  $("#jstree_collapse").on('show.bs.collapse', collapse_change_started);
-  $("#jstree_collapse").on('shown.bs.collapse', collapse_change_ended);
-  $("#jstree_collapse").on('hide.bs.collapse', collapse_change_started);
-  $("#jstree_collapse").on('hidden.bs.collapse', collapse_change_ended);
+  //$("#jstree_collapse").on('show.bs.collapse', collapse_change_started);
+  //$("#jstree_collapse").on('shown.bs.collapse', collapse_change_ended);
+  //$("#jstree_collapse").on('hide.bs.collapse', collapse_change_started);
+  //$("#jstree_collapse").on('hidden.bs.collapse', collapse_change_ended);
 };
