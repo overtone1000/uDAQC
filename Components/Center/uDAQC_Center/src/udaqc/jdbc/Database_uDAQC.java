@@ -550,17 +550,28 @@ public class Database_uDAQC
 		return -1;
 	}
 	
-	public Command getRefinedHistory(IO_System system, Timestamp start, Timestamp end, int max_points)
+	public class refinedHistory
 	{
+		public Regime reg=null;
+		public Command history=null;
+	}
+	public refinedHistory getRefinedHistory(IO_System system, Timestamp start, Timestamp end, int max_points)
+	{
+		refinedHistory retval = new refinedHistory();
 		for(int n=0;n<Regime.values().length-1;n++)
 		{
 			Regime r = Regime.values()[n];
 			if(count(system,r,start,end)<=max_points)
 			{
-				return getHistory(system,r,start,end);
+				retval.reg=r;
+				retval.history = getHistory(system,retval.reg,start,end);
+				return retval;
 			}
 		}
-		return getHistory(system,Regime.values()[Regime.values().length-1],start,end); //if none is short enough, just return the smallest one
+		//if none is short enough, just return the smallest one
+		retval.reg=Regime.values()[Regime.values().length-1];
+		retval.history = getHistory(system,retval.reg,start,end);
+		return retval;
 	}
 	
 	public Command getHistory(IO_System system, Regime r, Timestamp start, Timestamp end) 

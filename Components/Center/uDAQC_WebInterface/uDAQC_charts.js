@@ -269,6 +269,9 @@ window.onload=function(){
   console.log("Window loaded.");
   $("#x_reset_button").on("click",resetX);
   $("#TreeToggle").on("click",toggleTree);
+
+  jstree_shown=false;
+  toggleTree();
   //$("#jstree_collapse").on('show.bs.collapse', collapse_change_started);
   //$("#jstree_collapse").on('shown.bs.collapse', collapse_change_ended);
   //$("#jstree_collapse").on('hide.bs.collapse', collapse_change_started);

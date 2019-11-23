@@ -17,11 +17,9 @@
 * Need to be able to export all data or a subset of data to a CSV file.
 * Need to implement data streaming and history updates.
 * Need to keep WebSocket connection alive.
-* Can now collapse tree, but transition causes lag due to rendering of chart. Disable rendering before collapse and re-enable after.
-    * Tried removing DOM elements during transition. Doesn't work.
-    * Tried changing CSS transition. No effect
-    * This seems to be related to the Chart.js "Responsive" feature. When responsive is set to false, the chart doesn't redraw and the lag goes away. Maybe this can be disabled during the transition?
-* Would be nice to be able to change chart height. Right now it's fixed in the `IO_Value.createDashboard()` function.
+* Mutable chart height. Right now it's set statically in the `IO_Value.createDashboard()` function.
+* Chart grouping
+* Handle epochs
 
 ## Documentation
 * Improve README.md.

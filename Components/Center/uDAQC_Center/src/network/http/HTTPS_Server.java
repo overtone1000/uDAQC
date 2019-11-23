@@ -10,8 +10,10 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Vector;
 import java.util.concurrent.Semaphore;
 
 import network.http.websocket.Servlet_uD;
@@ -20,6 +22,7 @@ import udaqc.io.IO_Constants;
 import udaqc.io.IO_System;
 import udaqc.io.IO_Constants.Command_IDs;
 import udaqc.jdbc.Database_uDAQC.Regime;
+import udaqc.jdbc.Database_uDAQC.refinedHistory;
 import udaqc.network.center.Center;
 import udaqc.network.center.IO_Device_Connected;
 import udaqc.network.center.command.Command;
@@ -56,8 +59,6 @@ import org.eclipse.jetty.util.security.Credential;
 
 public class HTTPS_Server
 {
-	private ArrayList<Session> sessions = new ArrayList<Session>();
-	
 	public String home_dir;
 	public String HomeDirectory()
 	{
@@ -69,8 +70,13 @@ public class HTTPS_Server
 	private static final String home_page = "index.html";
 	public static final String credential_context = "/credentials";
 		
+	private HashSet<Session> sessions = new HashSet<Session>();
 	private Semaphore session_mutex=new Semaphore(1);
 
+	protected HashSet<Session> subscribers=new HashSet<Session>();
+    protected Semaphore subscription_mutex = new Semaphore(1);
+    
+	
 	private Center parent;
 	private Server server;
 	private Servlet_uD ws_servlet;
@@ -354,7 +360,11 @@ public class HTTPS_Server
 			session_mutex.acquire();
 			sessions.remove(closed_session);
 			session_mutex.release();
-			System.err.println("Need to unsubscribe from streaming if subscribed.");
+			
+			subscription_mutex.acquire();
+			subscribers.remove(closed_session);
+			subscription_mutex.release();
+			
 		} catch (InterruptedException e)
 		{
 			// TODO Auto-generated catch block
@@ -407,6 +417,7 @@ public class HTTPS_Server
 		}
     }
     
+    
     public void HandleCommand(Command command, Session session)
     {
     	switch(command.Header().command_id)
@@ -424,30 +435,43 @@ public class HTTPS_Server
 			  long end = data.getLong();
 			  Timestamp start_ts=null;
 			  Timestamp end_ts=null;
-			  if(start>=0)
-			  {
-				  start_ts = Timestamp.from(Instant.ofEpochMilli(start));
-			  }
-			  else
-			  {
-				  start_ts = Timestamp.from(Instant.ofEpochMilli(0));
-				  System.out.println("Returning earliest history available.");
-			  }
-			  if(end>=0)
-			  {
-				  end_ts = Timestamp.from(Instant.ofEpochMilli(end));
-				  System.err.println("Need to deregister for stream.");
-			  }
-			  else
-			  {
-				  end_ts = Timestamp.from(Instant.parse("9999-12-30T23:59:59.99Z")); //Long after human extinction, and also near the end of supported perior per SQL specs
-				  System.out.println("Returning latest history available.");
-				  System.err.println("Need to subscribe for stream.");
-			  }
 			  
-			  IO_System system = IO_Device_Connected.getDirectDevice(dev_index).GetSystem(sys_index);
-			  Command his = Center.database.getRefinedHistory(system, start_ts, end_ts, 1024);
-			  SendCommand(session,his);
+			  try 
+			  {
+				  subscription_mutex.acquire();
+			
+			  
+				  if(start>=0)
+				  {
+					  start_ts = Timestamp.from(Instant.ofEpochMilli(start));
+				  }
+				  else
+				  {
+					  start_ts = Timestamp.from(Instant.ofEpochMilli(0));
+					  System.out.println("Returning earliest history available.");
+				  }
+				  if(end>=0)
+				  {
+					  end_ts = Timestamp.from(Instant.ofEpochMilli(end));
+					  subscribers.remove(session);
+				  }
+				  else
+				  {
+					  end_ts = Timestamp.from(Instant.parse("9999-12-30T23:59:59.99Z")); //Long after human extinction, and also near the end of supported perior per SQL specs
+					  System.out.println("Returning latest history available.");
+					  subscribers.add(session);
+				  }
+				  
+				  IO_System system = IO_Device_Connected.getDirectDevice(dev_index).GetSystem(sys_index);
+				  refinedHistory his = Center.database.getRefinedHistory(system, start_ts, end_ts, 1024);
+				  System.err.println("Subscription work isn't finished.");
+				  SendCommand(session,his.history);
+				  
+				  subscription_mutex.release();
+			  } 
+			  catch (InterruptedException e) {
+					e.printStackTrace();
+			  }
 		  }
 		  break;
     	default:
