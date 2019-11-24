@@ -43,65 +43,53 @@ public class HTTP_PostHandler implements Handler
 
 	@Override
 	public void stop() throws Exception
-	{
-		// TODO Auto-generated method stub
-		
+	{		
 	}
 
 	@Override
 	public boolean isRunning()
 	{
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public boolean isStarted()
 	{
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public boolean isStarting()
 	{
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public boolean isStopping()
 	{
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public boolean isStopped()
 	{
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public boolean isFailed()
 	{
-		// TODO Auto-generated method stub
 		return false;
 	}
 
 	@Override
 	public void addLifeCycleListener(Listener listener)
-	{
-		// TODO Auto-generated method stub
-		
+	{	
 	}
 
 	@Override
 	public void removeLifeCycleListener(Listener listener)
-	{
-		// TODO Auto-generated method stub
-		
+	{		
 	}
 	
 	

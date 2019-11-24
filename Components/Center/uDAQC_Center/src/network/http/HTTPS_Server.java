@@ -7,9 +7,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -21,8 +24,8 @@ import network.SecurityBundle;
 import udaqc.io.IO_Constants;
 import udaqc.io.IO_System;
 import udaqc.io.IO_Constants.Command_IDs;
+import udaqc.jdbc.Database_uDAQC.History;
 import udaqc.jdbc.Database_uDAQC.Regime;
-import udaqc.jdbc.Database_uDAQC.refinedHistory;
 import udaqc.network.center.Center;
 import udaqc.network.center.IO_Device_Connected;
 import udaqc.network.center.command.Command;
@@ -59,6 +62,31 @@ import org.eclipse.jetty.util.security.Credential;
 
 public class HTTPS_Server
 {
+	private class SubscriberMeta
+    {
+		public SubscriberMeta(Regime r, Instant d)
+		{
+			this.regime=r;
+			this.setLast(d);
+		}
+    	private Regime regime;
+    	private Instant last=null;
+    	private Instant next=null;
+    	private void updateNext()
+    	{
+    		next=last.plus(regime.getDuration()); //this will work for raw too!
+    	}
+    	public void setLast(Instant l)
+    	{
+    		this.last=l;
+    		this.updateNext();
+    	}
+    	public Instant getNext()
+    	{
+    		return this.next;
+    	}
+    }
+	
 	public String home_dir;
 	public String HomeDirectory()
 	{
@@ -73,7 +101,7 @@ public class HTTPS_Server
 	private HashSet<Session> sessions = new HashSet<Session>();
 	private Semaphore session_mutex=new Semaphore(1);
 
-	protected HashSet<Session> subscribers=new HashSet<Session>();
+	protected HashMap<Session, SubscriberMeta> subscribers=new HashMap<Session, SubscriberMeta>();
     protected Semaphore subscription_mutex = new Semaphore(1);
     
 	
@@ -394,11 +422,15 @@ public class HTTPS_Server
 			session_mutex.release();
 		} catch (InterruptedException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
     }
-    
+	
+	public void handleSystemDataUpdated(IO_System system)
+	{
+		//TODO implement this function
+	}
+	    
     public static boolean SendCommand(Session sess, Command command)
     {
     	if(!sess.isOpen())
@@ -416,7 +448,6 @@ public class HTTPS_Server
 			return false;
 		}
     }
-    
     
     public void HandleCommand(Command command, Session session)
     {
@@ -437,10 +468,9 @@ public class HTTPS_Server
 			  Timestamp end_ts=null;
 			  
 			  try 
-			  {
-				  subscription_mutex.acquire();
-			
-			  
+			  {			
+				  boolean live_subscription_requested=false;
+				  
 				  if(start>=0)
 				  {
 					  start_ts = Timestamp.from(Instant.ofEpochMilli(start));
@@ -453,20 +483,33 @@ public class HTTPS_Server
 				  if(end>=0)
 				  {
 					  end_ts = Timestamp.from(Instant.ofEpochMilli(end));
-					  subscribers.remove(session);
 				  }
 				  else
 				  {
 					  end_ts = Timestamp.from(Instant.parse("9999-12-30T23:59:59.99Z")); //Long after human extinction, and also near the end of supported perior per SQL specs
 					  System.out.println("Returning latest history available.");
-					  subscribers.add(session);
+					  live_subscription_requested=true;
 				  }
 				  
 				  IO_System system = IO_Device_Connected.getDirectDevice(dev_index).GetSystem(sys_index);
-				  refinedHistory his = Center.database.getRefinedHistory(system, start_ts, end_ts, 1024);
-				  System.err.println("Subscription work isn't finished.");
-				  SendCommand(session,his.history);
+				  History his = Center.database.getRefinedHistory(system, start_ts, end_ts, 1024);
 				  
+				  SendCommand(session,his.command);
+				  
+				  subscription_mutex.acquire();
+				  if(live_subscription_requested)
+				  {
+					  SubscriberMeta sm = new SubscriberMeta(his.reg,his.getLast());
+					  sm.regime = his.reg;
+					  sm.last = his.getLast();
+					  subscribers.put(session,sm);
+					  
+					  System.err.println("Subscription work isn't finished. They should be populated but now need a thread to maintain subscriptions.");
+				  }
+				  else
+				  {
+					  subscribers.remove(session);
+				  }
 				  subscription_mutex.release();
 			  } 
 			  catch (InterruptedException e) {

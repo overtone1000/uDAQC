@@ -173,8 +173,9 @@ public class Center extends TCP_Server
 			else
 			{
 				handler.ReceivingDataUpdate();
-				device.ReceiveData(data);
+				IO_System updated_system = device.ReceiveData(data);
 				handler.ReceivedDataUpdate();
+				webserver.handleSystemDataUpdated(updated_system);
 			}
 		  }
 		  break;
@@ -233,7 +234,6 @@ public class Center extends TCP_Server
 			super.exceptionCaught(session, cause);
 		} catch (Exception e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 		log.severe(ExceptionUtils.getStackTrace(cause));

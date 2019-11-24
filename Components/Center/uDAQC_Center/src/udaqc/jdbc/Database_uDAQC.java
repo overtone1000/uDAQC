@@ -10,16 +10,21 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.Vector;
+
+import org.joda.time.DateTime;
 
 import threading.ThreadWorker;
 import udaqc.io.IO_Value;
 import udaqc.io.IO_System;
 import udaqc.io.IO_Constants.Command_IDs;
 import udaqc.io.IO_Constants.DataTypes;
+import udaqc.jdbc.Database_uDAQC.Regime;
 import udaqc.io.IO_Device;
 import udaqc.network.center.IO_Device_Connected;
 import udaqc.network.center.IO_Device_Synchronized;
@@ -211,6 +216,20 @@ public class Database_uDAQC
 				return "0 second";
 			}
 		}
+		public Duration getDuration()
+    	{
+    		switch(this)
+    		{
+    		case minute:
+				return Duration.ofMinutes(1);
+			case hour:
+				return Duration.ofHours(1);
+			case day:
+				return Duration.ofDays(1);
+			default:
+				return Duration.ZERO;
+    		}
+    	}
 	}
 		
 	static final String flagcolumn_name = "end_of_epoch";
@@ -340,7 +359,6 @@ public class Database_uDAQC
 			}
 		} catch (SQLException e)
 		{
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}	
 	}
@@ -550,35 +568,38 @@ public class Database_uDAQC
 		return -1;
 	}
 	
-	public class refinedHistory
+	public class History
 	{
 		public Regime reg=null;
-		public Command history=null;
+		public Command command=null;
+		private Instant last=null;
+		public Instant getLast()
+		{
+			return last;
+		}
 	}
-	public refinedHistory getRefinedHistory(IO_System system, Timestamp start, Timestamp end, int max_points)
+	public History getRefinedHistory(IO_System system, Timestamp start, Timestamp end, int max_points)
 	{
-		refinedHistory retval = new refinedHistory();
 		for(int n=0;n<Regime.values().length-1;n++)
 		{
 			Regime r = Regime.values()[n];
 			if(count(system,r,start,end)<=max_points)
 			{
-				retval.reg=r;
-				retval.history = getHistory(system,retval.reg,start,end);
-				return retval;
+				return getHistory(system,r,start,end);
 			}
 		}
 		//if none is short enough, just return the smallest one
-		retval.reg=Regime.values()[Regime.values().length-1];
-		retval.history = getHistory(system,retval.reg,start,end);
-		return retval;
+		Regime reg=Regime.values()[Regime.values().length-1];
+		return getHistory(system,reg,start,end);
 	}
 	
-	public Command getHistory(IO_System system, Regime r, Timestamp start, Timestamp end) 
+	public History getHistory(IO_System system, Regime r, Timestamp start, Timestamp end) 
 	{
 		String full_table_name = getFullSystemTableName(system,r);
 		ByteBuffer message=null;
 		PreparedStatement ps=null;
+		
+		Long timestamp=null;
 		
 		String time_column;
 		if(r==Regime.raw) {
@@ -633,7 +654,8 @@ public class Database_uDAQC
 					{
 						message.put((byte)0);
 					}
-					message.putLong(res.getTimestamp(2).getTime()); //timestamp
+					timestamp=res.getTimestamp(2).getTime();
+					message.putLong(timestamp); //timestamp
 					int index = 3;
 					i=values.iterator();
 					i.next(); //skip the timestamp
@@ -701,7 +723,8 @@ public class Database_uDAQC
 				}
 				else
 				{
-					message.putLong(res.getTimestamp(1).getTime()); //timestamp
+					timestamp=res.getTimestamp(1).getTime();
+					message.putLong(timestamp); //timestamp
 					int index=2;
 					i=values.iterator();
 					i.next(); //skip the timestamp
@@ -806,7 +829,15 @@ public class Database_uDAQC
 			e.printStackTrace();
 		}
 		
-		return new Command(Command_IDs.history,message.array());
+		History retval=new History();
+		retval.reg=r;
+		if(timestamp!=null)
+		{
+			retval.last=Instant.ofEpochMilli(timestamp); //since we iterated through the result, the last one will be the latest timestamp in the history. Will be -1 if not.
+		}
+		retval.command=new Command(Command_IDs.history,message.array());
+		
+		return retval;
 	}
 	 
 	public static void PrintHistory(IO_System system, ByteBuffer buf)

@@ -11,6 +11,7 @@ import security.PasswordManager;
 import udaqc.io.IO_Device;
 import udaqc.io.IO_System;
 import udaqc.jdbc.Database_uDAQC;
+import udaqc.jdbc.Database_uDAQC.History;
 import udaqc.jdbc.Database_uDAQC.Regime;
 import udaqc.network.Constants.Addresses;
 import udaqc.network.center.IO_Device_Connected;
@@ -37,9 +38,9 @@ public class Testing
 		Timestamp start_ts = Timestamp.from(start);
 		Timestamp end_ts = Timestamp.from(end);
 		System.out.println("Counted " + database.count(sys, Regime.hour, start_ts, end_ts));
-		Command c = database.getHistory(sys, Regime.hour, start_ts, end_ts);
+		History c = database.getHistory(sys, Regime.hour, start_ts, end_ts);
 		System.out.println("Retrieved history.");
-		Database_uDAQC.PrintHistory(sys, c.getmessage());
+		Database_uDAQC.PrintHistory(sys, c.command.getmessage());
 		System.out.println("Database testing done.");
 	}
 	public static void TLS()

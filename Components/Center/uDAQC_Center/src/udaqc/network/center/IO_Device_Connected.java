@@ -219,19 +219,15 @@ public class IO_Device_Connected extends IO_Device_Synchronized
 		return session.isConnected();
 	}
 
-	public void ReceiveData(ByteBuffer data)
+	public IO_System ReceiveData(ByteBuffer data)
 	{
 		Short system_index = data.getShort();
-		IO_System system = System(system_index);
+		IO_System system=System(system_index);
 		System.out.println("Received data for " + system.FullName());
-		if(system != null)
-		{				
-			system.ReceiveData(data);
-			Center.database.insertSystemTable(this, system_index);
-		}
-		else
-		{
-			System.out.println("System " + system_index + " on device " + Name() + " not found, discarding data.");
-		}
+					
+		system.ReceiveData(data);
+		Center.database.insertSystemTable(this, system_index);
+		
+		return system;
 	}
 }

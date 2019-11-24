@@ -48,7 +48,6 @@ public class Console_Center
 			program_root = root_path.getParent().toString(); 
 		} catch (URISyntaxException e2)
 		{
-			// TODO Auto-generated catch block
 			e2.printStackTrace();
 		}
 		
