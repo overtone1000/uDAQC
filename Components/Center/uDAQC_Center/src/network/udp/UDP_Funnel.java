@@ -67,7 +67,7 @@ public class UDP_Funnel implements Runnable
 			socket.send(packet);
 		} catch (IOException e)
 		{
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		}
                 

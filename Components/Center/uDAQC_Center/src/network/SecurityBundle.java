@@ -91,7 +91,7 @@ public class SecurityBundle
 				fos.close();
 			} catch (IOException e)
 			{
-				// TODO Auto-generated catch block
+	
 				e.printStackTrace();
 			}
 			return false;
@@ -201,7 +201,7 @@ public class SecurityBundle
 		        
 			} catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException | CertificateException | KeyStoreException e)
 			{
-				// TODO Auto-generated catch block
+	
 				e.printStackTrace();
 				return false;
 			}			 

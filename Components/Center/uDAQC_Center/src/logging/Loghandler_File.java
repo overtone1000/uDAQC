@@ -20,7 +20,7 @@ public class Loghandler_File {
 				{try {
 					Files.createDirectory(Paths.get(dir));
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
+		
 					e.printStackTrace();
 				}}
 		
@@ -36,7 +36,7 @@ public class Loghandler_File {
 		try {
 			fh = new FileHandler(logname);
 		} catch (SecurityException | IOException e1) {
-			// TODO Auto-generated catch block
+
 			e1.printStackTrace();
 		}
 		if(fh!=null){

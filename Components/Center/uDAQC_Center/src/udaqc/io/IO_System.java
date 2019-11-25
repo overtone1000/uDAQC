@@ -1,6 +1,7 @@
 package udaqc.io;
 
 import java.nio.ByteBuffer;
+import java.time.Instant;
 import java.util.Iterator;
 
 import udaqc.jdbc.Database_uDAQC.Regime;
@@ -134,4 +135,8 @@ public class IO_System extends IO_Group
 		Center.database.closeEpoch(this);
 	}
 	
+	public Instant getTimestamp()
+	{
+		return iodev.GetTimestamp(this.system_index);
+	}
 }

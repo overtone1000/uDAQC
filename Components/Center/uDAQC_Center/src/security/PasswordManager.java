@@ -47,7 +47,7 @@ public class PasswordManager
 				bbs.write(bb.array());
 			} catch (IOException e)
 			{
-				// TODO Auto-generated catch block
+	
 				e.printStackTrace();
 			}
 		}
@@ -160,7 +160,7 @@ public class PasswordManager
 			file.write(bbs.toByteArray());
 		} catch (IOException e)
 		{
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		}
 		
@@ -182,7 +182,7 @@ public class PasswordManager
 			}
 		} catch (IOException e)
 		{
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		}
 	}

@@ -180,7 +180,7 @@ public class HTTPS_Server
 				fw.close();
 			} catch (IOException e)
 			{
-				// TODO Auto-generated catch block
+	
 				e.printStackTrace();
 			}
 		}
@@ -248,7 +248,7 @@ public class HTTPS_Server
 				 */
 			} catch (IOException e)
 			{
-				// TODO Auto-generated catch block
+	
 				e.printStackTrace();
 			}
 		}
@@ -361,7 +361,7 @@ public class HTTPS_Server
 			server.join();
 		} catch (InterruptedException e)
 		{
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		}
 	}
@@ -376,7 +376,7 @@ public class HTTPS_Server
 			session_mutex.release();
 		} catch (InterruptedException e)
 		{
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		}
 	}
@@ -395,7 +395,7 @@ public class HTTPS_Server
 			
 		} catch (InterruptedException e)
 		{
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		}
 	}
@@ -428,7 +428,16 @@ public class HTTPS_Server
 	
 	public void handleSystemDataUpdated(IO_System system)
 	{
-		//TODO implement this function
+		System.out.println("System " + system.FullName() + " data updated. Forwarding to subscribers.");
+		Instant ts = system.getTimestamp();
+		for(Session session:subscribers.keySet())
+		{
+			SubscriberMeta md = subscribers.get(session);
+			if(!(md.getNext().isAfter(ts)));
+			{
+				//TODO format and send a history update
+			}
+		}
 	}
 	    
     public static boolean SendCommand(Session sess, Command command)

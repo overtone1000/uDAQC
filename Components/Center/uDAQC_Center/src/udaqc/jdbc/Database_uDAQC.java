@@ -420,7 +420,7 @@ public class Database_uDAQC
 		ps.executeBatch();
 		} catch (SQLException e)
 		{
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		}
 		System.out.println("Ending test data insertion");
@@ -916,7 +916,7 @@ public class Database_uDAQC
 		String full_table_name = getFullSystemTableName(system, Regime.raw);
 		try
 		{
-			Timestamp ts = Timestamp.from(Instant.ofEpochMilli(d.GetTimestamp(system.Index()).getMillis()));
+			Timestamp ts = Timestamp.from(d.GetTimestamp(system.Index()));
 			
 			Iterator<IO_Value> i = system.GetNestedValues().iterator();
 			i.next(); //ditch the IO_Value timestamp
@@ -970,7 +970,7 @@ public class Database_uDAQC
 			}
 		} catch (SQLException e)
 		{
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 		}
 		
@@ -1039,7 +1039,7 @@ public class Database_uDAQC
 					Thread.sleep(hour);
 				} catch (InterruptedException e)
 				{
-					// TODO Auto-generated catch block
+		
 					e.printStackTrace();
 				}
 			}

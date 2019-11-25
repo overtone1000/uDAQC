@@ -48,13 +48,13 @@ public class TCP_Commons
 				@Override
 				public void checkClientTrusted(java.security.cert.X509Certificate[] arg0, String arg1) throws CertificateException
 				{
-					// TODO Auto-generated method stub
+			
 					
 				}
 				@Override
 				public void checkServerTrusted(java.security.cert.X509Certificate[] arg0, String arg1) throws CertificateException
 				{
-					// TODO Auto-generated method stub
+			
 					
 				}
 			}
@@ -86,7 +86,7 @@ public class TCP_Commons
 			privateKeyAsymKeyParam = PrivateKeyFactory.createKey(keyPair.getPrivate().getEncoded());
 		} catch (IOException e)
 		{
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 			return null;
 		}
@@ -97,7 +97,7 @@ public class TCP_Commons
 			sigGen = new BcRSAContentSignerBuilder(sigAlgId, digAlgId).build(privateKeyAsymKeyParam);
 		} catch (OperatorCreationException e)
 		{
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 			return null;
 		}
@@ -110,7 +110,7 @@ public class TCP_Commons
 			certFactory = CertificateFactory.getInstance("X.509");
 		} catch (CertificateException e)
 		{
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 			return null;
 		}
@@ -122,12 +122,12 @@ public class TCP_Commons
 			
 		} catch (CertificateException e)
 		{
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 			return null;
 		} catch (IOException e)
 		{
-			// TODO Auto-generated catch block
+
 			e.printStackTrace();
 			return null;
 		}

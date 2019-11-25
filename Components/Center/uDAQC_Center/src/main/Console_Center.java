@@ -19,21 +19,21 @@ public class Console_Center
 		@Override
 		public void ClientListUpdate()
 		{
-			// TODO Auto-generated method stub
+
 			
 		}
 		
 		@Override
 		public void ReceivingDataUpdate()
 		{
-			// TODO Auto-generated method stub
+
 			
 		}
 
 		@Override
 		public void ReceivedDataUpdate()
 		{
-			// TODO Auto-generated method stub
+
 			
 		}
 	}

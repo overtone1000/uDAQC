@@ -1,6 +1,7 @@
 package udaqc.network.center;
 
 import java.nio.ByteBuffer;
+import java.time.Instant;
 
 import org.joda.time.DateTime;
 
@@ -24,15 +25,15 @@ public abstract class IO_Device_Synchronized extends IO_Device implements TimeSy
 	
 	//public abstract void Send_Command(Command update_command);
 	
-	public DateTime GetTimestamp(short system_index)
+	public Instant GetTimestamp(short system_index)
 	{
-		DateTime retval=null;
+		Instant retval=null;
 		if(System(system_index)!=null)
 		{
 			IO_Value time = (IO_Value)(System(system_index).GetMembers().firstElement());
 			long systemtimestamp = (long)(time.Value());
 			long us = systemtimestamp+syncer.timeZeroMicros();
-			retval = new DateTime(us/1000);
+			retval = Instant.ofEpochMilli(us/1000);
 		}
 		return retval;
 	}

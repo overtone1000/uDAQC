@@ -37,7 +37,7 @@ public class HTTP_PostHandler implements Handler
 	@Override
 	public void start() throws Exception
 	{
-		// TODO Auto-generated method stub
+
 		
 	}
 
@@ -264,21 +264,21 @@ public class HTTP_PostHandler implements Handler
 	@Override
 	public void setServer(Server server)
 	{
-		// TODO Auto-generated method stub
+
 		
 	}
 
 	@Override
 	public Server getServer()
 	{
-		// TODO Auto-generated method stub
+
 		return null;
 	}
 
 	@Override
 	public void destroy()
 	{
-		// TODO Auto-generated method stub
+
 		
 	}
 
