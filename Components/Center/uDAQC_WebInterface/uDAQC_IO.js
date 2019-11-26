@@ -690,9 +690,42 @@ class IO_System extends IO_Group
     return retval;
   }
 
-  setHistory(history)
+  setHistory(new_history)
   {
-    this.history=history;
+    this.history=new_history;
+    this.setChart();
+  }
+
+  updateHistory(new_history)
+  {
+    let update_earliest = new_history.times[0];
+
+    let insert_position;
+    for(insert_position=this.history.times.length-1;insert_position>=0;insert_position--)
+    {
+      let this_time=this.times[insert_position];
+      
+      //if this existing history timestamp is before or equal to the first in the update, the insert happens near here
+      if(this_time<=update_earliest) 
+      {
+        //if this existing history timestamp is before, it happens right after, so add one back
+        //otherwise, the insert point is already correct
+        if(this_time<update_earliest)
+        {
+          insert_position++;
+        }
+        break; //insertion is set, break and substitute
+      }
+    }
+
+    let deleteCount = (this.history.times.length-1)-insert_position;
+    
+    this.times.splice(0,deleteCount);
+
+    console.error("Update history not fully implemented.");
+    
+    console.error("Could also use splice to insert new elements but need to remove any duplicates first.");
+
     this.setChart();
   }
 

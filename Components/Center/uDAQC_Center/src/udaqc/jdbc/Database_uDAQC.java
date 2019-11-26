@@ -567,18 +567,8 @@ public class Database_uDAQC
 		}
 		return -1;
 	}
-	
-	public class History
-	{
-		public Regime reg=null;
-		public Command command=null;
-		private Instant last=null;
-		public Instant getLast()
-		{
-			return last;
-		}
-	}
-	public History getRefinedHistory(IO_System system, Timestamp start, Timestamp end, int max_points)
+			
+	public HistoryResult getConciseHistory(IO_System system, Timestamp start, Timestamp end, int max_points)
 	{
 		for(int n=0;n<Regime.values().length-1;n++)
 		{
@@ -593,10 +583,20 @@ public class Database_uDAQC
 		return getHistory(system,reg,start,end);
 	}
 	
-	public History getHistory(IO_System system, Regime r, Timestamp start, Timestamp end) 
+	public class HistoryResult
+	{
+		public ByteBuffer message=null;
+		public Instant first=null;
+		public Instant last=null;
+		public Regime reg=null;
+	}
+	
+	public HistoryResult getHistory(IO_System system, Regime r, Timestamp start, Timestamp end)
 	{
 		String full_table_name = getFullSystemTableName(system,r);
-		ByteBuffer message=null;
+		
+		HistoryResult retval=new HistoryResult();
+
 		PreparedStatement ps=null;
 		
 		Long timestamp=null;
@@ -616,17 +616,17 @@ public class Database_uDAQC
 			conn.setAutoCommit(false);
 			
 			int count = count(system,r,start,end);
-			message = ByteBuffer.allocate(count*system.HistoryEntrySize(r) + Short.BYTES*2 + Byte.BYTES);
-			message.order(ByteOrder.LITTLE_ENDIAN);
-			message.putShort(system.Device().DeviceIndex());
-			message.putShort(system.Index());
+			retval.message = ByteBuffer.allocate(count*system.HistoryEntrySize(r) + Short.BYTES*2 + Byte.BYTES);
+			retval.message.order(ByteOrder.LITTLE_ENDIAN);
+			retval.message.putShort(system.Device().DeviceIndex());
+			retval.message.putShort(system.Index());
 			if(r==Regime.raw)
 			{
-				message.put((byte)0);
+				retval.message.put((byte)0);
 			}
 			else
 			{
-				message.put((byte)1);
+				retval.message.put((byte)1);
 			}
 			
 			String command = "select * from " + full_table_name;
@@ -640,22 +640,23 @@ public class Database_uDAQC
 			ResultSet res = ps.getResultSet();
 			Vector<IO_Value> values = system.GetNestedValues();
 			Iterator<IO_Value> i;
+			
 			while(res.next())
 			{
-				//System.out.println("At position " + message.position() + " (entry size is " + system.HistoryEntrySize(r) + ", total size is " + message.capacity() + ")");
+				//System.out.println("At position " + retval.message.position() + " (entry size is " + system.HistoryEntrySize(r) + ", total size is " + retval.message.capacity() + ")");
 				if(r==Regime.raw)
 				{
 					boolean end_of_epoch = res.getBoolean(1); //end of epoch
 					if(end_of_epoch)
 					{
-						message.put((byte)1); 
+						retval.message.put((byte)1); 
 					}
 					else
 					{
-						message.put((byte)0);
+						retval.message.put((byte)0);
 					}
 					timestamp=res.getTimestamp(2).getTime();
-					message.putLong(timestamp); //timestamp
+					retval.message.putLong(timestamp); //timestamp
 					int index = 3;
 					i=values.iterator();
 					i.next(); //skip the timestamp
@@ -669,11 +670,11 @@ public class Database_uDAQC
 							boolean b = res.getBoolean(index);
 							if(b)
 							{
-								message.put((byte)1);
+								retval.message.put((byte)1);
 							}
 							else
 							{
-								message.put((byte)0);
+								retval.message.put((byte)0);
 							}
 						}
 							break;
@@ -682,12 +683,12 @@ public class Database_uDAQC
 							{
 							case 4:
 							{
-								message.putFloat(res.getFloat(index));
+								retval.message.putFloat(res.getFloat(index));
 							}
 								break;
 							case 8:
 							{
-								message.putDouble(res.getDouble(index));
+								retval.message.putDouble(res.getDouble(index));
 							}
 								break;
 							default:
@@ -700,17 +701,17 @@ public class Database_uDAQC
 							{
 							case 2:
 							{
-								message.putShort(res.getShort(index));
+								retval.message.putShort(res.getShort(index));
 							}
 								break;
 							case 4:
 							{
-								message.putInt(res.getInt(index));
+								retval.message.putInt(res.getInt(index));
 							}
 								break;
 							case 8:
 							{
-								message.putLong(res.getLong(index));
+								retval.message.putLong(res.getLong(index));
 							}
 								break;
 							default:
@@ -724,7 +725,7 @@ public class Database_uDAQC
 				else
 				{
 					timestamp=res.getTimestamp(1).getTime();
-					message.putLong(timestamp); //timestamp
+					retval.message.putLong(timestamp); //timestamp
 					int index=2;
 					i=values.iterator();
 					i.next(); //skip the timestamp
@@ -738,7 +739,7 @@ public class Database_uDAQC
 							//Converted to float between 0 and 1 for aggregates....
 							for(int n=0;n<IO_System.aggregates_per_value;n++)
 							{
-								message.putFloat(res.getFloat(index));
+								retval.message.putFloat(res.getFloat(index));
 								index++;
 							}
 						}
@@ -750,7 +751,7 @@ public class Database_uDAQC
 							{
 								for(int n=0;n<IO_System.aggregates_per_value;n++)
 								{
-									message.putFloat(res.getFloat(index));
+									retval.message.putFloat(res.getFloat(index));
 									index++;
 								}
 							}
@@ -759,7 +760,7 @@ public class Database_uDAQC
 							{
 								for(int n=0;n<IO_System.aggregates_per_value;n++)
 								{
-									message.putDouble(res.getDouble(index));
+									retval.message.putDouble(res.getDouble(index));
 									index++;
 								}
 							}
@@ -776,7 +777,7 @@ public class Database_uDAQC
 							{
 								for(int n=0;n<IO_System.aggregates_per_value;n++)
 								{
-									message.putShort(res.getShort(index));
+									retval.message.putShort(res.getShort(index));
 									index++;
 								}
 							}
@@ -785,7 +786,7 @@ public class Database_uDAQC
 							{
 								for(int n=0;n<IO_System.aggregates_per_value;n++)
 								{
-									message.putInt(res.getInt(index));
+									retval.message.putInt(res.getInt(index));
 									index++;
 								}
 							}
@@ -794,7 +795,7 @@ public class Database_uDAQC
 							{
 								for(int n=0;n<IO_System.aggregates_per_value;n++)
 								{
-									message.putLong(res.getLong(index));
+									retval.message.putLong(res.getLong(index));
 									index++;
 								}
 							}
@@ -807,8 +808,18 @@ public class Database_uDAQC
 					}
 					index++;
 				}
+				
+				//Make sure first timestamp is populated
+				if(retval.first==null)
+				{
+					retval.first=Instant.ofEpochMilli(timestamp);
+				}
 			}
-			//System.out.println("At position " + message.position() + " (entry size is " + system.HistoryEntrySize(r) + ")");
+			
+			//After last one processed, populate last timestmap
+			retval.last=Instant.ofEpochMilli(timestamp);
+			
+			//System.out.println("At position " + retval.message.position() + " (entry size is " + system.HistoryEntrySize(r) + ")");
 			ps.close();
 			conn.commit();
 		} catch (SQLException e)
@@ -829,17 +840,9 @@ public class Database_uDAQC
 			e.printStackTrace();
 		}
 		
-		History retval=new History();
-		retval.reg=r;
-		if(timestamp!=null)
-		{
-			retval.last=Instant.ofEpochMilli(timestamp); //since we iterated through the result, the last one will be the latest timestamp in the history. Will be -1 if not.
-		}
-		retval.command=new Command(Command_IDs.history,message.array());
-		
 		return retval;
 	}
-	 
+		 
 	public static void PrintHistory(IO_System system, ByteBuffer buf)
 	{
 		buf.position(0);

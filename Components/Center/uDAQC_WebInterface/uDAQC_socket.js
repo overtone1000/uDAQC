@@ -77,7 +77,7 @@ function requestHistory(system, start_time=-1, end_time=-1)
   command.sendto(websocket);
 }
 
-function handleHistory(com)
+function handleHistory(com, is_update)
 {
   let device_index = com.message.getInt16();
   let system_index = com.message.getInt16();
@@ -101,7 +101,14 @@ function handleHistory(com)
   }
   new_his.processEntries(com.message);
 
-  system.setHistory(new_his);
+  if(is_update)
+  {
+    system.updateHistory(new_his);
+  }
+  else
+  {
+    system.setHistory(new_his);
+  }
 }
 
 function onMessage(evt)

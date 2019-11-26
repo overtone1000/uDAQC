@@ -121,6 +121,4 @@ Aggregated data will have a similar structure to raw data. However, instead of a
 Each of these values will have the same type and size as that of the IO_Value with the exception of the boolean type, which will be converted to a 32-bit float and have values ranging between 0.0f (false) and 1.0f (true).
 
 ## History Update Structure
-This message contains an update to the existing History possessed by the client. It can either update the last datum or provide a single new datum. Its structure is similar to a History Structure (as above) with the following changes:
-3. int_8 containing only a single flag in the second smallest bit indicating whether this is an update to the last datum or is a new datum.
-4. The array contains information for only a single timestamp.
+This message contains an update to the existing History possessed by the client. Its structure is identical to a History Structure (as above), but instead of completely replacing the existing historical data, the client performs an update. If the update contains a timestamp already possessed, the data for that timestamp is updated. If the update contains timestamp(s) not possessed by the client, oldest timestamps are discarded to keep the number of points the same.

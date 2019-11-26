@@ -25,6 +25,7 @@ import udaqc.io.IO_Constants;
 import udaqc.io.IO_System;
 import udaqc.io.IO_Constants.Command_IDs;
 import udaqc.jdbc.Database_uDAQC.History;
+import udaqc.jdbc.Database_uDAQC.HistoryResult;
 import udaqc.jdbc.Database_uDAQC.Regime;
 import udaqc.network.center.Center;
 import udaqc.network.center.IO_Device_Connected;
@@ -426,6 +427,7 @@ public class HTTPS_Server
 		}
     }
 	
+	
 	public void handleSystemDataUpdated(IO_System system)
 	{
 		System.out.println("System " + system.FullName() + " data updated. Forwarding to subscribers.");
@@ -436,6 +438,9 @@ public class HTTPS_Server
 			if(!(md.getNext().isAfter(ts)));
 			{
 				//TODO format and send a history update
+				HistoryResult his = Center.database.getHistory(system, md.regime, Timestamp.from(md.last), end_of_time);
+				Command c = new Command(IO_Constants.Command_IDs.history_update,his.message.array());
+				SendCommand(session,c);
 			}
 		}
 	}
@@ -457,6 +462,8 @@ public class HTTPS_Server
 			return false;
 		}
     }
+    
+    public static final Timestamp end_of_time = Timestamp.from(Instant.parse("9999-12-30T23:59:59.99Z")); //Long after human extinction, and also near the end of supported perior per SQL specs
     
     public void HandleCommand(Command command, Session session)
     {
@@ -495,22 +502,22 @@ public class HTTPS_Server
 				  }
 				  else
 				  {
-					  end_ts = Timestamp.from(Instant.parse("9999-12-30T23:59:59.99Z")); //Long after human extinction, and also near the end of supported perior per SQL specs
+					  end_ts = end_of_time;
 					  System.out.println("Returning latest history available.");
 					  live_subscription_requested=true;
 				  }
 				  
 				  IO_System system = IO_Device_Connected.getDirectDevice(dev_index).GetSystem(sys_index);
-				  History his = Center.database.getRefinedHistory(system, start_ts, end_ts, 1024);
-				  
-				  SendCommand(session,his.command);
+				  HistoryResult his = Center.database.getConciseHistory(system, start_ts, end_ts, 1024);
+				  Command c = new Command(IO_Constants.Command_IDs.history,his.message.array());
+				  SendCommand(session,c);
 				  
 				  subscription_mutex.acquire();
 				  if(live_subscription_requested)
 				  {
-					  SubscriberMeta sm = new SubscriberMeta(his.reg,his.getLast());
+					  SubscriberMeta sm = new SubscriberMeta(his.reg,his.last);
 					  sm.regime = his.reg;
-					  sm.last = his.getLast();
+					  sm.last = his.last;
 					  subscribers.put(session,sm);
 					  
 					  System.err.println("Subscription work isn't finished. They should be populated but now need a thread to maintain subscriptions.");

@@ -7,6 +7,8 @@
 * Fix Device web interface (broken by changes allowing multiple systems on one device, see Network.cpp:299).
 * Check PlatformIO library availability and add to installation instructions.
 * Device is running out of memory when trying to accept a second client.
+    * Switch debug to F()?
+    * Switch to char* everywhere possible (so many Arduino String objects...)
 * Might be nice to shorten file system names.
 
 ## Center
@@ -29,6 +31,13 @@
 * Move deployment directory to main repository directory (and update docs)
 * Separate Center deployment into a separate deploy subdirectory
 * Include Device library in deployment directory
+
+## Stretch and Brainstorming
+* Ability to make Dashboards? Too ambitious? Would require...
+    * Change device descriptions. First send name and unique ID. Then send the remainder of the desription, which would be identical for devices using the same configuration. A dashboard could then be available to any device with that configuration.
+    * Could even do this at a smaller scope for all IO_Groups. Then, a group (like a PID controller) could have a default, reusable dashboard.
+* Plugins to allow flows, alarms like many other dashboards?
+* Plugins to interop with other protocols like MQTT?
 
 ## Deferred
 * Can't put library on Arduino Library Manager (https://github.com/arduino/Arduino/wiki/Library-Manager-FAQ) because the whole git repository must be dedicated to that library only.
