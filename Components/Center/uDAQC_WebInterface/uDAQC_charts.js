@@ -199,53 +199,62 @@ let resetX = function(e)
   }
 };
 
-let jstree_shown=true;
-let toggleTree = function(e)
+let setTree = function(e)
 {
-  console.log("Clicked toggle.")
-  jstree_shown=!jstree_shown;
+  console.log("setTree called");
+  
   disable_chart_rendering();
   set_chart_widths("0px");
-  let body_space = document.getElementById("body_container");
+  //let body_space = document.getElementById("body_container");
   let dash_space = document.getElementById("dash_container");
-  let chart_space = document.getElementById("chart_space_container");
+  //let chart_space = document.getElementById("chart_space_container");
   let js_tree_container = document.getElementById("jstree_container");
-  let js_tree = document.getElementById("jstree");
+  //let js_tree = document.getElementById("jstree");
+
+  //let new_width = window.innerWidth;
+  let new_width = $(window).width();
   
   if(jstree_shown)
   {
-    console.log("Showing tree.");
+    //console.log("Showing tree.");
     js_tree_container.style.display="block";
     //dash_space.style.width="50%";
-    dash_space.style.width=body_space.clientWidth-js_tree_container.clientWidth + "px";
+    dash_space.style.width=new_width-js_tree_container.clientWidth + "px";
     
-    console.log("Body space width is now " + body_space.clientWidth);
-    console.log("JSTreeContainer width is now " + js_tree_container.clientWidth);
-    console.log("Dash space width is now " + dash_space.style.width);
+    //console.log("Body space width is now " + body_space.clientWidth);
+    //console.log("JSTreeContainer width is now " + js_tree_container.clientWidth);
+    //console.log("Dash space width is now " + dash_space.style.width);
     
     //js_tree_container.style.width="50%";
     //js_tree_container.style.width=js_tree.clientWidth;
   }
   else
   {
-    console.log("Hiding tree.");
+    //console.log("Hiding tree.");
     dash_space.style.width="100%";
     js_tree_container.style.display="none";
   }
   enable_chart_rendering();
   set_chart_widths(dash_space.clientWidth - 20 + "px");
-  console.log("Dash space:");
-  console.log(dash_space);
+  //console.log("Dash space:");
+  //console.log(dash_space);
+};
+
+let jstree_shown=true;
+let toggleTree = function(e)
+{
+  jstree_shown=!jstree_shown;
+  setTree(e);
 };
 
 let disable_chart_rendering = function(e)
 {
   udaqc_chartjs_plugin.rendering_enabled=false;
-}
+};
 let enable_chart_rendering = function(e)
 {
   udaqc_chartjs_plugin.rendering_enabled=true;
-}
+};
 
 let set_chart_widths=function(new_width)
 {
@@ -263,15 +272,15 @@ let set_chart_widths=function(new_width)
       }
     }
   }
-}
+};
 
 window.onload=function(){
   console.log("Window loaded.");
   $("#x_reset_button").on("click",resetX);
   $("#TreeToggle").on("click",toggleTree);
 
-  jstree_shown=false;
-  toggleTree();
+  window.addEventListener("resize",setTree);
+  setTree();
   //$("#jstree_collapse").on('show.bs.collapse', collapse_change_started);
   //$("#jstree_collapse").on('shown.bs.collapse', collapse_change_ended);
   //$("#jstree_collapse").on('hide.bs.collapse', collapse_change_started);

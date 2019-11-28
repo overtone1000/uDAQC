@@ -24,7 +24,6 @@ import network.SecurityBundle;
 import udaqc.io.IO_Constants;
 import udaqc.io.IO_System;
 import udaqc.io.IO_Constants.Command_IDs;
-import udaqc.jdbc.Database_uDAQC.History;
 import udaqc.jdbc.Database_uDAQC.HistoryResult;
 import udaqc.jdbc.Database_uDAQC.Regime;
 import udaqc.network.center.Center;

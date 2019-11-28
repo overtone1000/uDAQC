@@ -8,10 +8,11 @@ import java.time.Instant;
 
 import network.http.HTTPS_Server;
 import security.PasswordManager;
+import udaqc.io.IO_Constants;
 import udaqc.io.IO_Device;
 import udaqc.io.IO_System;
 import udaqc.jdbc.Database_uDAQC;
-import udaqc.jdbc.Database_uDAQC.History;
+import udaqc.jdbc.Database_uDAQC.HistoryResult;
 import udaqc.jdbc.Database_uDAQC.Regime;
 import udaqc.network.Constants.Addresses;
 import udaqc.network.center.IO_Device_Connected;
@@ -38,9 +39,10 @@ public class Testing
 		Timestamp start_ts = Timestamp.from(start);
 		Timestamp end_ts = Timestamp.from(end);
 		System.out.println("Counted " + database.count(sys, Regime.hour, start_ts, end_ts));
-		History c = database.getHistory(sys, Regime.hour, start_ts, end_ts);
+		HistoryResult c = database.getHistory(sys, Regime.hour, start_ts, end_ts);
 		System.out.println("Retrieved history.");
-		Database_uDAQC.PrintHistory(sys, c.command.getmessage());
+		Command command = new Command(IO_Constants.Command_IDs.history,c.message.array());
+		Database_uDAQC.PrintHistory(sys, command.getmessage());
 		System.out.println("Database testing done.");
 	}
 	public static void TLS()
