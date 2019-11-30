@@ -3,8 +3,6 @@ package udaqc.io;
 import java.nio.ByteBuffer;
 import java.util.Vector;
 
-import udaqc.network.center.Center;
-
 public abstract class IO_Device extends IO_Group
 {
 	public IO_Device(ByteBuffer data)

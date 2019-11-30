@@ -12,23 +12,17 @@ import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.Date;
 import java.util.Iterator;
 import java.util.Properties;
 import java.util.Vector;
 
-import org.joda.time.DateTime;
-
 import threading.ThreadWorker;
-import udaqc.io.IO_Value;
-import udaqc.io.IO_System;
-import udaqc.io.IO_Constants.Command_IDs;
 import udaqc.io.IO_Constants.DataTypes;
-import udaqc.jdbc.Database_uDAQC.Regime;
 import udaqc.io.IO_Device;
+import udaqc.io.IO_System;
+import udaqc.io.IO_Value;
 import udaqc.network.center.IO_Device_Connected;
 import udaqc.network.center.IO_Device_Synchronized;
-import udaqc.network.center.command.Command;
 
 public class Database_uDAQC
 {

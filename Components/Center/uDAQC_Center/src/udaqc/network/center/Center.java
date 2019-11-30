@@ -11,8 +11,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
-import java.sql.Timestamp;
-import java.time.Instant;
 import java.util.LinkedList;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -34,7 +32,6 @@ import udaqc.network.center.command.Command;
 import udaqc.network.interfaces.CenterHandler;
 import udaqc.network.passthrough.command.PT_Command;
 import udaqc.jdbc.Database_uDAQC;
-import udaqc.jdbc.Database_uDAQC.Regime;
 
 public class Center extends TCP_Server
 {

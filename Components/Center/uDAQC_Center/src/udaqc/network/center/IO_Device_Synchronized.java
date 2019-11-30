@@ -3,8 +3,6 @@ package udaqc.network.center;
 import java.nio.ByteBuffer;
 import java.time.Instant;
 
-import org.joda.time.DateTime;
-
 import network.udp.TimeSyncExternals;
 import network.udp.TimeSynchronizer;
 import udaqc.io.IO_Device;

@@ -1,7 +1,6 @@
 package main;
 
 
-import java.nio.ByteBuffer;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -9,7 +8,6 @@ import java.time.Instant;
 import network.http.HTTPS_Server;
 import security.PasswordManager;
 import udaqc.io.IO_Constants;
-import udaqc.io.IO_Device;
 import udaqc.io.IO_System;
 import udaqc.jdbc.Database_uDAQC;
 import udaqc.jdbc.Database_uDAQC.HistoryResult;
@@ -94,9 +92,5 @@ public class Testing
 		
 		System.out.println();
 		System.out.println("Finished!");
-	}
-	public static void WebServer()
-	{
-		HTTPS_Server webserver = new HTTPS_Server(null, "", Addresses.webserver_insecure_port, Addresses.webserver_secure_port);
 	}
 }

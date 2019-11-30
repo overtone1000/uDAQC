@@ -7,32 +7,14 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
-import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.Vector;
 import java.util.concurrent.Semaphore;
 
-import network.http.websocket.Servlet_uD;
-import network.SecurityBundle;
-import udaqc.io.IO_Constants;
-import udaqc.io.IO_System;
-import udaqc.io.IO_Constants.Command_IDs;
-import udaqc.jdbc.Database_uDAQC.HistoryResult;
-import udaqc.jdbc.Database_uDAQC.Regime;
-import udaqc.network.center.Center;
-import udaqc.network.center.IO_Device_Connected;
-import udaqc.network.center.command.Command;
-import udaqc.network.passthrough.command.PT_Command;
-import udaqc.network.passthrough.endpoints.WS_Endpoint;
-
-import org.apache.mina.core.session.IoSession;
 import org.eclipse.jetty.http.HttpVersion;
 import org.eclipse.jetty.security.ConstraintMapping;
 import org.eclipse.jetty.security.ConstraintSecurityHandler;
@@ -56,9 +38,22 @@ import org.eclipse.jetty.server.handler.SecuredRedirectHandler;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 import org.eclipse.jetty.util.security.Constraint;
+import org.eclipse.jetty.util.security.Credential;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.eclipse.jetty.websocket.api.Session;
-import org.eclipse.jetty.util.security.Credential;
+
+import network.SecurityBundle;
+import network.http.websocket.Servlet_uD;
+import udaqc.io.IO_Constants;
+import udaqc.io.IO_Constants.Command_IDs;
+import udaqc.io.IO_System;
+import udaqc.jdbc.Database_uDAQC.HistoryResult;
+import udaqc.jdbc.Database_uDAQC.Regime;
+import udaqc.network.center.Center;
+import udaqc.network.center.IO_Device_Connected;
+import udaqc.network.center.command.Command;
+import udaqc.network.passthrough.command.PT_Command;
+import udaqc.network.passthrough.endpoints.WS_Endpoint;
 
 public class HTTPS_Server
 {
