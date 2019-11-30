@@ -661,7 +661,6 @@ class IO_System extends IO_Group
     this.nestedIOValues = this._getNestedIOValues();
     //console.log("System has " + this.ioValueCount + " values.");
     this.history = new History(this); //set to a dummy to start with, will be replaced
-    this.chart_stream = true;
 
     this.chartmeta = 
     {
@@ -709,12 +708,7 @@ class IO_System extends IO_Group
 
   updateChartXAxis(min,max)
   {
-    
-    if(max<this.chartmeta.xabsmax)
-    {
-      this.chart_stream=false;
-    }
-    
+
     //Just set to null so that full history is requested if either boundary is equal to the current extreme
     //In practice, the zoom tool never accomplishes this.
     //if(min==this.chartmeta.xabsmin)
@@ -737,8 +731,6 @@ class IO_System extends IO_Group
 
   resetChartXAxis()
   {
-    this.chart_stream=true;
-
     for(let i=1;i<this.nestedIOValues.length;i++) //skip timestamp
     {
       this.nestedIOValues[i].chart.options.scales.xAxes[0].time.min = this.chartmeta.xabsmin;
@@ -915,14 +907,23 @@ class IO_ModifiableValue extends IO_Value
 
 class History
 {
-  constructor(system)
+  constructor(system, fields_per_value)
   {
     this.system=system;
     this.current_epoch_index = 0;
     this.times = [];
     this.values = new Array(system.ioValueCount-1);
-  }
 
+    this.fields_per_value = fields_per_value;
+    for(let n = 0; n<this.values.length;n++) //skip timestamp IO_Value
+    { 
+      this.values[n]=[];
+      for(let m=0;m<this.fields_per_value;m++)
+      {    
+        this.values[n][m]=[];
+      }
+    }
+  }
 
   static getTime(millis)
   {
@@ -957,7 +958,24 @@ class History
 
   setChartDatasets(i)
   {
-    Console.err("Dataset function not overloaded.");
+    console.err("Dataset function not overloaded.");
+  }
+
+  startNewEpoch()
+  {
+    //console.debug("Starting new epoch.");
+    if(this.times.length)
+    {
+      this.current_epoch_index = this.times.length;
+      this.times.push(this.times[this.times.length-1]);
+      for(let n = 0; n<this.values.length;n++) //skip timestamp IO_Value
+      {  
+        for(let m=0;m<this.fields_per_value;m++)
+        {
+          this.values[n][m].push(null);
+        }
+      }
+    }
   }
 
   handleUpdate(new_history)
@@ -985,45 +1003,28 @@ class History
     let deleteCount = (this.history.times.length-1)-insert_position;
     
     this.times.splice(0,deleteCount);
-    this.times.splice(insert_position,new_history.times);
+    this.times.splice(insert_position,0,new_history.times);
+
+    for(let n = 0; n<this.values.length;n++)
+    { 
+      for(let m=0;m<this.fields_per_value;m++)
+      {    
+        this.values[n][m].splice(0,deleteCount);
+        this.values[n][m].splice(insert_position,0,new_history.values[n][m]);
+      }
+    }
+    console.debug("This needs to be checked.");
   }
 }
 
-//This class contains  aggregate historical data after a history command from the connected Center
-//Epoch separation is performed based on time between data
-const aggregates_per_value = 3;
+const fields_per_value_aggregate = 3;
+const fields_per_value_raw = 1;
 
 class AggregateHistory extends History
 {
   constructor(system)
   {
-    super(system);
-    for(let n = 0; n<this.values.length;n++) //skip timestamp IO_Value
-    { 
-      this.values[n]=[];
-      for(let m=0;m<aggregates_per_value;m++)
-      {    
-        this.values[n][m]=[];
-      }
-    }
-    //this.startNewEpoch();
-  }
-  
-  startNewEpoch()
-  {
-    //console.debug("Starting new epoch.");
-    if(this.times.length)
-    {
-      this.current_epoch_index = this.times.length;
-      this.times.push(this.times[this.times.length-1]);
-      for(let n = 0; n<this.values.length;n++) //skip timestamp IO_Value
-      {  
-        for(let m=0;m<aggregates_per_value;m++)
-        {
-          this.values[n][m].push(null);
-        }
-      }
-    }
+    super(system,fields_per_value_aggregate);
   }
 
   processEntries(message)
@@ -1045,14 +1046,14 @@ class AggregateHistory extends History
         case DataTypes.floating_point:
         case DataTypes.signed_integer:
         case DataTypes.unsigned_integer:
-          for(let m=0;m<aggregates_per_value;m++)
+          for(let m=0;m<this.fields_per_value;m++)
           {
             value = message.get(iovs[n+1].data_type,iovs[n+1].byte_count);
             this.values[n][m].push(value);
           }
           break;
         case DataTypes.bool:
-          for(let m=0;m<aggregates_per_value;m++)
+          for(let m=0;m<this.fields_per_value;m++)
           {
             value = message.getFloat32();
             this.values[n][m].push(value);
@@ -1071,8 +1072,8 @@ class AggregateHistory extends History
   setChartDatasets(i)
   {
     const col = "rgb(255,0,0)";
-    this.system.nestedIOValues[i].chart.data.datasets=new Array(aggregates_per_value);
-    for(let m=0;m<aggregates_per_value;m++)
+    this.system.nestedIOValues[i].chart.data.datasets=new Array(this.fields_per_value);
+    for(let m=0;m<this.fields_per_value;m++)
     {
       let dataset = 
       {
@@ -1104,32 +1105,11 @@ class AggregateHistory extends History
   }
 }
 
-//This class contains the historical data after a history command from the connected Center
-//Epoch separation is performed using the included flag
 class RawHistory extends History
 {
   constructor(system)
   {
-    super(system);
-    for(let n = 0; n<this.values.length;n++)
-    {
-      this.values[n]=[];
-    }
-    //this.startNewEpoch();
-  }
-  
-  startNewEpoch()
-  {
-    console.debug("Starting new epoch.");
-    if(this.times.length)
-    {
-      this.current_epoch_index = this.times.length;
-      this.times.push(this.times[this.times.length-1]);
-      for(let n = 0; n<this.values.length;n++) //skip timestamp IO_Value
-      {
-        this.values[n].push(null);
-      }
-    }
+    super(system,fields_per_value_raw);
   }
 
   processEntries(message)
@@ -1151,7 +1131,7 @@ class RawHistory extends History
         //let val = message.getFloat32(); This won't work anymore...
         
         let value = message.get(iovs[n+1].data_type,iovs[n+1].byte_count);
-        this.values[n].push(value);
+        this.values[n][0].push(value);
       }
 
       if(flags&new_epoch_flag)
@@ -1173,7 +1153,7 @@ class RawHistory extends History
       fill: false, //no filling under the curve
       //backgroundColor: "rgb(0,0,0,0)", //transparent (this fills under the curve)
       borderColor: "rgb(255, 0, 0, 255)",
-      data: this.values[i-1], //history doesn't contain the timestamp field
+      data: this.values[i-1][0], //history doesn't contain the timestamp field
       labels: this.times,
       //pointRadius: 0 //don't render points, but if this is don't you can't hover to get value
       //pointBackgroundColor: "rgb(0,0,0,0)",

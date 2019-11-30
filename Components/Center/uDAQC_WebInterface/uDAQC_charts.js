@@ -199,6 +199,20 @@ let resetX = function(e)
   }
 };
 
+let liveMinute = function(e)
+{
+  console.log("Requesting live minute");
+  let start = moment().subtract(1,"minute").valueOf();
+  for(let key of IO.devices.keys())
+  {
+    let device = IO.devices.get(key);
+    for(let sys of device.members)
+    {
+      requestHistory(sys,start);
+    }
+  }
+};
+
 let setTree = function(e)
 {
   console.log("setTree called");
@@ -277,6 +291,7 @@ let set_chart_widths=function(new_width)
 window.onload=function(){
   console.log("Window loaded.");
   $("#x_reset_button").on("click",resetX);
+  $("#x_live_button").on("click",liveMinute)
   $("#TreeToggle").on("click",toggleTree);
 
   window.addEventListener("resize",setTree);

@@ -564,17 +564,30 @@ public class Database_uDAQC
 			
 	public HistoryResult getConciseHistory(IO_System system, Timestamp start, Timestamp end, int max_points)
 	{
+		int[] counts = new int[Regime.values().length];
+		
 		for(int n=0;n<Regime.values().length-1;n++)
 		{
 			Regime r = Regime.values()[n];
-			if(count(system,r,start,end)<=max_points)
+			counts[n] = count(system,r,start,end);
+			if(counts[n]<=max_points && counts[n]>0)
 			{
 				return getHistory(system,r,start,end);
 			}
 		}
-		//if none is short enough, just return the smallest one
-		Regime reg=Regime.values()[Regime.values().length-1];
-		return getHistory(system,reg,start,end);
+		
+		//if none is short enough, just return the smallest one that isn't zero
+		for(int n=Regime.values().length-1;n>=0;n--)
+		{
+			Regime r = Regime.values()[n];
+			if(counts[n]>0)
+			{
+				return getHistory(system,r,start,end);
+			}
+		}
+		
+		//Otherwise, just return a zero length history
+		return getHistory(system,Regime.values()[Regime.values().length-1],start,end);
 	}
 	
 	public class HistoryResult
@@ -590,7 +603,8 @@ public class Database_uDAQC
 		String full_table_name = getFullSystemTableName(system,r);
 		
 		HistoryResult retval=new HistoryResult();
-
+		retval.reg=r;
+		
 		PreparedStatement ps=null;
 		
 		Long timestamp=null;
@@ -811,7 +825,14 @@ public class Database_uDAQC
 			}
 			
 			//After last one processed, populate last timestmap
-			retval.last=Instant.ofEpochMilli(timestamp);
+			if(timestamp!=null)
+			{
+				retval.last=Instant.ofEpochMilli(timestamp);
+			}
+			else
+			{
+				retval.last=end.toInstant();
+			}
 			
 			//System.out.println("At position " + retval.message.position() + " (entry size is " + system.HistoryEntrySize(r) + ")");
 			ps.close();

@@ -7,6 +7,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
 import java.util.HashMap;
@@ -69,7 +70,9 @@ public class HTTPS_Server
     	private Instant next=null;
     	private void updateNext()
     	{
-    		next=last.plus(regime.getDuration()); //this will work for raw too!
+    		System.out.println(this.regime);
+    		Duration d = this.regime.getDuration();
+    		this.next=this.last.plus(d); //this will work for raw too!
     	}
     	public void setLast(Instant l)
     	{
