@@ -102,8 +102,12 @@ The Center can serve historical data stored in the TimescaleDB/PostgreSQL databa
 This message is a command that contains a request from a web client to the Center to send historical data. Its structure is as follows:
 1. int_16 indicating the IO_Device index for the device about which data is being requested
 2. int_16 indicating the IO_System index for the system about which data is being requested
-3. int_64 containing the timestamp of the start time of the displayed interval. If the earliest available data is requested, this value will be negative.
-4. int_64 containing the timestamp of the end time of the displayed interval. If the last available data is requested, this value will be negative.
+3. boolean (8 bytes): 
+  * If true, the request is for the latest available data and the remainder is as follows:
+    1. int_64 containing the number of milliseconds of data requested.
+  * If false, the request is for a specific interval and the remainder is as follows:
+    1. int_64 containing the timestamp of the start time of the displayed interval. If the earliest available data is requested, this value will be negative.
+    2. int_64 containing the timestamp of the end time of the displayed interval. If the last available data is requested, this value will be negative.
 
 ## History Structure
 This message contains a response to the History Request comand. Its structure is as follows:

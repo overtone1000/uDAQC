@@ -202,13 +202,13 @@ let resetX = function(e)
 let liveMinute = function(e)
 {
   console.log("Requesting live minute");
-  let start = moment().subtract(1,"minute").valueOf();
+  let duration = 1000*60;
   for(let key of IO.devices.keys())
   {
     let device = IO.devices.get(key);
     for(let sys of device.members)
     {
-      requestHistory(sys,start);
+      requestRecentHistory(sys,duration);
     }
   }
 };

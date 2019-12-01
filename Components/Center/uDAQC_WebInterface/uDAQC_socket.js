@@ -52,7 +52,7 @@ function handlePassthroughCommand(ptcom)
       
       for(let n = 0; n<new_device.member_count; n++)
       {
-        requestHistory(new_device.members[n]);
+        requestHistoryInterval(new_device.members[n]);
       }
       break;
     default:
@@ -61,19 +61,32 @@ function handlePassthroughCommand(ptcom)
   }
 }
 
-function requestHistory(system, start_time=-1, end_time=-1)
+function requestRecentHistory(system, duration=0)
 {
-  const history_request_size = 2+2+8+8;
+  const request_size = 1+2+2+8;
 
+  let message = new DataViewWriter(request_size);
+  message.putInt16(system.parent_device_index);
+  message.putInt16(system.system_index);
+  message.putInt8(1); //This IS a recent history request
+  message.putInt64(duration);
+  let command = new Command(request_size,IO_Constants.history_request, message);
+  command.sendto(websocket);
+}
+
+function requestHistoryInterval(system, start_time=-1, end_time=-1)
+{
+  const request_size = 1+2+2+8+8;
   if(start_time==null){start_time=-1;}
   if(end_time==null){start_time=-1;}
 
-  let message = new DataViewWriter(history_request_size);
+  let message = new DataViewWriter(request_size);
   message.putInt16(system.parent_device_index);
   message.putInt16(system.system_index);
+  message.putInt8(0); //This is NOT a recent history request
   message.putInt64(start_time);
   message.putInt64(end_time);
-  let command = new Command(history_request_size,IO_Constants.history_request, message);
+  let command = new Command(request_size,IO_Constants.history_request, message);
   command.sendto(websocket);
 }
 

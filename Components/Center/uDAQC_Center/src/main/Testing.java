@@ -3,6 +3,7 @@ package main;
 
 import java.nio.file.Paths;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
 
 import network.http.HTTPS_Server;
@@ -24,6 +25,8 @@ public class Testing
 		//WebServer();
 		database();
 	}
+	
+	@SuppressWarnings("unused")
 	public static void database()
 	{
 		System.out.println("Testing database.");
@@ -32,16 +35,29 @@ public class Testing
 		
 		//Testing...
 		IO_System sys=IO_Device_Connected.getDirectDevice((short)0).GetSystem((short)0);
-		Instant start = Instant.parse("2019-10-20T06:22:05.00Z");
-		Instant end = Instant.parse("2019-10-25T06:22:17.00Z");
-		Timestamp start_ts = Timestamp.from(start);
-		Timestamp end_ts = Timestamp.from(end);
-		System.out.println("Counted " + database.count(sys, Regime.hour, start_ts, end_ts));
-		HistoryResult c = database.getHistory(sys, Regime.hour, start_ts, end_ts);
-		System.out.println("Retrieved history.");
-		Command command = new Command(IO_Constants.Command_IDs.history,c.message.array());
-		Database_uDAQC.PrintHistory(sys, command.getmessage());
-		System.out.println("Database testing done.");
+		
+		if(false)
+		{
+			Instant start = Instant.parse("2019-10-20T06:22:05.00Z");
+			Instant end = Instant.parse("2019-10-25T06:22:17.00Z");
+			Timestamp start_ts = Timestamp.from(start);
+			Timestamp end_ts = Timestamp.from(end);
+			System.out.println("Counted " + database.count(sys, Regime.hour, start_ts, end_ts));
+			HistoryResult c = database.getHistory(sys, Regime.hour, start_ts, end_ts);
+			System.out.println("Retrieved history.");
+			Command command = new Command(IO_Constants.Command_IDs.history,c.message.array());
+			Database_uDAQC.PrintHistory(sys, command.getmessage());
+			System.out.println("Database testing done.");
+		}
+		
+		if(true)
+		{
+			database.getRecentHistory(sys,Duration.ZERO,0);
+			System.out.println("Database testing done.");
+		}
+		
+		database=null;
+		sys=null;
 	}
 	public static void TLS()
 	{

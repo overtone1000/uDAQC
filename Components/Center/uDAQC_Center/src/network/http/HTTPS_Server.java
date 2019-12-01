@@ -462,6 +462,77 @@ public class HTTPS_Server
     
     public static final Timestamp end_of_time = Timestamp.from(Instant.parse("9999-12-30T23:59:59.99Z")); //Long after human extinction, and also near the end of supported perior per SQL specs
     
+    private static final int max_points = 1024;
+    private void handleRecentHistoryRequest(Session session, IO_System system, ByteBuffer data)
+    {
+    	Duration d = Duration.ofMillis(data.getLong());
+    	
+		try {
+			
+			HistoryResult his = Center.database.getRecentHistory(system, d, max_points);
+			Command c = new Command(IO_Constants.Command_IDs.history, his.message.array());
+			SendCommand(session, c);
+
+			subscription_mutex.acquire();
+
+			SubscriberMeta sm = new SubscriberMeta(his.reg, his.last);
+			sm.regime = his.reg;
+			sm.last = his.last;
+			subscribers.put(session, sm);
+			System.err.println("Subscription work isn't finished. They should be populated but now need a thread to maintain subscriptions.");
+
+			subscription_mutex.release();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+    }
+    
+    private void handleHistoryIntervalRequest(Session session, IO_System system, ByteBuffer data)
+    {
+		long start = data.getLong();
+		long end = data.getLong();
+		Timestamp start_ts = null;
+		Timestamp end_ts = null;
+
+		try {
+			boolean live_subscription_requested = false;
+
+			if (start >= 0) {
+				start_ts = Timestamp.from(Instant.ofEpochMilli(start));
+			} else {
+				start_ts = Timestamp.from(Instant.ofEpochMilli(0));
+				System.out.println("Returning earliest history available.");
+			}
+			if (end >= 0) {
+				end_ts = Timestamp.from(Instant.ofEpochMilli(end));
+			} else {
+				end_ts = end_of_time;
+				System.out.println("Returning latest history available.");
+				live_subscription_requested = true;
+			}
+
+			HistoryResult his = Center.database.getConciseHistory(system, start_ts, end_ts, max_points);
+			Command c = new Command(IO_Constants.Command_IDs.history, his.message.array());
+			SendCommand(session, c);
+
+			subscription_mutex.acquire();
+			if (live_subscription_requested) {
+				SubscriberMeta sm = new SubscriberMeta(his.reg, his.last);
+				sm.regime = his.reg;
+				sm.last = his.last;
+				subscribers.put(session, sm);
+
+				System.err.println(
+						"Subscription work isn't finished. They should be populated but now need a thread to maintain subscriptions.");
+			} else {
+				subscribers.remove(session);
+			}
+			subscription_mutex.release();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+    }
+    
     public void HandleCommand(Command command, Session session)
     {
     	switch(command.Header().command_id)
@@ -475,58 +546,18 @@ public class HTTPS_Server
 			  ByteBuffer data = command.getmessage();
 			  short dev_index = data.getShort();
 			  short sys_index = data.getShort();
-			  long start = data.getLong();
-			  long end = data.getLong();
-			  Timestamp start_ts=null;
-			  Timestamp end_ts=null;
-			  
-			  try 
-			  {			
-				  boolean live_subscription_requested=false;
-				  
-				  if(start>=0)
-				  {
-					  start_ts = Timestamp.from(Instant.ofEpochMilli(start));
-				  }
-				  else
-				  {
-					  start_ts = Timestamp.from(Instant.ofEpochMilli(0));
-					  System.out.println("Returning earliest history available.");
-				  }
-				  if(end>=0)
-				  {
-					  end_ts = Timestamp.from(Instant.ofEpochMilli(end));
-				  }
-				  else
-				  {
-					  end_ts = end_of_time;
-					  System.out.println("Returning latest history available.");
-					  live_subscription_requested=true;
-				  }
-				  
-				  IO_System system = IO_Device_Connected.getDirectDevice(dev_index).GetSystem(sys_index);
-				  HistoryResult his = Center.database.getConciseHistory(system, start_ts, end_ts, 1024);
-				  Command c = new Command(IO_Constants.Command_IDs.history,his.message.array());
-				  SendCommand(session,c);
-				  
-				  subscription_mutex.acquire();
-				  if(live_subscription_requested)
-				  {
-					  SubscriberMeta sm = new SubscriberMeta(his.reg,his.last);
-					  sm.regime = his.reg;
-					  sm.last = his.last;
-					  subscribers.put(session,sm);
-					  
-					  System.err.println("Subscription work isn't finished. They should be populated but now need a thread to maintain subscriptions.");
-				  }
-				  else
-				  {
-					  subscribers.remove(session);
-				  }
-				  subscription_mutex.release();
-			  } 
-			  catch (InterruptedException e) {
-					e.printStackTrace();
+			  byte histype = data.get();
+			  boolean type_is_recent = histype!=(byte)(0);
+			  IO_System system = IO_Device_Connected.getDirectDevice(dev_index).GetSystem(sys_index);
+			  if(type_is_recent)
+			  {
+				  System.out.println("Handling recent history request");
+				  handleRecentHistoryRequest(session,system,data);
+			  }
+			  else
+			  {
+				  System.out.println("Handling history interval request");
+				  handleHistoryIntervalRequest(session,system,data);
 			  }
 		  }
 		  break;

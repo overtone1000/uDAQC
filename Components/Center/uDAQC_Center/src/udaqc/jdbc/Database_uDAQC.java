@@ -433,13 +433,13 @@ public class Database_uDAQC
 			meta = conn.getMetaData();
 			
 			ResultSet meta_res = meta.getTables(null, Regime.raw.schema(), null, new String[] {"TABLE"});
-			System.out.println("Checking for tables with name " + new_table_name);
+			//System.out.println("Checking for tables with name " + new_table_name);
 			
 			while(meta_res.next()) 
 			{
 				String this_name = meta_res.getString("TABLE_NAME");
-				System.out.print("Found table with name " + this_name);
-				System.out.println(", comparing to " + raw_table_name);
+				//System.out.print("Found table with name " + this_name);
+				//System.out.println(", comparing to " + raw_table_name);
 				if(this_name.equals(raw_table_name))
 				{
 					return;
@@ -447,7 +447,7 @@ public class Database_uDAQC
 				}
 			}
 			
-			System.out.println("Table " + new_table_name + " doesn't exist, creating.");
+			//System.out.println("Table " + new_table_name + " doesn't exist, creating.");
 			
 			
 			s = conn.createStatement();
@@ -561,7 +561,70 @@ public class Database_uDAQC
 		}
 		return -1;
 	}
+	
+	public HistoryResult getRecentHistory(IO_System system, Duration length, int max_points)
+	{
+		HistoryResult retval=null;
+		try {
+			conn.setAutoCommit(false);
+			Instant last=getLastInstant(system);
+			Instant start = last.minus(length);
+			retval=getConciseHistory(system,Timestamp.from(start),Timestamp.from(last),max_points);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		try {
+			conn.setAutoCommit(true);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		
+		return retval;
+	}
+
+	public Instant getLastInstant(IO_System system)
+	{
+		Regime r = Regime.raw;
+		
+		String full_table_name = getFullSystemTableName(system,r);
+		Statement ps=null;
+		Instant retval=null;
+		try
+		{
+						
+			String command = "select max(" + timecolumn_name + ") from " + full_table_name;
+			ps=conn.createStatement();
+			ps.execute(command);
+			ResultSet res = ps.getResultSet();
+						
+			while(res.next())
+			{
+				retval=res.getTimestamp(1).toInstant();
+			}
 			
+			ps.close();
+		} catch (SQLException e)
+		{
+			System.out.println("Error during history retrieval.");
+			if(ps!=null)
+			{
+				System.err.println("Command was " + ps.toString());
+			}
+			e.printStackTrace();
+		}
+		
+		try
+		{
+			conn.setAutoCommit(true);
+		} catch (SQLException e)
+		{
+			e.printStackTrace();
+		}
+		
+		return retval;
+	}
+	
 	public HistoryResult getConciseHistory(IO_System system, Timestamp start, Timestamp end, int max_points)
 	{
 		int[] counts = new int[Regime.values().length];
