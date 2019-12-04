@@ -998,20 +998,22 @@ class History
 
     let deleteCount = (this.times.length-1)-update_position;
     
-    this.times.splice(0,deleteCount);
-    this.times.splice(update_position,1);
-    this.times.concat(new_history.times);
+    console.debug("New history:");
+    console.debug(new_history.times);
+    //this.times.splice(0,deleteCount);
+    //this.times.splice(update_position,1);
+    this.times=this.times.concat(new_history.times);
 
     console.debug("Splice result:");
-    console.debug(this.times.slice());
+    console.debug(this.times);
 
     for(let n = 0; n<this.values.length;n++)
     { 
       for(let m=0;m<this.fields_per_value;m++)
       {    
-        this.values[n][m].splice(0,deleteCount);
-        this.values[n][m].splice(update_position,1);
-        this.values[n][m].concat(new_history.values[n][m]);
+        //this.values[n][m].splice(0,deleteCount);
+        //this.values[n][m].splice(update_position,1);
+        this.values[n][m]=this.values[n][m].concat(new_history.values[n][m]);
       }
     }
     console.debug("This needs to be checked.");

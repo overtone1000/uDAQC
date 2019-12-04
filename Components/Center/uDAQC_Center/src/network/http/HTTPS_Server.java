@@ -126,6 +126,7 @@ public class HTTPS_Server
 				if(!(md.getNext().isAfter(ts)));
 				{
 					HistoryResult his = Center.database.getHistory(system, md.regime, Timestamp.from(md.last), end_of_time);
+					md.setLast(ts);
 					Command c = new Command(IO_Constants.Command_IDs.history_update,his.message.array());
 					SendCommand(session,c);
 				}
