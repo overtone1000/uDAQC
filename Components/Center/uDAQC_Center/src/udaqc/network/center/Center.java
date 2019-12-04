@@ -26,6 +26,7 @@ import network.tcp.server.TCP_Server;
 import network.udp.UDP_Funnel;
 import network.udp.UDP_TimeSync;
 import udaqc.io.IO_Constants.Command_IDs;
+import udaqc.io.IO_Device;
 import udaqc.io.IO_System;
 import udaqc.network.Constants.Addresses;
 import udaqc.network.center.command.Command;
@@ -179,6 +180,19 @@ public class Center extends TCP_Server
 		  default:
 			System.err.println("Unhandled command " + c.Header().command_id + " of lenght " + c.Header().message_length);
 			break;
+		}
+	}
+	
+	public void test_forceDataUpdate()
+	{
+		System.out.println("Testing: Forcing data update.");
+		for(IO_Device d:IO_Device_Connected.getDevices())
+		{
+			for(IO_System s:d.Systems())
+			{
+				System.out.println("Testing: Forcing data update " + s.FullName());
+				webserver.handleSystemDataUpdated(s);
+			}
 		}
 	}
 

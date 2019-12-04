@@ -139,7 +139,12 @@ function onMessage(evt)
       break;
     case IO_Constants.history:
       {
-        handleHistory(c);
+        handleHistory(c,false);
+      }
+      break;
+      case IO_Constants.history_update:
+      {
+        handleHistory(c,true);
       }
       break;
     default:

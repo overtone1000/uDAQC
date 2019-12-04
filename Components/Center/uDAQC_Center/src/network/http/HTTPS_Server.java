@@ -45,6 +45,7 @@ import org.eclipse.jetty.websocket.api.Session;
 
 import network.SecurityBundle;
 import network.http.websocket.Servlet_uD;
+import threading.ThreadWorker;
 import udaqc.io.IO_Constants;
 import udaqc.io.IO_Constants.Command_IDs;
 import udaqc.io.IO_System;
@@ -98,10 +99,64 @@ public class HTTPS_Server
 		
 	private HashSet<Session> sessions = new HashSet<Session>();
 	private Semaphore session_mutex=new Semaphore(1);
-
-	protected HashMap<Session, SubscriberMeta> subscribers=new HashMap<Session, SubscriberMeta>();
-    protected Semaphore subscription_mutex = new Semaphore(1);
     
+    protected class SubscriptionMaintainer
+    {
+    	private HashMap<Session, SubscriberMeta> subscribers=new HashMap<Session, SubscriberMeta>();
+        private Semaphore subscription_mutex = new Semaphore(1);
+        
+		protected void handleSystemDataUpdated(IO_System system)
+		{
+			System.out.println("System " + system.FullName() + " data updated. Forwarding to subscribers.");
+			
+			//Just for testing right now...
+			Instant ts=null;
+			try
+			{
+				ts = system.getTimestamp();
+			}
+			catch(Exception e)
+			{
+				ts=Instant.now();
+			}
+			
+			for(Session session:subscribers.keySet())
+			{
+				SubscriberMeta md = subscribers.get(session);
+				if(!(md.getNext().isAfter(ts)));
+				{
+					HistoryResult his = Center.database.getHistory(system, md.regime, Timestamp.from(md.last), end_of_time);
+					Command c = new Command(IO_Constants.Command_IDs.history_update,his.message.array());
+					SendCommand(session,c);
+				}
+			}
+		}
+		
+		protected void addSubscriber(Session ses, SubscriberMeta meta)
+		{
+			try {
+				subscription_mutex.acquire();
+				subscribers.put(ses, meta);
+				subscription_mutex.release();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			
+		}
+		
+		protected void removeSubscriber(Session ses)
+		{
+			try {
+				subscription_mutex.acquire();
+				subscribers.remove(ses);
+				subscription_mutex.release();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			
+		}
+    }
+    private SubscriptionMaintainer sub_main=new SubscriptionMaintainer();    
 	
 	private Center parent;
 	private Server server;
@@ -387,9 +442,7 @@ public class HTTPS_Server
 			sessions.remove(closed_session);
 			session_mutex.release();
 			
-			subscription_mutex.acquire();
-			subscribers.remove(closed_session);
-			subscription_mutex.release();
+			sub_main.removeSubscriber(closed_session);
 			
 		} catch (InterruptedException e)
 		{
@@ -427,19 +480,7 @@ public class HTTPS_Server
 	
 	public void handleSystemDataUpdated(IO_System system)
 	{
-		System.out.println("System " + system.FullName() + " data updated. Forwarding to subscribers.");
-		Instant ts = system.getTimestamp();
-		for(Session session:subscribers.keySet())
-		{
-			SubscriberMeta md = subscribers.get(session);
-			if(!(md.getNext().isAfter(ts)));
-			{
-				//TODO format and send a history update
-				HistoryResult his = Center.database.getHistory(system, md.regime, Timestamp.from(md.last), end_of_time);
-				Command c = new Command(IO_Constants.Command_IDs.history_update,his.message.array());
-				SendCommand(session,c);
-			}
-		}
+		sub_main.handleSystemDataUpdated(system);
 	}
 	    
     public static boolean SendCommand(Session sess, Command command)
@@ -466,25 +507,19 @@ public class HTTPS_Server
     private void handleRecentHistoryRequest(Session session, IO_System system, ByteBuffer data)
     {
     	Duration d = Duration.ofMillis(data.getLong());
-    	
-		try {
-			
-			HistoryResult his = Center.database.getRecentHistory(system, d, max_points);
-			Command c = new Command(IO_Constants.Command_IDs.history, his.message.array());
-			SendCommand(session, c);
+	
+		HistoryResult his = Center.database.getRecentHistory(system, d, max_points);
+		Command c = new Command(IO_Constants.Command_IDs.history, his.message.array());
+		SendCommand(session, c);
 
-			subscription_mutex.acquire();
 
-			SubscriberMeta sm = new SubscriberMeta(his.reg, his.last);
-			sm.regime = his.reg;
-			sm.last = his.last;
-			subscribers.put(session, sm);
-			System.err.println("Subscription work isn't finished. They should be populated but now need a thread to maintain subscriptions.");
+		SubscriberMeta sm = new SubscriberMeta(his.reg, his.last);
+		sm.regime = his.reg;
+		sm.last = his.last;
+		
+		sub_main.addSubscriber(session,sm);
+		System.err.println("Subscription work isn't finished. They should be populated but now need a thread to maintain subscriptions.");
 
-			subscription_mutex.release();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
     }
     
     private void handleHistoryIntervalRequest(Session session, IO_System system, ByteBuffer data)
@@ -494,44 +529,37 @@ public class HTTPS_Server
 		Timestamp start_ts = null;
 		Timestamp end_ts = null;
 
-		try {
-			boolean live_subscription_requested = false;
+		boolean live_subscription_requested = false;
 
-			if (start >= 0) {
-				start_ts = Timestamp.from(Instant.ofEpochMilli(start));
-			} else {
-				start_ts = Timestamp.from(Instant.ofEpochMilli(0));
-				System.out.println("Returning earliest history available.");
-			}
-			if (end >= 0) {
-				end_ts = Timestamp.from(Instant.ofEpochMilli(end));
-			} else {
-				end_ts = end_of_time;
-				System.out.println("Returning latest history available.");
-				live_subscription_requested = true;
-			}
-
-			HistoryResult his = Center.database.getConciseHistory(system, start_ts, end_ts, max_points);
-			Command c = new Command(IO_Constants.Command_IDs.history, his.message.array());
-			SendCommand(session, c);
-
-			subscription_mutex.acquire();
-			if (live_subscription_requested) {
-				SubscriberMeta sm = new SubscriberMeta(his.reg, his.last);
-				sm.regime = his.reg;
-				sm.last = his.last;
-				subscribers.put(session, sm);
-
-				System.err.println(
-						"Subscription work isn't finished. They should be populated but now need a thread to maintain subscriptions.");
-			} else {
-				subscribers.remove(session);
-			}
-			subscription_mutex.release();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
+		if (start >= 0) {
+			start_ts = Timestamp.from(Instant.ofEpochMilli(start));
+		} else {
+			start_ts = Timestamp.from(Instant.ofEpochMilli(0));
+			System.out.println("Returning earliest history available.");
 		}
-    }
+		if (end >= 0) {
+			end_ts = Timestamp.from(Instant.ofEpochMilli(end));
+		} else {
+			end_ts = end_of_time;
+			System.out.println("Returning latest history available.");
+			live_subscription_requested = true;
+		}
+
+		HistoryResult his = Center.database.getConciseHistory(system, start_ts, end_ts, max_points);
+		Command c = new Command(IO_Constants.Command_IDs.history, his.message.array());
+		SendCommand(session, c);
+
+		if (live_subscription_requested) {
+			SubscriberMeta sm = new SubscriberMeta(his.reg, his.last);
+			sm.regime = his.reg;
+			sm.last = his.last;
+			sub_main.addSubscriber(session, sm);
+			System.err.println(
+					"Subscription work isn't finished. They should be populated but now need a thread to maintain subscriptions.");
+		} else {
+			sub_main.removeSubscriber(session);
+		}
+	}
     
     public void HandleCommand(Command command, Session session)
     {

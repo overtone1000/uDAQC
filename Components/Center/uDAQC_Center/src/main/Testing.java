@@ -10,10 +10,12 @@ import network.http.HTTPS_Server;
 import security.PasswordManager;
 import udaqc.io.IO_Constants;
 import udaqc.io.IO_System;
+import udaqc.io.IO_Value;
 import udaqc.jdbc.Database_uDAQC;
 import udaqc.jdbc.Database_uDAQC.HistoryResult;
 import udaqc.jdbc.Database_uDAQC.Regime;
 import udaqc.network.Constants.Addresses;
+import udaqc.network.center.Center;
 import udaqc.network.center.IO_Device_Connected;
 import udaqc.network.center.command.Command;
 
@@ -23,7 +25,9 @@ public class Testing
 	{
 		//TLS();
 		//WebServer();
-		database();
+		//database();
+		
+		database_source_sim();
 	}
 	
 	@SuppressWarnings("unused")
@@ -59,6 +63,29 @@ public class Testing
 		database=null;
 		sys=null;
 	}
+	
+	public static void database_source_sim()
+	{
+		Center center= Console_Center.init();
+		
+		System.out.println("Testing database.");
+				
+		boolean cont=true;
+		while(cont)
+		{
+			Center.database.insert_test_datum(Instant.now());
+			center.test_forceDataUpdate();
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	
+	
 	public static void TLS()
 	{
 		//InetSocketAddress host = new InetSocketAddress("127.0.0.1",udaqc.network.passthrough.Secondary_Constants.Ports.passthrough_server);

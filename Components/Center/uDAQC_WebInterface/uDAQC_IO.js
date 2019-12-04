@@ -698,11 +698,6 @@ class IO_System extends IO_Group
   updateHistory(new_history)
   {
     this.history.handleUpdate(new_history);
-
-    console.error("Update history not fully implemented.");
-    
-    console.error("Could also use splice to insert new elements but need to remove any duplicates first.");
-
     this.setChart();
   }
 
@@ -737,7 +732,7 @@ class IO_System extends IO_Group
       this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max = this.chartmeta.xabsmax;
     }
 
-    requestHistory(this);
+    requestHistoryInterval(this);
   }
 
   setChart()
@@ -982,10 +977,11 @@ class History
   {
     let update_earliest = new_history.times[0];
 
-    let insert_position;
-    for(insert_position=this.times.length-1;insert_position>=0;insert_position--)
+    let update_position;
+    let remove_last=false;
+    for(update_position=this.times.length-1;update_position>=0;update_position--)
     {
-      let this_time=this.times[insert_position];
+      let this_time=this.times[update_position];
       
       //if this existing history timestamp is before or equal to the first in the update, the insert happens near here
       if(this_time<=update_earliest) 
@@ -994,23 +990,28 @@ class History
         //otherwise, the insert point is already correct
         if(this_time<update_earliest)
         {
-          insert_position++;
+          remove_last=true;
         }
         break; //insertion is set, break and substitute
       }
     }
 
-    let deleteCount = (this.history.times.length-1)-insert_position;
+    let deleteCount = (this.times.length-1)-update_position;
     
     this.times.splice(0,deleteCount);
-    this.times.splice(insert_position,0,new_history.times);
+    this.times.splice(update_position,1);
+    this.times.concat(new_history.times);
+
+    console.debug("Splice result:");
+    console.debug(this.times.slice());
 
     for(let n = 0; n<this.values.length;n++)
     { 
       for(let m=0;m<this.fields_per_value;m++)
       {    
         this.values[n][m].splice(0,deleteCount);
-        this.values[n][m].splice(insert_position,0,new_history.values[n][m]);
+        this.values[n][m].splice(update_position,1);
+        this.values[n][m].concat(new_history.values[n][m]);
       }
     }
     console.debug("This needs to be checked.");

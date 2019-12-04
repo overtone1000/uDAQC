@@ -37,9 +37,14 @@ public class Console_Center
 		}
 	}
 	
-	public static void main(String[] args) {
-		
-				
+	public static void main(String[] args) 
+	{
+		@SuppressWarnings("unused")
+		Center center = Console_Center.init();
+	}
+
+	public static Center init()
+	{
 		String program_root = "";
 		try
 		{
@@ -79,19 +84,8 @@ public class Console_Center
 		
 		DummyHandler h = new DummyHandler();
 		
-		@SuppressWarnings("unused")
 		Center id_serv = new Center("IO_Center", program_root, h);
 		
-		//String Threadname = "GNDM_Server";
-		//InetSocketAddress[] hosts=new InetSocketAddress[1];
-		//hosts[0]=new InetSocketAddress("192.168.1.13",49152);
-		//hosts[0]=new InetSocketAddress("0.0.0.0",0);
-				
-		//@SuppressWarnings("unused")
-		//GNDM_Server s=new GNDM_Server(Threadname,hosts);
-		
-		
+		return id_serv;
 	}
-
-	
 }

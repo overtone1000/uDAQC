@@ -389,6 +389,34 @@ public class Database_uDAQC
 		}
 	}
 	
+	public void insert_test_datum(Instant time)
+	{
+		String system_table_name = "\"uDAQC Template Device(2418134)_0\"";
+		String command = "insert into " + Regime.raw.schema() + "." + system_table_name + " values ";
+		command += "(false,?,?,0,1,2,3);";
+		
+		System.out.println("Starting test data insertion.");
+		
+		Timestamp ts;
+		PreparedStatement ps;
+		try
+		{
+		ps = conn.prepareStatement(command);
+		
+		ts = Timestamp.from(time);
+		ps.setTimestamp(1, ts);
+		ps.setFloat(2, (float)Math.random());
+		ps.addBatch();
+			
+		ps.executeBatch();
+		}
+		catch(Exception e)
+		{
+
+			e.printStackTrace();
+		}
+	}
+	
 	public void insert_test_data()
 	{
 		String system_table_name = "\"uDAQC Template Device(2418134)_0\"";

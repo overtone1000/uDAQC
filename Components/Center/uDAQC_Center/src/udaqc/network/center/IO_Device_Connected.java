@@ -26,6 +26,12 @@ public class IO_Device_Connected extends IO_Device_Synchronized
 	
 	private static Semaphore device_list_mutex=new Semaphore(1);
 	
+	@SuppressWarnings("unchecked")
+	public static Vector<IO_Device_Connected> getDevices()
+	{
+		return (Vector<IO_Device_Connected>) devices.clone();
+	}
+	
 	public static IO_Device_Connected getDirectDevice(short index)
 	{
 		return devices.get(index);
