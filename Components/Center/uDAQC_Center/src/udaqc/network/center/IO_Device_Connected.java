@@ -172,6 +172,10 @@ public class IO_Device_Connected extends IO_Device_Synchronized
 	//@Override
 	public void Send_Command(Command command)
 	{
+		if(session==null)
+		{
+			return;
+		}
 		if(session.isConnected())
 		{
 			System.out.println("Sending command " + command.Header().command_id + " to device " + Name());

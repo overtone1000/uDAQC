@@ -684,6 +684,7 @@ public class Database_uDAQC
 	public class HistoryResult
 	{
 		public ByteBuffer message=null;
+		public int data_count=0;
 		public Instant first=null;
 		public Instant last=null;
 		public Regime reg=null;
@@ -714,8 +715,17 @@ public class Database_uDAQC
 		{
 			conn.setAutoCommit(false);
 			
-			int count = count(system,r,start,end);
-			retval.message = ByteBuffer.allocate(count*system.HistoryEntrySize(r) + Short.BYTES*2 + Byte.BYTES);
+			retval.data_count = count(system,r,start,end);
+			if(retval.data_count<=0)
+			{
+				System.out.println("No data. Returning empty history.");
+				conn.setAutoCommit(true);
+				retval.last=end.toInstant();
+				retval.first=start.toInstant();
+				return retval;
+			}
+			
+			retval.message = ByteBuffer.allocate(retval.data_count*system.HistoryEntrySize(r) + Short.BYTES*2 + Byte.BYTES);
 			retval.message.order(ByteOrder.LITTLE_ENDIAN);
 			retval.message.putShort(system.Device().DeviceIndex());
 			retval.message.putShort(system.Index());
@@ -916,14 +926,7 @@ public class Database_uDAQC
 			}
 			
 			//After last one processed, populate last timestmap
-			if(timestamp!=null)
-			{
-				retval.last=Instant.ofEpochMilli(timestamp);
-			}
-			else
-			{
-				retval.last=end.toInstant();
-			}
+			retval.last=Instant.ofEpochMilli(timestamp);
 			
 			//System.out.println("At position " + retval.message.position() + " (entry size is " + system.HistoryEntrySize(r) + ")");
 			ps.close();

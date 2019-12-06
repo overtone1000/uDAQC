@@ -59,13 +59,17 @@ import udaqc.network.passthrough.endpoints.WS_Endpoint;
 
 public class HTTPS_Server
 {
-	private class SubscriberMeta
+	private class Subscription
     {
-		public SubscriberMeta(Regime r, Instant d)
+		public Subscription(Session session, IO_System system, Regime r, Instant d)
 		{
+			this.session=session;
+			this.system=system;
 			this.regime=r;
 			this.setLast(d);
 		}
+		private Session session;
+		private IO_System system;
     	private Regime regime;
     	private Instant last=null;
     	private Instant next=null;
@@ -75,14 +79,30 @@ public class HTTPS_Server
     		Duration d = this.regime.getDuration();
     		this.next=this.last.plus(d); //this will work for raw too!
     	}
-    	public void setLast(Instant l)
+    	private void setLast(Instant l)
     	{
     		this.last=l;
     		this.updateNext();
     	}
-    	public Instant getNext()
+    	private Instant getNext()
     	{
     		return this.next;
+    	}
+    	public void CheckUpdate(Instant update_timestamp)
+    	{
+    		if(!(this.getNext().isAfter(update_timestamp)));
+			{
+				HistoryResult his = Center.database.getHistory(system, this.regime, Timestamp.from(this.last), end_of_time);
+				
+				if(his.data_count>0)
+				{
+					System.out.println("Sending update from " + update_timestamp.toString() + " containing " + his.data_count + " elements.");
+					Command c = new Command(IO_Constants.Command_IDs.history_update,his.message.array());
+					SendCommand(session,c);
+				}
+				
+				this.setLast(update_timestamp);
+			}
     	}
     }
 	
@@ -102,7 +122,7 @@ public class HTTPS_Server
     
     protected class SubscriptionMaintainer
     {
-    	private HashMap<Session, SubscriberMeta> subscribers=new HashMap<Session, SubscriberMeta>();
+    	private HashMap<Session,HashMap<IO_System,Subscription>> subscriptions=new HashMap<Session,HashMap<IO_System,Subscription>>();
         private Semaphore subscription_mutex = new Semaphore(1);
         
 		protected void handleSystemDataUpdated(IO_System system)
@@ -120,24 +140,33 @@ public class HTTPS_Server
 				ts=Instant.now();
 			}
 			
-			for(Session session:subscribers.keySet())
+			for(Session sess:subscriptions.keySet())
 			{
-				SubscriberMeta md = subscribers.get(session);
-				if(!(md.getNext().isAfter(ts)));
+				HashMap<IO_System,Subscription> system_subs=subscriptions.get(sess);
+				Subscription sub = system_subs.get(system);
+				if(sub!=null)
 				{
-					HistoryResult his = Center.database.getHistory(system, md.regime, Timestamp.from(md.last), end_of_time);
-					md.setLast(ts);
-					Command c = new Command(IO_Constants.Command_IDs.history_update,his.message.array());
-					SendCommand(session,c);
+					sub.CheckUpdate(ts);
 				}
 			}
 		}
 		
-		protected void addSubscriber(Session ses, SubscriberMeta meta)
+		protected void addSubscriber(Session session, IO_System system, Regime r, Instant last)
 		{
 			try {
 				subscription_mutex.acquire();
-				subscribers.put(ses, meta);
+				
+				Subscription sub = new Subscription(session,system,r,last);
+				
+				HashMap<IO_System,Subscription> ses_subs=subscriptions.get(session);
+				if(ses_subs==null)
+				{
+					ses_subs = new HashMap<IO_System,Subscription>();
+					subscriptions.put(session, new HashMap<IO_System,Subscription>());
+				}
+				
+				ses_subs.put(system, sub);
+				
 				subscription_mutex.release();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -149,7 +178,7 @@ public class HTTPS_Server
 		{
 			try {
 				subscription_mutex.acquire();
-				subscribers.remove(ses);
+				subscriptions.remove(ses);
 				subscription_mutex.release();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
@@ -510,17 +539,15 @@ public class HTTPS_Server
     	Duration d = Duration.ofMillis(data.getLong());
 	
 		HistoryResult his = Center.database.getRecentHistory(system, d, max_points);
-		Command c = new Command(IO_Constants.Command_IDs.history, his.message.array());
-		SendCommand(session, c);
-
-
-		SubscriberMeta sm = new SubscriberMeta(his.reg, his.last);
-		sm.regime = his.reg;
-		sm.last = his.last;
 		
-		sub_main.addSubscriber(session,sm);
-		System.err.println("Subscription work isn't finished. They should be populated but now need a thread to maintain subscriptions.");
-
+		if(his.data_count>0)
+		{
+			Command c = new Command(IO_Constants.Command_IDs.history, his.message.array());
+			SendCommand(session, c);
+		}
+		
+		System.out.println("Adding subscriber for regime " + his.reg.toString() + " last datum at " + his.last.toString());
+		sub_main.addSubscriber(session,system,his.reg,his.last);	
     }
     
     private void handleHistoryIntervalRequest(Session session, IO_System system, ByteBuffer data)
@@ -551,12 +578,7 @@ public class HTTPS_Server
 		SendCommand(session, c);
 
 		if (live_subscription_requested) {
-			SubscriberMeta sm = new SubscriberMeta(his.reg, his.last);
-			sm.regime = his.reg;
-			sm.last = his.last;
-			sub_main.addSubscriber(session, sm);
-			System.err.println(
-					"Subscription work isn't finished. They should be populated but now need a thread to maintain subscriptions.");
+			sub_main.addSubscriber(session,system,his.reg,his.last);
 		} else {
 			sub_main.removeSubscriber(session);
 		}

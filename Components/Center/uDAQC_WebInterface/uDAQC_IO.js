@@ -720,7 +720,7 @@ class IO_System extends IO_Group
       this.nestedIOValues[i].chart.options.scales.xAxes[0].time.min=min;
       this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max=max;
 
-      requestHistory(this,min,max);
+      requestHistoryInterval(this,min,max);
     }
   }
 
