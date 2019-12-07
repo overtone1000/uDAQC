@@ -1032,14 +1032,23 @@ class AggregateHistory extends History
 
   processEntries(message)
   {
-    const new_epoch_flag = Math.pow(2,0);
+    const new_epoch_flag = Math.pow(2,1);
     let iovs = this.system.nestedIOValues;
 
     while(message.remaining()>0)
     {
 
-    let timestamp = History.getTime(message.getInt64());
-    this.times.push(timestamp);
+      let flags = message.getInt8();
+
+      if(flags&new_epoch_flag)
+      {
+        //Start a new epoch
+        console.debug("Beginning of epoch flag.");
+        this.startNewEpoch();
+      }
+
+      let timestamp = History.getTime(message.getInt64());
+      this.times.push(timestamp);
       //console.log("Remaining = " + message.remaining());
       for(let n=0;n<this.values.length;n++) //skip timestamp IO_Value
       {

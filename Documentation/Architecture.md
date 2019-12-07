@@ -83,7 +83,7 @@ Furthermore, the PostgreSQL has an alternative long definition of the time. This
 >Note: When timestamp values are stored as eight-byte integers (currently the default), microsecond precision is available over the full range of values. When timestamp values are stored as double precision floating-point numbers instead (a deprecated compile-time option), the effective limit of precision might be less than 6. timestamp values are stored as seconds before or after midnight 2000-01-01. When timestamp values are implemented using floating-point numbers, microsecond precision is achieved for dates within a few years of 2000-01-01, but the precision degrades for dates further away. Note that using floating-point datetimes allows a larger range of timestamp values to be represented than shown above: from 4713 BC up to 5874897 AD. The same compile-time option also determines whether time and interval values are stored as floating-point numbers or eight-byte integers. In the floating-point case, large interval values degrade in precision as the size of the interval increases.
 
 # Live Data 
-## DataMessage Structure
+## Data Message Structure
 When a data message for an IO_System is sent from a Device to a Center, the message first contains:
 1. The int_16 index of that IO_System
 2. An entry for each IO_Node in that system in the order that each IO_Node is found in the description for that IO_System.  
@@ -116,13 +116,17 @@ This message contains a response to the History Request comand. Its structure is
 3. int_8 containing only a single flag in the smallest bit indicating whether this is raw data or an aggregate
 4. An array containing the data
 
-Raw data will have the same structure as item #2 in the Data Message structure above.
-Aggregated data will have a similar structure to raw data. However, instead of a single value for each IO_Value, it will have 3 values in the following order:
-1. Average
-2. Minimum
-3. Maximum
+Each datum for raw data will have the following structure:
+1. int_8 flag. The least significant bit will be true if the current epoch ends on this datum.
+2. The remainder of the datum is identifcal to the Data Message structure above.
 
-Each of these values will have the same type and size as that of the IO_Value with the exception of the boolean type, which will be converted to a 32-bit float and have values ranging between 0.0f (false) and 1.0f (true).
+Each datum for aggregated data will have the following structure:
+1. int_8 flag. The second least significant bit will be true if a new epoch starts on this datum. Note that this is different from the flag for raw data.
+2. The remainder of the datum contains 3 values for each IO_Value such as in a Data Message for this system: 
+  1. Average
+  2. Minimum
+  3. Maximum
+  Each of these values will have the same type and size as that of the IO_Value with the exception of the boolean type, which will be converted to a 32-bit float and have values ranging between 0.0f (false) and 1.0f (true).
 
 ## History Update Structure
 This message contains an update to the existing History possessed by the client. Its structure is identical to a History Structure (as above), but instead of completely replacing the existing historical data, the client performs an update. If the update contains a timestamp already possessed, the data for that timestamp is updated. If the update contains timestamp(s) not possessed by the client, oldest timestamps are discarded to keep the number of points the same.

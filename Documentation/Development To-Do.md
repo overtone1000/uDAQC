@@ -14,6 +14,7 @@
 ## Center
 * Consider compression of TimescaleDB older chunks. This may be a workaround for the fact that continuous aggregates can't have different data retention than their source tables.
 * Should drop tables of systems that lose all their data to expiration.
+* Why is there a duplicate system with a description that passes equivalency test? This looks like a problem in the way database tables are named (devices have different descriptions but the same system table name). See output statements in `loadDevices()` in Database_udAQC.java. Should table names be hashes of the descriptions?
 
 ## Web Interface
 * Need to be able to export all data or a subset of data to a CSV file.
@@ -22,7 +23,7 @@
 * Window resize works okay with `setTree()` but isn't perfect. Probably conflicting with resize of jstree container.
 * Mutable chart height. Right now it's set statically in the `IO_Value.createDashboard()` function.
 * Chart grouping
-* Handle epochs
+* Epochs are handled, but y-axis range is off for aggregated data.
 
 ## Documentation
 * Improve README.md.

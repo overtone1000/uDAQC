@@ -344,17 +344,37 @@ public class Database_uDAQC
 				System.out.println("Creating device.");
 				IO_Device_Connected dev = IO_Device_Connected.getDirectDevice(bb);
 				System.out.println("Device " + dev.FullName() + " loaded from database.");
-				for(IO_System sys:dev.Systems())
-				{
-					System.out.println("Initializing system table for " + sys.FullName());
-					initSystemTable(sys);
-					closeEpoch(sys);
-				}
 			}
 		} catch (SQLException e)
 		{
 			e.printStackTrace();
 		}	
+		
+		Vector<IO_Device_Connected> devices = IO_Device_Connected.getDevices();
+		for(int n=0;n<devices.size();n++)
+		{
+			for(int m=n+1;m<devices.size();m++)
+			{	
+				if(devices.get(n).isEqual(devices.get(m)))
+				{
+					System.err.println("Why are there identical devices?");
+				}
+				else
+				{
+					System.out.println("Devices are not identical.");
+				}
+			}
+		}
+		
+		for(IO_Device_Connected dev:devices)
+		{
+			for(IO_System sys:dev.Systems())
+			{
+				System.out.println("Initializing system table for " + sys.FullName());
+				initSystemTable(sys);
+				closeEpoch(sys);
+			}
+		}
 	}
 		
 	public void closeEpoch(IO_System system)
@@ -699,7 +719,7 @@ public class Database_uDAQC
 		
 		PreparedStatement ps=null;
 		
-		Long timestamp=null;
+		long timestamp=0; //Initialize to zero for the purposes of the first aggregate data epoch check
 		
 		String time_column;
 		if(r==Regime.raw) {
@@ -725,7 +745,7 @@ public class Database_uDAQC
 				return retval;
 			}
 			
-			retval.message = ByteBuffer.allocate(retval.data_count*system.HistoryEntrySize(r) + Short.BYTES*2 + Byte.BYTES);
+			retval.message = ByteBuffer.allocate(retval.data_count*(system.HistoryEntrySize(r)) + Short.BYTES*2 + Byte.BYTES);
 			retval.message.order(ByteOrder.LITTLE_ENDIAN);
 			retval.message.putShort(system.Device().DeviceIndex());
 			retval.message.putShort(system.Index());
@@ -833,7 +853,21 @@ public class Database_uDAQC
 				}
 				else
 				{
+					Instant last_time = Instant.ofEpochMilli(timestamp);
 					timestamp=res.getTimestamp(1).getTime();
+					Instant this_time = Instant.ofEpochMilli(timestamp);
+					Duration between = Duration.between(last_time, this_time);
+					boolean beginning_of_epoch = between.compareTo(r.getDuration())>0;
+					
+					if(beginning_of_epoch)
+					{
+						retval.message.put((byte)2); 
+					}
+					else
+					{
+						retval.message.put((byte)0);
+					}
+					
 					retval.message.putLong(timestamp); //timestamp
 					int index=2;
 					i=values.iterator();

@@ -33,8 +33,9 @@ public class IO_System extends IO_Group
 		raw_history_entry_size=Long.BYTES; 
 		aggregate_history_entry_size=Long.BYTES;
 		
-		//end_of_epoch boolean
-		raw_history_entry_size+=Byte.BYTES; 
+		//flag
+		raw_history_entry_size+=Byte.BYTES;
+		aggregate_history_entry_size+=Byte.BYTES;
 
 		Iterator<IO_Value> i = GetNestedValues().iterator();
 		i.next(); //ditch timestamp
