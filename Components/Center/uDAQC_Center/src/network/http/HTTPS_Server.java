@@ -90,6 +90,7 @@ public class HTTPS_Server
     	}
     	public void CheckUpdate(Instant update_timestamp)
     	{
+    		System.out.println("Checking for updates for system " + system.FullName() + ", regime " + this.regime);
     		if(!(this.getNext().isAfter(update_timestamp)));
 			{
 				HistoryResult his = Center.database.getHistory(system, this.regime, Timestamp.from(this.last), end_of_time);
@@ -140,14 +141,17 @@ public class HTTPS_Server
 				ts=Instant.now();
 			}
 			
+			System.out.println("There are " + subscriptions.keySet().size() + " sessions subscribing.");
+			
+			checkSubscribers();
 			for(Session sess:subscriptions.keySet())
 			{
-				HashMap<IO_System,Subscription> system_subs=subscriptions.get(sess);
-				Subscription sub = system_subs.get(system);
-				if(sub!=null)
-				{
-					sub.CheckUpdate(ts);
-				}
+					HashMap<IO_System,Subscription> system_subs=subscriptions.get(sess);
+					Subscription sub = system_subs.get(system);
+					if(sub!=null)
+					{
+						sub.CheckUpdate(ts);
+					}
 			}
 		}
 		
@@ -167,6 +171,26 @@ public class HTTPS_Server
 				
 				ses_subs.put(system, sub);
 				
+				subscription_mutex.release();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			
+		}
+		
+		protected void checkSubscribers()
+		{
+			try {
+				subscription_mutex.acquire();
+				Iterator<Session> i = subscriptions.keySet().iterator();
+				while(i.hasNext())
+				{
+					Session sess=i.next();
+					if(!sess.isOpen())
+					{
+						i.remove();
+					}
+				}
 				subscription_mutex.release();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
