@@ -646,10 +646,17 @@ public class Database_uDAQC
 			ps=conn.createStatement();
 			ps.execute(command);
 			ResultSet res = ps.getResultSet();
-						
-			while(res.next())
+					
+			if(res!=null)
 			{
-				retval=res.getTimestamp(1).toInstant();
+				while(res.next())
+				{
+					Timestamp t = res.getTimestamp(1);
+					if(t!=null)
+					{
+						retval=t.toInstant();
+					}
+				}
 			}
 			
 			ps.close();

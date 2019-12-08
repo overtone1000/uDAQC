@@ -13,7 +13,7 @@
 
 ## Center
 * Consider compression of TimescaleDB older chunks. This may be a workaround for the fact that continuous aggregates can't have different data retention than their source tables.
-* Should drop tables of systems that lose all their data to expiration.
+* Should drop tables of systems that lose all their data to expiration...or that are orphaned.
 * Why is there a duplicate system with a description that passes equivalency test? This looks like a problem in the way database tables are named (devices have different descriptions but the same system table name). See output statements in `loadDevices()` in Database_udAQC.java. Should table names be hashes of the descriptions?
 
 ## Web Interface
