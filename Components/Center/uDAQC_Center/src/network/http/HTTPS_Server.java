@@ -598,9 +598,10 @@ public class HTTPS_Server
 		}
 
 		HistoryResult his = Center.database.getConciseHistory(system, start_ts, end_ts, max_points);
+		
 		Command c = new Command(IO_Constants.Command_IDs.history, his.message.array());
 		SendCommand(session, c);
-
+		
 		if (live_subscription_requested) {
 			sub_main.addSubscriber(session,system,his.reg,his.last);
 		} else {

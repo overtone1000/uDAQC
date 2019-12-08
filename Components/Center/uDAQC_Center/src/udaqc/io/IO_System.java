@@ -54,6 +54,11 @@ public class IO_System extends IO_Group
 		}
 	}
 	
+	public int deviceHash()
+	{
+		return java.util.Arrays.hashCode(iodev.description);
+	}
+	
 	public Short Index()
 	{
 		return system_index;

@@ -18,8 +18,7 @@
 
 ## Web Interface
 * Need to be able to export all data or a subset of data to a CSV file.
-* Need to implement data streaming and history updates.
-* Need to keep WebSocket connection alive.
+* Need to keep WebSocket connection alive? Timeout is printing error to stack trace. Changed error handling to allow these to close without error output.
 * Window resize works okay with `setTree()` but isn't perfect. Probably conflicting with resize of jstree container.
 * Mutable chart height. Right now it's set statically in the `IO_Value.createDashboard()` function.
 * Chart grouping

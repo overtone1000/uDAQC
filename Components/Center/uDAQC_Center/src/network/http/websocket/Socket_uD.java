@@ -1,6 +1,8 @@
 package network.http.websocket;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.TimeoutException;
+
 import org.eclipse.jetty.websocket.api.Session;
 import org.eclipse.jetty.websocket.api.WebSocketAdapter;
 
@@ -63,6 +65,14 @@ public class Socket_uD extends WebSocketAdapter
     public void onWebSocketError(Throwable cause)
     {
         super.onWebSocketError(cause);
-        cause.printStackTrace(System.err);
+        
+        if(cause instanceof TimeoutException)
+        {
+        	System.out.println("Websocket connection timed out. Closing.");
+        }
+        else
+        {
+        	cause.printStackTrace(System.err);
+        }
     }
 }

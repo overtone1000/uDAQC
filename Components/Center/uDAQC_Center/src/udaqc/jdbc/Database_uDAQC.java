@@ -316,7 +316,8 @@ public class Database_uDAQC
 	private String getSystemTableName(IO_System system)
 	{
 		//ESP.getChipId() is always appended to device name, so this is guaranteed to be unique
-		return system.Device().Name() + "_" + system.Index().toString();
+		//...unless the description changes but the system name and chip are identical, so add a hash of the description
+		return system.Device().Name() + "_" + system.Index().toString() + "_" + system.deviceHash();
 	}
 	
 	private String getFullSystemTableName(IO_System system, Regime r)
@@ -736,19 +737,12 @@ public class Database_uDAQC
 			conn.setAutoCommit(false);
 			
 			retval.data_count = count(system,r,start,end);
-			if(retval.data_count<=0)
-			{
-				System.out.println("No data. Returning empty history.");
-				conn.setAutoCommit(true);
-				retval.last=end.toInstant();
-				retval.first=start.toInstant();
-				return retval;
-			}
-			
+						
 			retval.message = ByteBuffer.allocate(retval.data_count*(system.HistoryEntrySize(r)) + Short.BYTES*2 + Byte.BYTES);
 			retval.message.order(ByteOrder.LITTLE_ENDIAN);
 			retval.message.putShort(system.Device().DeviceIndex());
 			retval.message.putShort(system.Index());
+					
 			if(r==Regime.raw)
 			{
 				retval.message.put((byte)0);
@@ -756,6 +750,15 @@ public class Database_uDAQC
 			else
 			{
 				retval.message.put((byte)1);
+			}
+			
+			if(retval.data_count<=0)
+			{
+				System.out.println("No data. Returning empty history.");
+				conn.setAutoCommit(true);
+				retval.last=end.toInstant();
+				retval.first=start.toInstant();
+				return retval;
 			}
 			
 			String command = "select * from " + full_table_name;
