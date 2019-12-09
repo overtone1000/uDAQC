@@ -48,8 +48,7 @@ function handlePassthroughCommand(ptcom)
       console.debug("Received description for device " + ptcom.source_ID);
       let new_device = new IO_Device(ptcom.message,ptcom.source_ID);
       update_devices();
-      
-      
+            
       for(let n = 0; n<new_device.member_count; n++)
       {
         requestHistoryInterval(new_device.members[n]);

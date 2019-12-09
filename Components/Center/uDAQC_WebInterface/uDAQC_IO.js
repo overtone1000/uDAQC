@@ -754,6 +754,8 @@ class IO_System extends IO_Group
       this.nestedIOValues[i].chart.options.scales.xAxes[0].time.min = this.chartmeta.xabsmin;
       this.nestedIOValues[i].chart.options.scales.xAxes[0].time.max = this.chartmeta.xabsmax;
 
+      //console.debug("Chart minimum is " + this.chartmeta.xabsmin);
+      //console.debug("Chart maximum is " + this.chartmeta.xabsmax);
       this.history.setChartDatasets(i);      
 
       this.nestedIOValues[i].chart.update(); //need to force update regardless of whether its enabled;

@@ -13,8 +13,9 @@
 
 ## Center
 * Consider compression of TimescaleDB older chunks. This may be a workaround for the fact that continuous aggregates can't have different data retention than their source tables.
-* Should drop tables of systems that lose all their data to expiration...or that are orphaned.
 * Why is there a duplicate system with a description that passes equivalency test? This looks like a problem in the way database tables are named (devices have different descriptions but the same system table name). See output statements in `loadDevices()` in Database_udAQC.java. Should table names be hashes of the descriptions?
+* Track device metadata (for example, "when last seen" to decide which to delete in the web interface?)
+* Center isn't sending updates for System 1 subscribers until a new history request is received.
 
 ## Web Interface
 * Need to be able to export all data or a subset of data to a CSV file.
@@ -23,6 +24,8 @@
 * Mutable chart height. Right now it's set statically in the `IO_Value.createDashboard()` function.
 * Chart grouping
 * Epochs are handled, but y-axis range is off for aggregated data.
+* Need to be able to delete devices from the database.
+* If requesting live stream and provided data is shorter than expected interval, need to display full x-range anyway. Also need to only display what's in range and drop expired data.
 
 ## Documentation
 * Improve README.md.
