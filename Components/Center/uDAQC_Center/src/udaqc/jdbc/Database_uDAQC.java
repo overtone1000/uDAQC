@@ -43,8 +43,9 @@ public class Database_uDAQC
 		try
 		{
 			conn = DriverManager.getConnection(url, props);
+			
 			conn.setAutoCommit(true);
-			initDeviceTable();
+			
 			DatabaseMetaData meta = conn.getMetaData();
 			boolean supports_isolation = meta.supportsTransactionIsolationLevel(java.sql.Connection.TRANSACTION_SERIALIZABLE);
 			if(supports_isolation)
@@ -55,6 +56,10 @@ public class Database_uDAQC
 			{
 				System.err.println("Transaction isolation is not supported by this database. This will result in allocation errors.");
 			}
+			
+			initDeviceTable();
+			loadDevices();
+			
 			background.start();
 		} catch (SQLException e)
 		{
@@ -309,11 +314,17 @@ public class Database_uDAQC
 			initSystemTable(sys);
 		}
 	}
+	
 	private String getEscapedSystemTableName(IO_System system)
 	{
-		return "\"" + getSystemTableName(system) + "\"";
+		return getEscapedSystemTableName(getRawSystemTableName(system));
 	}
-	private String getSystemTableName(IO_System system)
+	private String getEscapedSystemTableName(String raw_name)
+	{
+		return "\"" + raw_name + "\"";
+	}
+	
+	private String getRawSystemTableName(IO_System system)
 	{
 		//ESP.getChipId() is always appended to device name, so this is guaranteed to be unique
 		//...unless the description changes but the system name and chip are identical, so add a hash of the description
@@ -322,10 +333,14 @@ public class Database_uDAQC
 	
 	private String getFullSystemTableName(IO_System system, Regime r)
 	{
-		return r.schema() + "." + getEscapedSystemTableName(system);
+		return getFullSystemTableName(getRawSystemTableName(system),r);
+	}
+	private String getFullSystemTableName(String raw_name, Regime r)
+	{
+		return r.schema() + "." + getEscapedSystemTableName(raw_name);
 	}
 	
-	public void loadDevices()
+	private void loadDevices()
 	{
 		System.out.println("Loading stored devices.");
 		Statement s;
@@ -476,7 +491,7 @@ public class Database_uDAQC
 		String command;
 		DatabaseMetaData meta;
 		String new_table_name = getEscapedSystemTableName(system);
-		String raw_table_name = getSystemTableName(system);
+		String raw_table_name = getRawSystemTableName(system);
 		try
 		{
 			meta = conn.getMetaData();
@@ -1166,29 +1181,76 @@ public class Database_uDAQC
 				DatabaseMetaData meta;
 				try
 				{
+					conn.setAutoCommit(false);
 					meta = conn.getMetaData();
-					//for(Regime r:Regime.values())
-					//{
-					Regime r = Regime.raw; //for now, can't manage retention in continous aggregates separately.
-					ResultSet meta_res = meta.getTables(null, r.schema(), null, new String[] {"TABLE"});
-					while(meta_res.next()) 
+
+					//Manage retention
 					{
-						String this_name = meta_res.getString("TABLE_NAME");
-						s = conn.createStatement();
-						command = "SELECT drop_chunks(older_than => interval '" + r.retention() + "' , schema_name => '" + r.schema() + "', table_name => '" + this_name;
-						command +=  "', cascade_to_materializations => true);"; //currently have to do this if there are continuous aggregates. TimescaleDB may improve this in the future.
-						System.out.println(command);
-						s.execute(command);
-						s.close();
-					}	
-					//}	
+						Regime r = Regime.raw; //for now, can't manage retention in continous aggregates separately.
+						
+						ResultSet meta_res = meta.getTables(null, r.schema(), null, new String[] {"TABLE"});
+						while(meta_res.next()) 
+						{
+							String this_name = meta_res.getString("TABLE_NAME");
+							
+							s = conn.createStatement();
+							command = "SELECT drop_chunks(older_than => interval '" + r.retention() + "' , schema_name => '" + r.schema() + "', table_name => '" + this_name;
+							command +=  "', cascade_to_materializations => true);"; //currently have to do this if there are continuous aggregates. TimescaleDB may improve this in the future.
+							System.out.println(command);
+							s.execute(command);
+							s.close();
+						}
+					}
+
+					
+					//Get rid of any orphaned tables
+					for(Regime r:Regime.values())
+					{
+						ResultSet meta_res = meta.getTables(null, r.schema(), null, new String[] {"TABLE"});
+						while(meta_res.next()) 
+						{
+							String this_name = meta_res.getString("TABLE_NAME");
+
+							boolean device_exists=false;
+							for(IO_Device_Connected dev:IO_Device_Connected.getDevices())
+							{
+								for(IO_System sys:dev.Systems())
+								{
+									String raw_table_name = getRawSystemTableName(sys);
+									if(this_name.contentEquals(raw_table_name))
+									{
+										device_exists=true;
+										break;
+									}
+								}
+								if(device_exists)
+								{
+									break;
+								}
+							}
+							if(!device_exists)
+							{
+								System.out.println("System for table " + this_name + " not found. Dropping table.");
+								dropTable(getFullSystemTableName(this_name,r));
+								conn.commit();
+							}
+						}
+					}
+					
 					
 				} catch (SQLException e)
 				{
 					System.err.println("Error during background operations.");
 					e.printStackTrace();
 				}
-				
+				finally
+				{
+					try {
+						conn.setAutoCommit(true);
+					} catch (SQLException e) {
+						e.printStackTrace();
+					}
+				}
 
 				try
 				{

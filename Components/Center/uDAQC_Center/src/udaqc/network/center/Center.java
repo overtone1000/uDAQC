@@ -57,9 +57,7 @@ public class Center extends TCP_Server
 		
 		this.handler = handler;
 		this.master_device_cred_list = program_root + "/security/device_credential_list.txt";
-		
-		database.loadDevices();
-		
+				
 		handler.ClientListUpdate();
 
 		log = Logger.getLogger(Threadname);
