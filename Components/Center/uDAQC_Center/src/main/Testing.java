@@ -35,6 +35,7 @@ public class Testing
 	{
 		System.out.println("Testing database.");
 		Database_uDAQC database = new Database_uDAQC();
+		database.Initialize();
 		
 		//Testing...
 		IO_System sys=IO_Device_Connected.getDirectDevice((short)0).GetSystem((short)0);

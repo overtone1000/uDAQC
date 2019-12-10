@@ -57,14 +57,18 @@ public class Database_uDAQC
 				System.err.println("Transaction isolation is not supported by this database. This will result in allocation errors.");
 			}
 			
-			initDeviceTable();
-			loadDevices();
-			
-			background.start();
 		} catch (SQLException e)
 		{
 			e.printStackTrace();
 		}
+	}
+	
+	public void Initialize()
+	{
+		initDeviceTable();
+		loadDevices();
+		
+		background.start();
 	}
 	
 	private static String IOValueTypeToSQLType(udaqc.io.IO_Value value)

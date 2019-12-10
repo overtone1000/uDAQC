@@ -1000,7 +1000,7 @@ class History
 
     let deleteCount = (this.times.length-1)-update_position;
     
-    console.debug("New history:");
+    console.debug("New history for system " + this.system.name);
     console.debug(new_history.times);
     //this.times.splice(0,deleteCount);
     //this.times.splice(update_position,1);

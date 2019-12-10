@@ -42,6 +42,7 @@ public class IO_Device_Connected extends IO_Device_Synchronized
 		retval.session=session;
 		return retval;
 	}
+	
 	public static IO_Device_Connected getDirectDevice(ByteBuffer data)
 	{
 		//System.out.println("Creating IO_Device_Connected.");

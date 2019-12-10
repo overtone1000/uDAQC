@@ -54,12 +54,14 @@ public class Center extends TCP_Server
 	public Center(String Threadname, String program_root, CenterHandler handler)
 	{
 		super(Threadname, true, false);
-		
+				
 		this.handler = handler;
 		this.master_device_cred_list = program_root + "/security/device_credential_list.txt";
-				
+		
+		database.Initialize();
+		
 		handler.ClientListUpdate();
-
+		
 		log = Logger.getLogger(Threadname);
 		//loghandler = new Loghandler_File(Level.WARNING);
 
