@@ -27,7 +27,7 @@ public class IO_Device_Connected extends IO_Device_Synchronized
 	private static Semaphore device_list_mutex=new Semaphore(1);
 	
 	@SuppressWarnings("unchecked")
-	public static Vector<IO_Device_Connected> getDevices()
+	public static final Vector<IO_Device_Connected> getDevices()
 	{
 		return (Vector<IO_Device_Connected>) devices.clone();
 	}
@@ -71,6 +71,25 @@ public class IO_Device_Connected extends IO_Device_Synchronized
 				new_device=false;
 				break;
 			}
+			else
+			{
+				System.out.println();
+				if(retval.FullName().equals(comp.FullName()))
+				{
+					System.out.println("Identically named systems without equivalent descriptions:");
+				}
+				for(byte b:retval.description)
+				{
+					System.out.print(b+" ");
+				}
+				System.out.println();
+				for(byte b:comp.description)
+				{
+					System.out.print(b+" ");
+				}
+				System.out.println();
+				System.out.println();
+			}
 		}
 		
 		if(new_device)
@@ -78,8 +97,8 @@ public class IO_Device_Connected extends IO_Device_Synchronized
 			System.out.println("Unknown device. Saving.");
 			Center.database.insertDevice(retval);
 			
-			System.out.println("Adding device to device list.");
 			retval.device_index=(short) devices.size();
+			System.out.println("Adding device to device list at index " + retval.device_index);
 			devices.add(retval);
 		}
 		

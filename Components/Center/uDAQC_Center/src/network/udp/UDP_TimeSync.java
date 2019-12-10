@@ -41,16 +41,7 @@ public class UDP_TimeSync implements Runnable
 	
 	public UDP_TimeSync()
 	{
-		try
-		{
-			socket = new DatagramSocket();
-			socket.setSoTimeout(5000);
-			start();
-		} catch (SocketException e)
-		{
-
-			e.printStackTrace();
-		}
+		start();
 	}
 	
 	public Integer port()
@@ -66,18 +57,35 @@ public class UDP_TimeSync implements Runnable
         DatagramPacket packet = new DatagramPacket(buf, buf.length, add);
         try
 		{
-			socket.send(packet);
+    		socket.send(packet);
 		} catch (IOException e)
 		{
-
+			
 			e.printStackTrace();
 		}
 	}
     
+	protected void createSocket()
+	{
+		try {
+			if(socket!=null)
+			{
+				socket.close();
+			}
+			socket = new DatagramSocket();
+			socket.setSoTimeout(5000);
+		} catch (SocketException e) {
+			e.printStackTrace();
+		}
+	}
+	
     protected void start(){
 		if(t==null || !t.isAlive() || t.isInterrupted()){
 			t=new Thread(this,"UDP TimeSync");
 			continuerunning=true;
+			
+			createSocket();
+			
 			t.start();
 		}
 	}
@@ -237,66 +245,74 @@ public class UDP_TimeSync implements Runnable
 	{
 		byte[] buf = new byte[Constants.UDP_MaxPacketSize];
 		DatagramPacket packet = new DatagramPacket(buf, buf.length);
+		
 		while(continuerunning)
 		{
-			if(current_sync==null)
+			if(socket==null || socket.isClosed())
 			{
-				//System.out.println("There are " + syncs_to_perform.size() + " synchronizations being managed by " + this);
-				Iterator<TimeSynchronizer> i = syncs_to_perform.iterator();
-				TimeSynchronizer next = null;
-				while(i.hasNext())
-				{
-					next=i.next();
-					if(next.SynchronizeNow())
-					{
-						current_sync = next;
-						last_sync_message=java.time.Clock.systemDefaultZone().millis();
-						break;
-					}
-				}
+				createSocket();
 			}
-			
-			if(current_sync!=null)
+			else
 			{
-				long current = java.time.Clock.systemDefaultZone().millis();
-				if((current-last_sync_message)>sync_timeout_ms || points.size()>=points_to_full)
+				if(current_sync==null)
 				{
-					finishCurrent();
-				}
-				else
-				{
-					pollCurrent();
-				}
-			}
-			
-			try
-			{
-				socket.receive(packet);
-				
-				ByteBuffer bb = ByteBuffer.wrap(packet.getData());
-				Command c = Command.tryDecode(bb);
-				
-				switch(c.Header().command_id)
-				{
-					case IO_Constants.Command_IDs.timesync_response:
+					//System.out.println("There are " + syncs_to_perform.size() + " synchronizations being managed by " + this);
+					Iterator<TimeSynchronizer> i = syncs_to_perform.iterator();
+					TimeSynchronizer next = null;
+					while(i.hasNext())
 					{
-						InetAddress expected = current_sync.getExternal().TimeSyncAddress().getAddress();
-						if(packet.getAddress().equals(expected)) //only handle the response if this packet is from the expected source. Don't want to mix up time syncs. This is also a security issue.
+						next=i.next();
+						if(next.SynchronizeNow())
 						{
-							handleResponse(c);
+							current_sync = next;
+							last_sync_message=java.time.Clock.systemDefaultZone().millis();
+							break;
 						}
 					}
 				}
-			}
-			
-			catch(SocketTimeoutException timeout)
-			{
-				Thread.yield();
-			}
-			
-			catch(Exception e)
-			{
-				e.printStackTrace();
+				
+				if(current_sync!=null)
+				{
+					long current = java.time.Clock.systemDefaultZone().millis();
+					if((current-last_sync_message)>sync_timeout_ms || points.size()>=points_to_full)
+					{
+						finishCurrent();
+					}
+					else
+					{
+						pollCurrent();
+					}
+				}
+				
+				try
+				{
+					socket.receive(packet);
+					
+					ByteBuffer bb = ByteBuffer.wrap(packet.getData());
+					Command c = Command.tryDecode(bb);
+					
+					switch(c.Header().command_id)
+					{
+						case IO_Constants.Command_IDs.timesync_response:
+						{
+							InetAddress expected = current_sync.getExternal().TimeSyncAddress().getAddress();
+							if(packet.getAddress().equals(expected)) //only handle the response if this packet is from the expected source. Don't want to mix up time syncs. This is also a security issue.
+							{
+								handleResponse(c);
+							}
+						}
+					}
+				}
+				
+				catch(SocketTimeoutException timeout)
+				{
+					Thread.yield();
+				}
+				
+				catch(Exception e)
+				{
+					e.printStackTrace();
+				}
 			}
 		}
 	}

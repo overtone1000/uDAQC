@@ -1,6 +1,10 @@
 # **Development Tasks**
 
 ## In Progress Notes
+Debugging hell:
+* PTCom device indices are going negative. Why? It's interpreting int16...
+* Device descriptions are identical but "int_32 containing the byte count for the data" is different. Why?
+* Subscriptions aren't finding data. Is this because of duplicated devices?
 
 ## Device
 * Convert to saving only hashed password (v2.6.0 is out!)

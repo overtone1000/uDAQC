@@ -150,7 +150,12 @@ public class HTTPS_Server
 					Subscription sub = system_subs.get(system);
 					if(sub!=null)
 					{
+						System.out.println("Checking subscription.");
 						sub.CheckUpdate(ts);
+					}
+					else
+					{
+						System.out.println("Null subscription...");
 					}
 			}
 		}
@@ -603,6 +608,7 @@ public class HTTPS_Server
 		SendCommand(session, c);
 		
 		if (live_subscription_requested) {
+			System.out.println("Subscribing " + session.getRemoteAddress().toString() + " to system " + system.FullName() + " for regime " + his.reg.toString());
 			sub_main.addSubscriber(session,system,his.reg,his.last);
 		} else {
 			sub_main.removeSubscriber(session);
