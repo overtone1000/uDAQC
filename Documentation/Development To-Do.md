@@ -14,6 +14,7 @@ Debugging hell:
     * Switch debug to F()?
     * Switch to char* everywhere possible (so many Arduino String objects...)
 * Might be nice to shorten file system names.
+* Look at WiFi.persistence. Should be set to false (unless false is default) or it will result in excessive flash use.
 
 ## Center
 * Consider compression of TimescaleDB older chunks. This may be a workaround for the fact that continuous aggregates can't have different data retention than their source tables.
