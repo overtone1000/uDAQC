@@ -16,13 +16,11 @@ sudo chown "$database_dir"
 sudo chgrp "$database_dir"
 sudo chmod 700 "$database_dir"
 
-sudo su postgres
-
-psql -c "create user udaqc with password 'udaqc';"
-psql -c "create tablespace udaqc_tablespace location '/alt/postgres/datadirectory';"
-psql -c "create database udaqc_database with tablespace = udaqc_tablespace;"
-psql -d udaqc_database -c "create extension if not exists timescaledb cascade;"
-psql -c "grant all privileges on database udaqc_database to udaqc;"
+sudo -u postgres psql -c "create user udaqc with password 'udaqc';"
+sudo -u postgres psql -c "create tablespace udaqc_tablespace location '/alt/postgres/datadirectory';"
+sudo -u postgres psql -c "create database udaqc_database with tablespace = udaqc_tablespace;"
+sudo -u postgres psql -d udaqc_database -c "create extension if not exists timescaledb cascade;"
+sudo -u postgres psql -c "grant all privileges on database udaqc_database to udaqc;"
 
 sudo timescaledb-tune
 sudo service postgresql restart
