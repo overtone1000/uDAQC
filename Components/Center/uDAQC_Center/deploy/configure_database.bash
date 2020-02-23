@@ -3,7 +3,8 @@
 echo "Configuring PostreSQL/TimescaleDB database."
 
 echo "Creating udaqc user."
-sudo useradd udaqc
+sudo useradd -M udaqc
+sudo usermod -L udaqc
 echo udaqc:udaqc | sudo chpasswd
 
 echo "Choose a directory in the file system for the uDAQC database: "
